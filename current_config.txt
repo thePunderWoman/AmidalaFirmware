@@ -1,0 +1,170 @@
+#START
+# --- XBEE Configuration ---
+# Unique serial numbers for the XBEE modules (Lower 32-bits in Hex)
+xbr=40C8CCB0
+xbl=40C8CCC4
+
+# --- Joystick Analog Calibration ---
+# Reference voltages for analog stick limits (0-1024)
+rvrmin=0
+rvrmax=1014
+rvlmin=0
+rvlmax=1014
+# Vertical and Horizontal offset adjustments for Joystick 1 (0-80)
+j1adjv=0
+j1adjh=0
+
+# --- RC Radio Configuration ---
+# Number of RC channels (6-8)
+rcchn=6
+# Deadzone (1-50): Ignores small stick movements
+rcd=30
+# Jitter/Hysteresis (1-40): Smooths signal noise
+rcj=5
+# Failsafe Timeout (ms): Time before motors stop if signal is lost
+fst=1000
+# Global Servo Pulse Limits (µs)
+minpulse=1000
+maxpulse=2000
+
+# --- General System Settings ---
+# Global Volume (0-100)
+volume=50
+# Startup Sound: Play a sound when the robot boots (y/n)
+startup=y
+# Random Sounds: Start in random sound mode on boot (y/n)
+rndon=n
+# Acknowledge Sounds: Sound response to commands (y/n)
+ackon=n
+# Acknowledge Type: g=general, a=auto, d=dome, s=speed, r=radio
+acktype=a
+# Slow Mode: Start in slow mode for safer driving (y/n)
+goslow=n
+# Channel Mixing: Mix channels 1 & 2 for tank drive (y/n)
+mix12=n
+# Autocorrect: Enable signal error correction (y/n)
+auto=n
+
+# --- Random Sound Timing (Seconds) ---
+mindelay=10
+maxdelay=120
+
+# --- Communication & I2C ---
+# This board's I2C address (0 = Master)
+myi2c=0
+# Aux Serial Port Baud Rate
+auxbaud=9600
+# ASCII code for delimiter (default 58 = ':')
+auxdelim=58
+# ASCII code for EOL (default 13 = Carriage Return)
+auxeol=13
+
+# --- Dome Motor Control ---
+# Default Dome Mode: 0=Manual, 1=Auto-Home, 2=Random, 3=Seek
+domemode=0
+# Maximum Dome Speed (0-100)
+domespeed=100
+# Dome Home position in degrees (0-360)
+domehome=50
+# Dome rotation inversion (y/n)
+domeflip=n
+# Dome Fudge Factor: Accuracy tolerance for sensors (1-20)
+domefudge=2
+# Speed during homing and seeking (1-100)
+domespeedhome=40
+domespeedseek=60
+# Delays between movements (Seconds)
+domehomemin=6
+domehomemax=8
+domeseekmin=6
+domeseekmax=8
+# Rotation range for seeking (Degrees)
+domeseekl=80
+domeseekr=80
+# Enable Dome Control on RC Channel 6 (y/n)
+domech6=n
+
+# --- Gestures for Special Toggles ---
+# These set which stick gesture string toggles which mode (default values)
+rnd=3
+ackgest=252
+slowgest=858
+domegest=
+
+# --- Servo Channel Configuration ---
+# Format: s=NN,min,max,neutral,deadzone,trim,speed,reversed
+# speed: 1 (Slowest) to 100 (Full Acceleration)
+s=1,0,180,90,4,0,50,0
+s=2,0,180,90,4,0,50,0
+s=3,0,180,90,4,0,50,0
+s=4,50,130,90,4,0,50,1
+s=5,0,180,90,10,0,50,0
+s=6,0,180,90,10,0,50,0
+
+# --- Sound Bank Configuration ---
+# Format: sb=dir,numfiles
+sb=gen,16
+sb=chat,22
+sb=sad,11
+sb=raspb,1
+sb=whis,12
+sb=scream,4
+sb=warn,2
+sb=short,1
+sb=leia,1
+sb=vader,1
+sb=sw,1
+sb=dance,2
+sb=cant,1
+sb=leial,1
+
+# --- Button Mappings ---
+# Format: b=ButtonNum,Action,TargetAddr,TargetCmd
+# Actions: 4=I2C Command, 1=Sound...
+# Sad Emote
+b=1,4,9,8
+# Scared Emote
+b=2,4,9,10
+# Mad Emote
+b=3,4,9,9
+# Very Mad Emote
+b=4,4,9,13
+# Toggle Mute
+b=5,4,9,16
+# Very Happy Emote
+b=6,4,9,11
+# Scream
+b=7,4,12,10
+# Overload
+b=8,4,9,15
+
+# --- Gesture Mappings (Stick Movments) ---
+# Format: g=GestureString,Action,TargetAddr,TargetCmd,AuxConfig
+
+# Heart
+g=1,4,12,6
+# Pies Open / Close
+g=252,4,12,2
+# Toggle Musing
+g=3,4,9,31
+# Leia
+g=4,4,12,5
+# Reset
+g=5,4,12,1
+# Vader
+g=6,4,9,2
+# Hello There
+g=7,4,12,7
+# Low Panels Open / Close
+g=8,4,12,3
+# All Panels Open / Close
+g=858,4,12,4
+# Utility Arms Open Close
+g=9,4,9,21
+# Flutter
+g=2,4,12,12
+
+# --- Final Control Settings ---
+ack=252
+
+#END

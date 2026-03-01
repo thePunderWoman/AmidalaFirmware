@@ -62,6 +62,8 @@
 #define DEFAULT_DOME_SPEED_MIN 15
 #define DEFAULT_DOME_TIMEOUT 5
 #define DEFAULT_DOME_INVERTED false
+#define DEFAULT_DOME_MIN_PULSE 1000
+#define DEFAULT_DOME_MAX_PULSE 2000
 
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
 #define DRIVE_SERIAL Serial3
@@ -130,10 +132,8 @@
 ////////////////////////////////
 
 #include "ReelTwo.h"
-// #include "ReelTwoAudio.h"
 #include "SD.h"
 #include "SPI.h"
-// #include "audio/VMusic.h"
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
 #include "drive/TankDrivePWM.h"
 #endif
@@ -152,7 +152,7 @@
 #include "ServoDispatchDirect.h"
 #include "ServoEasing.h"
 #include "core/MedianSampleBuffer.h"
-// #include "i2c/I2CReceiver.h"
+#include <Wire.h>
 
 ////////////////////////////////
 
@@ -203,6 +203,12 @@
 #if !defined(DOME_DRIVE_SERIAL) && !defined(RDH_SERIAL)
 #define AUX_SERIAL Serial3
 #endif
+////////////////////////////////
+
+// I2C bus recovery pin definitions
+// On Arduino Mega: SDA = pin 20, SCL = pin 21
+#define I2C_SDA_PIN 20
+#define I2C_SCL_PIN 21
 
 ////////////////////////////////
 
@@ -1122,7 +1128,7 @@ public:
         j1adjh = 0;
         domehome = DEFAULT_DOME_HOME_POSITION;
         domepos = domehome;
-        domemode = 1;
+        domemode = 0; // Force manual mode to stop auto-spinning on startup
         domehomemin = DEFAULT_DOME_HOME_MIN_DELAY;
         domehomemax = DEFAULT_DOME_HOME_MAX_DELAY;
         domeseekmin = DEFAULT_DOME_SEEK_MIN_DELAY;
@@ -1138,6 +1144,8 @@ public:
         domech6 = false;
         domeflip = DEFAULT_DOME_INVERTED;
         domeimu = true; /* no longer used */
+        minpulse = DEFAULT_DOME_MIN_PULSE;
+        maxpulse = DEFAULT_DOME_MAX_PULSE;
       }
       size_t offs = 0;
       if (EEPROM.read(offs) == 'D' && EEPROM.read(offs + 1) == 'B' &&
@@ -1604,7 +1612,7 @@ public:
 #ifdef RDH_SERIAL
   RDHSerial fAutoDome;
 #endif
-  // I2CReceiver fI2C;
+
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
   TankDriveSabertooth fTankDrive;
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
@@ -1753,6 +1761,66 @@ public:
     return false;
   }
 
+  // --- I2C bus recovery and safe transmission ---
+
+  static void recoverI2CBus() {
+    Wire.end();
+    pinMode(I2C_SDA_PIN, INPUT_PULLUP);
+    pinMode(I2C_SCL_PIN, OUTPUT);
+    // Clock out up to 9 bits to release a stuck slave
+    for (int i = 0; i < 9; i++) {
+      digitalWrite(I2C_SCL_PIN, LOW);
+      delayMicroseconds(5);
+      digitalWrite(I2C_SCL_PIN, HIGH);
+      delayMicroseconds(5);
+      if (digitalRead(I2C_SDA_PIN) == HIGH)
+        break;
+    }
+    // Generate a STOP condition
+    pinMode(I2C_SDA_PIN, OUTPUT);
+    digitalWrite(I2C_SDA_PIN, LOW);
+    delayMicroseconds(5);
+    digitalWrite(I2C_SCL_PIN, HIGH);
+    delayMicroseconds(5);
+    digitalWrite(I2C_SDA_PIN, HIGH);
+    delayMicroseconds(5);
+    Wire.begin();
+  }
+
+  static byte sendI2CCmd(byte addr, byte cmd) {
+    Wire.beginTransmission(addr);
+    Wire.write(cmd);
+    byte err = Wire.endTransmission();
+    if (err != 0) {
+      Serial.print(F("I2C err "));
+      Serial.print(err);
+      Serial.print(F(" @"));
+      Serial.println(addr);
+      if (err == 4) {
+        recoverI2CBus();
+      }
+    }
+    delay(5);
+    return err;
+  }
+
+  static byte sendI2CStr(byte addr, const char *str) {
+    Wire.beginTransmission(addr);
+    Wire.write(str);
+    byte err = Wire.endTransmission();
+    if (err != 0) {
+      Serial.print(F("I2C err "));
+      Serial.print(err);
+      Serial.print(F(" @"));
+      Serial.println(addr);
+      if (err == 4) {
+        recoverI2CBus();
+      }
+    }
+    delay(5);
+    return err;
+  }
+
   bool readConfigFromSD() {
     if (!SD.begin(4)) {
       Serial.println("initialization failed!");
@@ -1809,8 +1877,8 @@ public:
     fConsole.println(F("Activating Digital Outputs"));
     fConsole.println(F("Init i2c Bus"));
 
-    // fI2C.begin(params.myi2c);
-    fConsole.println(F("No i2c devices configured"));
+    Wire.begin();
+
     if (params.autocorrect)
       fConsole.println(F("Auto Correct Gestures Enabled"));
 
@@ -1878,16 +1946,29 @@ public:
 #endif
 
     for (unsigned i = 0; i < params.getServoCount(); i++) {
-      float neutral = float(params.S[i].n) / float(params.S[i].max);
-      uint16_t minpulse = params.S[i].minpulse;
-      uint16_t maxpulse = params.S[i].maxpulse;
-      if (params.S[i].r) {
-        maxpulse = params.S[i].minpulse;
-        minpulse = params.S[i].maxpulse;
+      uint16_t minpulse =
+          params.S[i].minpulse ? params.S[i].minpulse : params.minpulse;
+      uint16_t maxpulse =
+          params.S[i].maxpulse ? params.S[i].maxpulse : params.maxpulse;
+
+      float neutral_percent = float(params.S[i].n) / 180.0f;
+      bool reversed = params.S[i].r;
+
+      if (i == 3) {
+        if (!params.domeflip) {
+          reversed = !reversed;
+        }
+      } else if (reversed) {
+        uint16_t temp = maxpulse;
+        maxpulse = minpulse;
+        minpulse = temp;
       }
+
       uint16_t neutralpulse =
-          params.S[i].minpulse +
-          neutral * (params.S[i].maxpulse - params.S[i].minpulse);
+          (uint16_t)((int32_t)minpulse +
+                     (int32_t)(neutral_percent *
+                               ((int32_t)maxpulse - (int32_t)minpulse)));
+
       servoDispatch.setServo(i, SERVO1_PIN + i, minpulse, maxpulse,
                              neutralpulse, 0);
     }
@@ -2251,6 +2332,24 @@ void AmidalaConsole::process(ButtonAction &button) {
       playSound(button.sound.soundbank, button.sound.sound);
     } else {
       playSound(button.sound.soundbank);
+    }
+    break;
+  case button.kI2CCmd:
+    DEBUG_PRINT("I2C CMD addr=");
+    DEBUG_PRINT(button.i2ccmd.target);
+    DEBUG_PRINT(" cmd=");
+    DEBUG_PRINTLN(button.i2ccmd.cmd);
+    AmidalaController::sendI2CCmd(button.i2ccmd.target, button.i2ccmd.cmd);
+    break;
+  case button.kI2CStr:
+    if (button.i2cstr.cmd != 0 &&
+        button.i2cstr.cmd <= params.getAuxStringCount()) {
+      const char *str = params.A[button.i2cstr.cmd - 1].str;
+      DEBUG_PRINT("I2C STR addr=");
+      DEBUG_PRINT(button.i2cstr.target);
+      DEBUG_PRINT(" str=");
+      DEBUG_PRINTLN(str);
+      AmidalaController::sendI2CStr(button.i2cstr.target, str);
     }
     break;
   }
@@ -3144,6 +3243,12 @@ bool AmidalaConsole::processConfig(const char *cmd) {
              boolparam(cmd, "domeflip=", params.domeflip) ||
              boolparam(cmd, "domech6=", params.domech6)) {
     return true;
+  } else if (startswith(cmd, "xbr=")) {
+    params.xbr = strtoul(cmd, NULL, 16);
+    return true;
+  } else if (startswith(cmd, "xbl=")) {
+    params.xbl = strtoul(cmd, NULL, 16);
+    return true;
   } else if (boolparam(cmd, "domeimu=", boolarg)) {
     return true;
   } else if (intparam(cmd, "domespeed=", params.domespeed, 0, 100)) {
@@ -3316,6 +3421,7 @@ void AmidalaConsole::processCommand(const char *cmd) {
     int i2caddr = atoi(cmd + 1, 3);
     int i2ccmd = atoi(cmd + 5, 3);
     println("I2C addr=" + String(i2caddr) + ", " + String(i2ccmd));
+    AmidalaController::sendI2CCmd(i2caddr, i2ccmd);
     return;
   } else if (startswith(cmd, "autod=") && isdigit(cmd, 1) && cmd[1] == '\0') {
     int autod = atoi(cmd, 1);
