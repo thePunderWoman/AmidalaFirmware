@@ -1391,9 +1391,7 @@ public:
     DriveController(AmidalaController *driver) : fDriver(driver) {}
 
     virtual void notify() override {
-      uint32_t currentTime = millis();
-      uint32_t lagTime =
-          (currentTime > fLastTime) ? currentTime - fLastTime : 0;
+      uint32_t lagTime = millis() - lastPacket;
       if (event.analog_changed.button.l2) {
         fDriver->setDriveThrottle(float(state.analog.button.l2) / 255.0);
       }
@@ -1427,13 +1425,11 @@ public:
         if (event.long_button_up.square)
           fDriver->processLongButton(4);
       }
-      fLastTime = currentTime;
     }
 
     virtual void onConnect() override {
       DEBUG_PRINTLN("Drive Stick Connected");
       fDriver->enableController();
-      fLastTime = millis();
     }
 
     virtual void onDisconnect() override {
@@ -1441,7 +1437,6 @@ public:
       fDriver->disableController();
     }
 
-    uint32_t fLastTime = 0;
     AmidalaController *fDriver;
   };
 
@@ -1450,9 +1445,7 @@ public:
     DomeController(AmidalaController *driver) : fDriver(driver) {}
 
     virtual void notify() override {
-      uint32_t currentTime = millis();
-      uint32_t lagTime =
-          (currentTime > fLastTime) ? currentTime - fLastTime : 0;
+      uint32_t lagTime = millis() - lastPacket;
       if (lagTime > 5000) {
         DEBUG_PRINTLN("More than 5 seconds. Disconnect");
         fDriver->domeEmergencyStop();
@@ -1463,7 +1456,6 @@ public:
       } else {
         process();
       }
-      fLastTime = currentTime;
     }
 
     void process() {
@@ -1573,7 +1565,6 @@ public:
     virtual void onConnect() override {
       DEBUG_PRINTLN("Dome Stick Connected");
       fDriver->enableDomeController();
-      fLastTime = millis();
     }
 
     virtual void onDisconnect() override {
@@ -1581,7 +1572,6 @@ public:
       fDriver->disableDomeController();
     }
 
-    uint32_t fLastTime = 0;
     AmidalaController *fDriver;
 
   protected:
@@ -1601,7 +1591,7 @@ public:
   };
 
   AmidalaConsole fConsole;
-  // VMusic fVMusic;
+// VMusic fVMusic;
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
   JevoisConsole fJevois;
 #endif
@@ -1616,7 +1606,7 @@ public:
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
   TankDriveSabertooth fTankDrive;
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-  TankDrivePWM fTankDrive
+  TankDrivePWM fTankDrive;
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM
   TankDriveRoboteq fTankDrive;
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_SERIAL
@@ -1630,7 +1620,7 @@ public:
 #if DOME_DRIVE == DOME_DRIVE_SABER
   DomeDriveSabertooth fDomeDrive;
 #elif DOME_DRIVE == DOME_DRIVE_PWM
-      DomeDrivePWM fDomeDrive;
+  DomeDrivePWM fDomeDrive;
 #elif defined(DOME_DRIVE)
 #error Unsupported DOME_DRIVE
 #endif
@@ -1725,6 +1715,10 @@ public:
   void emergencyStop() {
 #ifdef DRIVE_SYSTEM
     fTankDrive.stop();
+    // Force neutral PWM signals as a safety backup
+    servoDispatch.moveTo(1, 0.5); // Drive Left
+    servoDispatch.moveTo(0, 0.5); // Drive Right
+    // If using serial, the Roboteq script handles its own RWD 100 watchdog
 #endif
   }
 
@@ -1744,6 +1738,8 @@ public:
   void domeEmergencyStop() {
 #ifdef DOME_DRIVE
     fDomeDrive.stop();
+    // Force neutral PWM signal as a safety backup
+    servoDispatch.moveTo(3, 0.5); // Dome
 #endif
   }
 
@@ -1785,6 +1781,10 @@ public:
     digitalWrite(I2C_SDA_PIN, HIGH);
     delayMicroseconds(5);
     Wire.begin();
+    Wire.setClock(100000L);
+#if defined(WIRE_HAS_TIMEOUT)
+    Wire.setWireTimeout(3000, true);
+#endif
   }
 
   static byte sendI2CCmd(byte addr, byte cmd) {
@@ -1796,9 +1796,7 @@ public:
       Serial.print(err);
       Serial.print(F(" @"));
       Serial.println(addr);
-      if (err == 4) {
-        recoverI2CBus();
-      }
+      recoverI2CBus();
     }
     delay(5);
     return err;
@@ -1813,9 +1811,7 @@ public:
       Serial.print(err);
       Serial.print(F(" @"));
       Serial.println(addr);
-      if (err == 4) {
-        recoverI2CBus();
-      }
+      recoverI2CBus();
     }
     delay(5);
     return err;
@@ -1878,6 +1874,10 @@ public:
     fConsole.println(F("Init i2c Bus"));
 
     Wire.begin();
+    Wire.setClock(100000L);
+#if defined(WIRE_HAS_TIMEOUT)
+    Wire.setWireTimeout(3000, true);
+#endif
 
     if (params.autocorrect)
       fConsole.println(F("Auto Correct Gestures Enabled"));
