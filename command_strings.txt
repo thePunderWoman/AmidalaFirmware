@@ -1,0 +1,45 @@
+Command Strings
+Body (BD:):
+
+Command String	Current Case	Action
+RESET	1	resetServos + resetVocalizer
+VADER	2	Vader
+THEME	3	SW Theme
+CANTINA	4	Cantina
+SCREAM	5	Scream
+LEIA	6	Leia
+HAPPY	7	happyEmote
+SAD	    8	sadEmote
+MAD   	9	madEmote
+SCARED	10	scaredEmote
+HAPPY2	11	happyEmote(STRONG)
+SAD2	12	sadEmote(STRONG)
+MAD2	13	madEmote(STRONG)
+SCARED2	14	scaredEmote(STRONG)
+OVERLOAD	15	overload
+VOL	16	toggleVolume
+UARMS	21	UtilityArms
+DOORS	22	Doors
+LDOOR	23	openLeftDoor
+RDOOR	24	openRightDoor
+OPENALL	25	openEverything
+CBIDOOR	26	openCBIDoor
+DATADOOR	27	openDataDoor
+CBIDATADOOR	28	openCBI_DataDoor
+TOPARM	29	TopUtilityArm
+BOTARM	30	BottomUtilityArm
+MUSE	31	toggleMuse
+HELLO	32	playHello
+Dome (DM:):
+
+Command String	Current Case	Action
+RESET	1	resetAll
+PIES	2	OpenClosePies
+LOW	3	OpenCloseLow
+OPENALL	4	OpenCloseAll
+LEIA	5	leiaMode
+HEART	6	heart
+HELLO	7	helloThere
+SCREAM	10	scream
+MUSE	11	toggleMuse
+FLUTTER	12	flutter

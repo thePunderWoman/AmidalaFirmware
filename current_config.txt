@@ -54,8 +54,8 @@ maxdelay=120
 myi2c=0
 # Aux Serial Port Baud Rate
 auxbaud=9600
-# ASCII code for delimiter (default 58 = ':')
-auxdelim=58
+# ASCII code for delimiter (default 58 = ':', 124 = '|')
+auxdelim=124
 # ASCII code for EOL (default 13 = Carriage Return)
 auxeol=13
 
@@ -88,7 +88,7 @@ domech6=n
 # These set which stick gesture string toggles which mode (default values)
 rnd=3
 ackgest=252
-slowgest=858
+# slowgest=858
 domegest=
 
 # --- Servo Channel Configuration ---
@@ -118,51 +118,95 @@ sb=dance,2
 sb=cant,1
 sb=leial,1
 
+# --- Aux String Definitions ---
+# Format: a=string_here
+# One indexed and read in the order they appear
+
+# 1: Sad (Moderate)
+a=<SS0>
+# 2: Scared (Moderate)
+a=<SC0>
+# 3: Mad (Moderate)
+a=<SM0>
+# 4: Very Mad (Strong)
+a=<SM1>
+# 5: Very Happy (Strong)
+a=<SH1>
+# 6: Overload
+a=<SE>
+# 7: Toggle Mute
+a=BD:VOL
+# 8: Vader
+a=BD:VADER
+# 9: Utility Arms
+a=BD:UARMS
+# 10: Toggle Musing
+a=BD:MUSE
+# 11: Reset All
+a=DM:RESET
+# 12: Pie Panels
+a=DM:PIES
+# 13: Low Panels
+a=DM:LOW
+# 14: All Panels
+a=DM:OPENALL
+# 15: Leia Sequence
+a=DM:LEIA
+# 16: Heart Sequence
+a=DM:HEART
+# 17: Hello There
+a=DM:HELLO
+# 18: Scream
+a=DM:SCREAM
+# 19: Panel flutter
+a=DM:FLUTTER
+
+
 # --- Button Mappings ---
 # Format: b=ButtonNum,Action,TargetAddr,TargetCmd
 # Actions: 4=I2C Command, 1=Sound...
 # Sad Emote
-b=1,4,9,8
+b=1,5,1
 # Scared Emote
-b=2,4,9,10
+b=2,5,2
 # Mad Emote
-b=3,4,9,9
+b=3,5,3
 # Very Mad Emote
-b=4,4,9,13
+b=4,5,4
 # Toggle Mute
-b=5,4,9,16
+b=5,5,7
 # Very Happy Emote
-b=6,4,9,11
+b=6,5,5
 # Scream
-b=7,4,12,10
+b=7,5,18
 # Overload
-b=8,4,9,15
+b=8,5,6
 
 # --- Gesture Mappings (Stick Movments) ---
 # Format: g=GestureString,Action,TargetAddr,TargetCmd,AuxConfig
 
-# Heart
-g=1,4,12,6
-# Pies Open / Close
-g=252,4,12,2
-# Toggle Musing
-g=3,4,9,31
-# Leia
-g=4,4,12,5
-# Reset
-g=5,4,12,1
-# Vader
-g=6,4,9,2
-# Hello There
-g=7,4,12,7
-# Low Panels Open / Close
-g=8,4,12,3
-# All Panels Open / Close
-g=858,4,12,4
 # Utility Arms Open Close
-g=9,4,9,21
+g=1,5,9
+# Pies Open / Close
+g=252,5,12
+# Toggle Musing
+g=3,5,10
+# Leia
+g=4,5,15
+# Reset
+g=5,5,11
+# Vader
+g=6,5,8
+# Hello There
+g=7,5,17
+# Low Panels Open / Close
+g=8,5,13
+# All Panels Open / Close
+g=858,5,14
+# Heart
+g=9,5,16
 # Flutter
-g=2,4,12,12
+g=2,5,19
 
 # --- Final Control Settings ---
 ack=252
