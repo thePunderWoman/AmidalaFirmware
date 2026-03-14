@@ -154,6 +154,7 @@
 #include "core/MedianSampleBuffer.h"
 #include <Wire.h>
 #include <hcr.h>
+#include "amidala_core.h"
 
 ////////////////////////////////
 
@@ -238,83 +239,7 @@ ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 
 ////////////////////////////////
 
-class Gesture {
-public:
-  Gesture(const char *gestureStr = nullptr) { setGesture(gestureStr); }
-
-  bool isEmpty() { return fGesture == 0; }
-
-  uint8_t getGestureType(char ch) {
-    switch (ch) {
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-      return ch - '0';
-    case 'A':
-      return 10;
-    case 'B':
-      return 11;
-    case 'C':
-      return 12;
-    case 'D':
-      return 13;
-    default:
-      return 0;
-    }
-  }
-
-  bool matches(const char *str) {
-    if (fGesture == 0 && *str == '\0')
-      return true;
-    if (fGesture == 0)
-      return false;
-    const char *s = str;
-    unsigned cnt = 0;
-    uint32_t quotient = fGesture;
-    while (quotient != 0 && cnt < MAX_GESTURE_LENGTH) {
-      uint8_t val[] = {'\0', '1', '2', '3', '4', '5', '6',
-                       '7',  '8', '9', 'A', 'B', 'C', 'D'};
-      uint32_t remainder = quotient % 14;
-      if (*s++ != val[remainder])
-        return false;
-      quotient = quotient / 14;
-    }
-    return (*s == '\0');
-  }
-
-  char *getGestureString(char *str) {
-    char *s = str;
-    unsigned cnt = 0;
-    uint32_t quotient = fGesture;
-    while (quotient != 0 && cnt < MAX_GESTURE_LENGTH) {
-      uint8_t val[] = {'\0', '1', '2', '3', '4', '5', '6',
-                       '7',  '8', '9', 'A', 'B', 'C', 'D'};
-      uint32_t remainder = quotient % 14;
-      *s++ = val[remainder];
-      *s = '\0';
-      quotient = quotient / 14;
-    }
-    return str;
-  }
-
-  void setGesture(const char *str) {
-    fGesture = 0;
-    const char *strend = str + strlen(str);
-    while (str != strend) {
-      // Base 16
-      fGesture = fGesture * 14 + getGestureType(*--strend);
-    }
-  }
-
-private:
-  uint32_t fGesture;
-};
+// Gesture class is defined in amidala_core.h
 
 ////////////////////////////////
 
@@ -643,47 +568,7 @@ private:
   bool fMinimal = true;
 };
 
-class ServoPD {
-public:
-  ServoPD(long Kp, long Kd, long zero, long range, long scalebits = 8)
-      : fKp(Kp), fKd(Kd), fPos(zero << scalebits),
-        fPrevTarget(zero << scalebits), fZero(zero << scalebits),
-        fRange(range << scalebits), fScaleBits(scalebits) {}
-
-  // void attach(int pin, int pos)
-  // {
-  //     // itsServo.attach(pin);
-  //     itsPos = (pos << itsScaleBits);
-  //     // itsServo.write(pos);
-  // }
-
-  long get() const { return (fPos >> fScaleBits); }
-
-  void update(long targetpos) {
-    targetpos <<= fScaleBits;
-    long diff = fKp * targetpos + fKd * (targetpos - fPrevTarget);
-    fPos += (diff >> 16);
-    fPos = constrain(fPos, fZero - fRange, fZero + fRange);
-    // fServo.write(fPos >> fScaleBits);
-    fPrevTarget = targetpos;
-  }
-
-  void reset(long targetpos) {
-    targetpos <<= fScaleBits;
-    fPos = constrain(fPos, fZero - fRange, fZero + fRange);
-    fPrevTarget = targetpos;
-  }
-
-  long rawget() { return fPos >> fScaleBits; }
-
-  void rawset(long rawval) {
-    fPos = rawval << fScaleBits;
-    // fServo.write(rawval);
-  }
-
-private:
-  long fKp, fKd, fPos, fPrevTarget, fZero, fRange, fScaleBits;
-};
+// ServoPD class is defined in amidala_core.h
 
 // Pan and tilt servos zero values and +/- angular range, in degrees:
 #define PANZERO 90
@@ -2874,14 +2759,10 @@ void AmidalaConsole::monitorToggle() {
   print(F("\e[13;1HIMU:"));
 }
 
-bool startswith(const char *&cmd, const char *str) {
-  size_t len = strlen(str);
-  if (strncmp(cmd, str, strlen(str)) == 0) {
-    cmd += len;
-    return true;
-  }
-  return false;
-}
+// startswith, strtol, strtolu, boolparam, intparam, charparam, sintparam,
+// sintparam2, gestureparam, and numberparams are defined in amidala_core.h
+// isdigit(const char*, int) and atoi(const char*, int) are used only by
+// processCommand() for servo/digital-out command parsing and remain here.
 
 bool isdigit(const char *cmd, int numdigits) {
   for (int i = 0; i < numdigits; i++)
@@ -2895,158 +2776,6 @@ int atoi(const char *cmd, int numdigits) {
   for (int i = 0; i < numdigits; i++)
     result = result * 10 + (cmd[i] - '0');
   return result;
-}
-
-int32_t strtol(const char *cmd, const char **endptr) {
-  bool sign = false;
-  int32_t result = 0;
-  if (*cmd == '-') {
-    cmd++;
-    sign = true;
-  }
-  while (isdigit(*cmd)) {
-    result = result * 10L + (*cmd - '0');
-    cmd++;
-  }
-  *endptr = cmd;
-  return (sign) ? -result : result;
-}
-
-uint32_t strtolu(const char *cmd, const char **endptr) {
-  uint32_t result = 0;
-  while (isdigit(*cmd)) {
-    result = result * 10L + (*cmd - '0');
-    cmd++;
-  }
-  *endptr = cmd;
-  return result;
-}
-
-bool boolparam(const char *cmd, const char *match, bool &value) {
-  if (startswith(cmd, match)) {
-    if (strcmp(cmd, "y") == 0) {
-      value = true;
-      return true;
-    } else if (strcmp(cmd, "n") == 0) {
-      value = false;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool charparam(const char *cmd, const char *match, const char *oneof,
-               char &value) {
-  if (startswith(cmd, match) && cmd[1] == '\0') {
-    while (*oneof != '\0') {
-      if (*oneof++ == cmd[0]) {
-        value = cmd[0];
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool sintparam(const char *cmd, const char *match, int32_t &value) {
-  if (startswith(cmd, match)) {
-    int32_t val = strtol(cmd, &cmd);
-    if (*cmd == '\0') {
-      value = val;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool sintparam2(const char *cmd, const char *match, int32_t &value1,
-                int32_t &value2) {
-  if (startswith(cmd, match)) {
-    int32_t val = strtol(cmd, &cmd);
-    if (*cmd == ',') {
-      value1 = val;
-      val = strtol(cmd + 1, &cmd);
-      if (*cmd == '\0') {
-        value2 = val;
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool intparam(const char *cmd, const char *match, uint32_t &value,
-              uint32_t minval, uint32_t maxval) {
-  if (startswith(cmd, match)) {
-    uint32_t val = strtolu(cmd, &cmd);
-    if (*cmd == '\0') {
-      value = min(max(val, minval), maxval);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool intparam(const char *cmd, const char *match, uint16_t &value,
-              uint16_t minval, uint16_t maxval) {
-  if (startswith(cmd, match)) {
-    uint16_t val = strtolu(cmd, &cmd);
-    if (*cmd == '\0') {
-      value = min(max(val, minval), maxval);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool intparam(const char *cmd, const char *match, uint8_t &value,
-              uint8_t minval, uint8_t maxval) {
-  if (startswith(cmd, match)) {
-    uint8_t val = strtolu(cmd, &cmd);
-    if (*cmd == '\0') {
-      value = min(max(val, minval), maxval);
-      return true;
-    }
-  }
-  return false;
-}
-
-bool gestureparam(const char *cmd, const char *match, Gesture &gesture) {
-  if (startswith(cmd, match)) {
-    gesture.setGesture(cmd);
-    return true;
-  }
-  return false;
-}
-
-bool numberparams(const char *cmd, uint8_t &argcount, int *args,
-                  uint8_t maxcount) {
-  for (argcount = 0; argcount < maxcount; argcount++) {
-    args[argcount] = strtol(cmd, &cmd);
-    if (*cmd == '\0') {
-      argcount++;
-      return true;
-    } else if (*cmd != ',') {
-      return false;
-    }
-    cmd++;
-  }
-  return true;
-}
-
-bool numberparams(const char *cmd, uint8_t &argcount, uint8_t *args,
-                  uint8_t maxcount) {
-  for (argcount = 0; argcount < maxcount; argcount++) {
-    args[argcount] = strtolu(cmd, &cmd);
-    if (*cmd == '\0') {
-      argcount++;
-      return true;
-    } else if (*cmd != ',') {
-      return false;
-    }
-    cmd++;
-  }
-  return true;
 }
 
 bool AmidalaConsole::processConfig(const char *cmd) {
