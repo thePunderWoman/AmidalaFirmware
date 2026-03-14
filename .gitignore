@@ -1,2 +1,15 @@
-.pio
-.vscode/*
+# PlatformIO build artifacts
+.pio/
+
+# Third-party libraries (install instructions in README.md)
+lib/*
+!lib/README.md
+
+# macOS metadata
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Claude Code internal state
+.claude/
