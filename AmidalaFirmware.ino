@@ -153,6 +153,13 @@
 #include "ServoEasing.h"
 #include "core/MedianSampleBuffer.h"
 #include <Wire.h>
+#include <hcr.h>
+
+////////////////////////////////
+
+// Audio hardware selection
+#define AUDIO_HW_HCR    1  // Human Cyborg Relations board (default)
+#define AUDIO_HW_VMUSIC 2  // VMusic2
 
 ////////////////////////////////
 
@@ -200,6 +207,9 @@
 #define CONSOLE_SERIAL Serial
 #define XBEE_SERIAL Serial1
 // #define VMUSIC_SERIAL       Serial2
+#ifdef VMUSIC_SERIAL
+#include <audio/VMusic.h>
+#endif
 #if !defined(DOME_DRIVE_SERIAL) && !defined(RDH_SERIAL)
 #define AUX_SERIAL Serial3
 #endif
@@ -425,7 +435,9 @@ struct ButtonAction {
     kDigitalOut = 3,
     kI2CCmd = 4,
     kAuxStr = 5,
-    kI2CStr = 6
+    kI2CStr   = 6,
+    kHCREmote = 7,  // Trigger an HCR emotion (emotion, level)
+    kHCRMuse  = 8   // Toggle HCR musing on/off
   };
   uint8_t action;
   union {
@@ -459,6 +471,11 @@ struct ButtonAction {
       uint8_t cmd;
       uint8_t auxstring;
     } i2cstr;
+    struct {
+      uint8_t emotion;   // HAPPY=0, SAD=1, MAD=2, SCARED=3, OVERLOAD=4
+      uint8_t level;     // EMOTE_MODERATE=0, EMOTE_STRONG=1
+      uint8_t auxstring;
+    } emote;
   };
 
   void printDescription(Print *stream) {
@@ -511,8 +528,25 @@ struct ButtonAction {
       stream->print(F(", Dest "));
       stream->print(i2cstr.target);
       break;
+    case kHCREmote:
+      stream->print(F("HCR "));
+      switch (emote.emotion) {
+        case HAPPY:    stream->print(F("Happy"));   break;
+        case SAD:      stream->print(F("Sad"));     break;
+        case MAD:      stream->print(F("Mad"));     break;
+        case SCARED:   stream->print(F("Scared"));  break;
+        case OVERLOAD: stream->print(F("Overload")); break;
+        default:       stream->print(emote.emotion); break;
+      }
+      if (emote.emotion != OVERLOAD)
+        stream->print(emote.level ? F(" Strong") : F(" Moderate"));
+      break;
+    case kHCRMuse:
+      stream->print(F("HCR Muse Toggle"));
+      break;
     }
-    if (action != kAuxStr && aux.auxstring != 0) {
+    if (action != kAuxStr && action != kHCREmote && action != kHCRMuse &&
+        aux.auxstring != 0) {
       stream->print(F(", Aux #"));
       stream->print(aux.auxstring);
     }
@@ -555,11 +589,6 @@ public:
   void process(ButtonAction &button);
   void processButton(unsigned num);
   void processLongButton(unsigned num);
-
-  // inline void setVMusic(VMusic* vmusic)
-  // {
-  //     fVMusic = vmusic;
-  // }
 
   virtual size_t write(uint8_t ch) { return write(&ch, 1); }
 
@@ -607,7 +636,6 @@ public:
 
 private:
   AmidalaController *fController = nullptr;
-  // VMusic* fVMusic = nullptr;
   unsigned fPos;
   char fBuffer[CONSOLE_BUFFER_SIZE];
   bool fMonitor = false;
@@ -937,7 +965,10 @@ class AmidalaController : public SetupEvent, public AnimatedEvent {
 public:
   AmidalaController()
       : fConsole(),
-        // fVMusic(VMUSIC_SERIAL),
+        fHCR(&Serial3, HCR_BAUD_RATE),
+#ifdef VMUSIC_SERIAL
+        fVMusic(VMUSIC_SERIAL),
+#endif
         fDriveStick(this), fDomeStick(this),
 #ifdef RDH_SERIAL
         fAutoDome(RDH_SERIAL),
@@ -1060,6 +1091,11 @@ public:
     bool goslow;
     uint8_t j1adjv;
     uint8_t j1adjh;
+    uint8_t audiohw;     // AUDIO_HW_HCR (default) or AUDIO_HW_VMUSIC
+    uint8_t startupem;   // Startup emote emotion (HAPPY=0..OVERLOAD=4)
+    uint8_t startuplvl;  // Startup emote level (EMOTE_MODERATE=0, EMOTE_STRONG=1)
+    uint8_t ackem;       // Ack emote emotion
+    uint8_t acklvl;      // Ack emote level
 
     Gesture rnd;
     Gesture ackgest;
@@ -1122,6 +1158,11 @@ public:
         auxeol = 13;
         autocorrect = false;
         b9 = 'n';
+        audiohw = AUDIO_HW_HCR;
+        startupem = HAPPY;
+        startuplvl = EMOTE_MODERATE;
+        ackem = HAPPY;
+        acklvl = EMOTE_MODERATE;
         slowgest.setGesture("858");
         goslow = false;
         j1adjv = 0;
@@ -1591,7 +1632,10 @@ public:
   };
 
   AmidalaConsole fConsole;
-// VMusic fVMusic;
+  HCRVocalizer fHCR;
+#ifdef VMUSIC_SERIAL
+  VMusic fVMusic;
+#endif
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
   JevoisConsole fJevois;
 #endif
@@ -1885,6 +1929,19 @@ public:
 #ifdef AUX_SERIAL
     AUX_SERIAL.begin(params.auxbaud);
     sendAuxString(params.auxinit);
+    if (params.audiohw == AUDIO_HW_HCR) {
+      fHCR.begin();
+      fHCR.SetVolume(CH_V, params.volume);
+      fHCR.SetVolume(CH_A, params.volume);
+      fHCR.SetVolume(CH_B, params.volume);
+      if (params.rndon) {
+        fHCR.Muse(params.mindelay, params.maxdelay);
+        fHCR.SetMuse(1);
+      }
+      if (params.startup) {
+        fHCR.Trigger(params.startupem, params.startuplvl);
+      }
+    }
 #endif
 
     remote[0]->addr = params.xbr;
@@ -1982,7 +2039,14 @@ public:
 #ifdef RDH_SERIAL
     fAutoDome.process();
 #endif
-    // fVMusic.process();
+    if (params.audiohw == AUDIO_HW_HCR) {
+      fHCR.update();
+    }
+#ifdef VMUSIC_SERIAL
+    if (params.audiohw == AUDIO_HW_VMUSIC) {
+      fVMusic.process();
+    }
+#endif
 
     // TODO THIS IS HARDCODED FOR PWM!!!
     if (servoDispatch.currentPos(0) != 1450 ||
@@ -2222,21 +2286,33 @@ void AmidalaConsole::randomToggle() {
   params.rndon = !params.rndon;
   print(F("Random "));
   println((params.rndon) ? F("On") : F("Off"));
+  if (params.audiohw == AUDIO_HW_HCR) {
+    fController->fHCR.SetMuse(params.rndon ? 1 : 0);
+  }
 }
 
 void AmidalaConsole::setVolumeNoResponse(uint8_t volume) {
-  // if (fVMusic != nullptr)
-  //     fVMusic->setVolumeNoResponse(volume);
+  AmidalaController::AmidalaParameters &params = fController->params;
+  if (params.audiohw == AUDIO_HW_HCR) {
+    fController->fHCR.SetVolume(CH_V, volume);
+    fController->fHCR.SetVolume(CH_A, volume);
+    fController->fHCR.SetVolume(CH_B, volume);
+  }
+#ifdef VMUSIC_SERIAL
+  else if (params.audiohw == AUDIO_HW_VMUSIC) {
+    fController->fVMusic.setVolumeNoResponse(volume);
+  }
+#endif
 }
 
 void AmidalaConsole::playSound(int sndbank, int snd) {
   AmidalaController::AmidalaParameters &params = fController->params;
-  if (false) {
-    // if (fVMusic->isPlaying())
-    // {
-    //     println(F("Busy"));
-    //     return;
-    // }
+#ifdef VMUSIC_SERIAL
+  if (params.audiohw == AUDIO_HW_VMUSIC) {
+    if (fController->fVMusic.isPlaying()) {
+      println(F("Busy"));
+      return;
+    }
     AmidalaController::AmidalaParameters::SoundBank *sb = params.SB;
     if (sndbank >= 1 && sndbank <= params.sbcount) {
       sb += (sndbank - 1);
@@ -2251,18 +2327,18 @@ void AmidalaConsole::playSound(int sndbank, int snd) {
           snd = -1;
         }
       }
-      Serial.println(snd);
-      if (snd <= sb->numfiles) {
+      if (snd >= 0 && snd <= sb->numfiles) {
         char fname[16];
         snprintf(fname, sizeof(fname), "%s-%d.MP3", sb->dir, snd + 1);
-        Serial.print("PLAY: ");
-        Serial.println(fname);
-        // fVMusic->play(fname, sb->dir);
+        DEBUG_PRINT("PLAY: ");
+        DEBUG_PRINTLN(fname);
+        fController->fVMusic.play(fname, sb->dir);
       }
     }
-  } else {
-    println(F("Invalid"));
+    return;
   }
+#endif
+  println(F("Invalid"));
 }
 
 void AmidalaConsole::setServo() {
@@ -2352,6 +2428,27 @@ void AmidalaConsole::process(ButtonAction &button) {
       AmidalaController::sendI2CStr(button.i2cstr.target, str);
     }
     break;
+  case button.kHCREmote:
+    if (params.audiohw == AUDIO_HW_HCR) {
+      if (button.emote.emotion == OVERLOAD) {
+        fController->fHCR.Overload();
+      } else {
+        fController->fHCR.Trigger(button.emote.emotion, button.emote.level);
+      }
+    }
+    break;
+  case button.kHCRMuse:
+    if (params.audiohw == AUDIO_HW_HCR) {
+      fController->fHCR.SetMuse(1 - fController->fHCR.GetMuse());
+    }
+    break;
+  }
+  // Play ack emote for non-audio actions when ackon is enabled
+  if (params.ackon && params.audiohw == AUDIO_HW_HCR &&
+      button.action != ButtonAction::kNone &&
+      button.action != ButtonAction::kHCREmote &&
+      button.action != ButtonAction::kHCRMuse) {
+    fController->fHCR.Trigger(params.ackem, params.acklvl);
   }
   if (button.aux.auxstring != 0 &&
       button.aux.auxstring <= params.getAuxStringCount()) {
@@ -3028,7 +3125,7 @@ bool AmidalaConsole::processConfig(const char *cmd) {
     uint8_t args[5];
     memset(args, '\0', sizeof(args));
     ButtonAction *b = params.B;
-    if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 3 &&
+    if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 2 &&
         args[0] >= 1 && args[0] <= params.getButtonCount()) {
       b += args[0] - 1;
       memset(b, '\0', sizeof(*b));
@@ -3071,11 +3168,21 @@ bool AmidalaConsole::processConfig(const char *cmd) {
         b->i2cstr.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
+      case ButtonAction::kHCREmote:
+        b->emote.emotion = min(args[2], (uint8_t)4);
+        b->emote.level = (argcount >= 4) ? min(args[3], (uint8_t)1) : 0;
+        b->action = args[1];
+        break;
+      case ButtonAction::kHCRMuse:
+        b->action = args[1];
+        break;
       default:
         b->action = 0;
         break;
       }
-      if (b->action != ButtonAction::kAuxStr && argcount >= 4)
+      if (b->action != ButtonAction::kAuxStr &&
+          b->action != ButtonAction::kHCREmote &&
+          b->action != ButtonAction::kHCRMuse && argcount >= 4)
         b->sound.auxstring = (argcount >= 5) ? args[4] : 0;
       return true;
     }
@@ -3085,7 +3192,7 @@ bool AmidalaConsole::processConfig(const char *cmd) {
     uint8_t args[5];
     memset(args, '\0', sizeof(args));
     ButtonAction *b = params.LB;
-    if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 3 &&
+    if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 2 &&
         args[0] >= 1 && args[0] <= params.getButtonCount()) {
       b += args[0] - 1;
       memset(b, '\0', sizeof(*b));
@@ -3126,11 +3233,21 @@ bool AmidalaConsole::processConfig(const char *cmd) {
         b->i2cstr.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
+      case ButtonAction::kHCREmote:
+        b->emote.emotion = min(args[2], (uint8_t)4);
+        b->emote.level = (argcount >= 4) ? min(args[3], (uint8_t)1) : 0;
+        b->action = args[1];
+        break;
+      case ButtonAction::kHCRMuse:
+        b->action = args[1];
+        break;
       default:
         b->action = 0;
         break;
       }
-      if (b->action != ButtonAction::kAuxStr && argcount >= 4)
+      if (b->action != ButtonAction::kAuxStr &&
+          b->action != ButtonAction::kHCREmote &&
+          b->action != ButtonAction::kHCRMuse && argcount >= 4)
         b->sound.auxstring = args[3];
       return true;
     }
@@ -3163,7 +3280,7 @@ bool AmidalaConsole::processConfig(const char *cmd) {
       uint8_t argcount;
       uint8_t args[5];
       memset(args, '\0', sizeof(args));
-      if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 2) {
+      if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 1) {
         memset(b, '\0', sizeof(*b));
         b->action = args[0];
         b->sound.auxstring = 0;
@@ -3197,11 +3314,19 @@ bool AmidalaConsole::processConfig(const char *cmd) {
           b->i2cstr.target = min(args[1], 100);
           b->i2cstr.cmd = (argcount >= 3) ? args[2] : 0;
           break;
+        case ButtonAction::kHCREmote:
+          b->emote.emotion = min(args[1], (uint8_t)4);
+          b->emote.level = (argcount >= 3) ? min(args[2], (uint8_t)1) : 0;
+          break;
+        case ButtonAction::kHCRMuse:
+          break;
         default:
           b->action = 0;
           break;
         }
-        if (b->action != ButtonAction::kAuxStr && argcount >= 3)
+        if (b->action != ButtonAction::kAuxStr &&
+            b->action != ButtonAction::kHCREmote &&
+            b->action != ButtonAction::kHCRMuse && argcount >= 3)
           b->sound.auxstring = args[2];
         if (params.gcount < params.getGestureCount())
           params.gcount++;
@@ -3209,9 +3334,17 @@ bool AmidalaConsole::processConfig(const char *cmd) {
       }
     }
     return false;
+  } else if (startswith(cmd, "audiohw=")) {
+    if (startswith(cmd, "hcr"))    params.audiohw = AUDIO_HW_HCR;
+    else if (startswith(cmd, "vmusic")) params.audiohw = AUDIO_HW_VMUSIC;
+    return true;
   } else if (charparam(cmd, "acktype=", "gadsr", params.acktype) ||
              charparam(cmd, "b9=", "ynksdb", params.b9) ||
              intparam(cmd, "volume=", params.volume, 0, 100) ||
+             intparam(cmd, "startupem=", params.startupem, 0, 4) ||
+             intparam(cmd, "startuplvl=", params.startuplvl, 0, 1) ||
+             intparam(cmd, "ackem=", params.ackem, 0, 4) ||
+             intparam(cmd, "acklvl=", params.acklvl, 0, 1) ||
              intparam(cmd, "mindelay=", params.mindelay, 0, 1000) ||
              intparam(cmd, "maxdelay=", params.maxdelay, 0, 1000) ||
              intparam(cmd, "rvrmin=", params.rvrmin, 0, 100) ||
@@ -3519,7 +3652,9 @@ void setup() {
 
   CONSOLE_SERIAL.begin(DEFAULT_BAUD_RATE);
   XBEE_SERIAL.begin(57600);
-  // VMUSIC_SERIAL.begin(9600);
+#ifdef VMUSIC_SERIAL
+  VMUSIC_SERIAL.begin(9600);
+#endif
 #ifdef DRIVE_SERIAL
   DRIVE_SERIAL.begin(DRIVE_BAUD_RATE);
 #elif defined(DOME_DRIVE_SERIAL)

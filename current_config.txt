@@ -27,6 +27,18 @@ fst=1000
 minpulse=1000
 maxpulse=2000
 
+# --- Audio Hardware ---
+# audiohw: hcr=Human Cyborg Relations board (default), vmusic=VMusic2
+audiohw=hcr
+# Startup emote emotion: 0=Happy, 1=Sad, 2=Mad, 3=Scared, 4=Overload
+startupem=0
+# Startup emote level: 0=Moderate, 1=Strong
+startuplvl=0
+# Acknowledge emote emotion (same scale as startupem)
+ackem=0
+# Acknowledge emote level (same scale as startuplvl)
+acklvl=0
+
 # --- General System Settings ---
 # Global Volume (0-100)
 volume=50
@@ -46,8 +58,8 @@ mix12=n
 auto=n
 
 # --- Random Sound Timing (Seconds) ---
-mindelay=10
-maxdelay=120
+mindelay=20
+maxdelay=45
 
 # --- Communication & I2C ---
 # This board's I2C address (0 = Master)
@@ -164,33 +176,37 @@ a=DM:FLUTTER
 
 # --- Button Mappings ---
 # Format: b=ButtonNum,Action,TargetAddr,TargetCmd
-# Actions: 4=I2C Command, 1=Sound...
+# Actions: 1=Sound, 2=Servo, 3=DigitalOut, 4=I2CCmd, 5=AuxStr, 6=I2CStr
+#          7=HCREmote(emotion,level)  emotion: 0=Happy 1=Sad 2=Mad 3=Scared 4=Overload
+#                                     level:   0=Moderate 1=Strong
+#          8=HCRMuseToggle
 # Sad Emote
-b=1,5,1
+b=1,7,1,0
 # Scared Emote
-b=2,5,2
+b=2,7,3,0
 # Mad Emote
-b=3,5,3
+b=3,7,2,0
 # Very Mad Emote
-b=4,5,4
-# Toggle Mute
-b=5,5,7
+b=4,7,2,1
+# Toggle Musing
+b=5,8
 # Very Happy Emote
-b=6,5,5
-# Scream
-b=7,5,18
+b=6,7,0,1
+# Scream (Scared Strong)
+b=7,7,3,1
 # Overload
-b=8,5,6
+b=8,7,4,0
 
 # --- Gesture Mappings (Stick Movments) ---
-# Format: g=GestureString,Action,TargetAddr,TargetCmd,AuxConfig
+# Format: g=GestureString,Action,TargetAddr,TargetCmd
+# Actions: 5=AuxStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle
 
 # Utility Arms Open Close
 g=1,5,9
 # Pies Open / Close
 g=252,5,12
 # Toggle Musing
-g=3,5,10
+g=3,8
 # Leia
 g=4,5,15
 # Reset
