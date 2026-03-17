@@ -14,4 +14,3 @@ each one into this `lib/` directory before building.
 | FastLED | Advanced LED animation library | https://github.com/FastLED/FastLED |
 | LedControl | MAX7219/MAX7221 LED matrix driver | https://github.com/wayoda/LedControl |
 | SlowServoPCA9685 | Smooth multi-servo movement on PCA9685 boards (Graham Short) | No public repository — include source files directly |
-| VarSpeedServo | Variable-speed servo control (originally Michael Margolis) | https://github.com/pvanallen/VarSpeedServo |

@@ -152,6 +152,7 @@
 #include "ServoDispatchDirect.h"
 #include "ServoEasing.h"
 #include "core/MedianSampleBuffer.h"
+#include "core/DelayCall.h"
 #include <Wire.h>
 #include <hcr.h>
 #include "amidala_core.h"
@@ -349,6 +350,7 @@ private:
 ////////////////////////////////
 
 class AmidalaController;
+static void hcrDelayedInit();
 
 ////////////////////////////////
 
@@ -1816,16 +1818,7 @@ public:
     sendAuxString(params.auxinit);
     if (params.audiohw == AUDIO_HW_HCR) {
       fHCR.begin();
-      fHCR.SetVolume(CH_V, params.volume);
-      fHCR.SetVolume(CH_A, params.volume);
-      fHCR.SetVolume(CH_B, params.volume);
-      if (params.rndon) {
-        fHCR.Muse(params.mindelay, params.maxdelay);
-        fHCR.SetMuse(1);
-      }
-      if (params.startup) {
-        fHCR.Trigger(params.startupem, params.startuplvl);
-      }
+      DelayCall::schedule(hcrDelayedInit, 5000);
     }
 #endif
 
@@ -1925,7 +1918,7 @@ public:
     fAutoDome.process();
 #endif
     if (params.audiohw == AUDIO_HW_HCR) {
-      fHCR.update();
+      // fHCR.update();
     }
 #ifdef VMUSIC_SERIAL
     if (params.audiohw == AUDIO_HW_VMUSIC) {
@@ -2150,6 +2143,20 @@ private:
 };
 
 AmidalaController amidala;
+
+static void hcrDelayedInit() {
+  AmidalaController::AmidalaParameters &params = amidala.params;
+  amidala.fHCR.SetVolume(CH_V, params.volume);
+  amidala.fHCR.SetVolume(CH_A, params.volume);
+  amidala.fHCR.SetVolume(CH_B, params.volume);
+  if (params.rndon) {
+    amidala.fHCR.Muse(params.mindelay, params.maxdelay);
+    amidala.fHCR.SetMuse(1);
+  }
+  if (params.startup) {
+    amidala.fHCR.Trigger(params.startupem, params.startuplvl);
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////
 
