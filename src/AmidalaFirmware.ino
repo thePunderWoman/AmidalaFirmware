@@ -132,8 +132,6 @@
 ////////////////////////////////
 
 #include "ReelTwo.h"
-#include "SD.h"
-#include "SPI.h"
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
 #include "drive/TankDrivePWM.h"
 #endif
@@ -154,8 +152,11 @@
 #include "core/MedianSampleBuffer.h"
 #include "core/DelayCall.h"
 #include <Wire.h>
+#ifndef VMUSIC_SERIAL
 #include <hcr.h>
+#endif
 #include "amidala_core.h"
+#include "config_reader.h"
 
 ////////////////////////////////
 
@@ -1045,7 +1046,11 @@ public:
         auxeol = 13;
         autocorrect = false;
         b9 = 'n';
+#ifdef VMUSIC_SERIAL
+        audiohw = AUDIO_HW_VMUSIC;
+#else
         audiohw = AUDIO_HW_HCR;
+#endif
         startupem = HAPPY;
         startuplvl = EMOTE_MODERATE;
         ackem = HAPPY;
@@ -1519,9 +1524,10 @@ public:
   };
 
   AmidalaConsole fConsole;
-  HCRVocalizer fHCR;
 #ifdef VMUSIC_SERIAL
   VMusic fVMusic;
+#else
+  HCRVocalizer fHCR;
 #endif
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
   JevoisConsole fJevois;
@@ -1748,31 +1754,18 @@ public:
     return err;
   }
 
-  bool readConfigFromSD() {
-    if (!SD.begin(4)) {
-      Serial.println("initialization failed!");
+  bool loadConfig() {
+#ifdef VMUSIC_SERIAL
+    fConsole.println(F("Waiting for VMusic"));
+    if (!fVMusic.init()) {
+      fConsole.println(F("VMusic unavailable"));
       return false;
     }
-    Serial.println("initialization done.");
-    File conf = SD.open("config.txt");
-
-    if (conf) {
-      ConfigParser parser(fConsole);
-
-      // read from the file and feed each character through
-      // the config parser (just like VMusic.parseTextFile did)
-      while (conf.available()) {
-        char ch = conf.read();
-        parser.process(ch);
-      }
-      // close the file:
-      conf.close();
-      return true;
-    } else {
-      // if the file didn't open, print an error:
-      Serial.println("error opening config.txt");
-    }
-    return false;
+    fConsole.println(F("Reading Config File"));
+    return readConfig(fVMusic, fConsole);
+#else
+    return readConfig(fConsole);
+#endif
   }
 
   void sendAuxString(const char *str) {
@@ -1797,7 +1790,7 @@ public:
 #endif
 
     fConsole.println(F("Reading Config File"));
-    fConsole.setMinimal(!readConfigFromSD());
+    fConsole.setMinimal(!loadConfig());
     fConsole.showCurrentConfiguration();
 
     fConsole.println(F("Activating Servos"));
@@ -1816,10 +1809,12 @@ public:
 #ifdef AUX_SERIAL
     AUX_SERIAL.begin(params.auxbaud);
     sendAuxString(params.auxinit);
+#ifndef VMUSIC_SERIAL
     if (params.audiohw == AUDIO_HW_HCR) {
       fHCR.begin();
       DelayCall::schedule(hcrDelayedInit, 5000);
     }
+#endif
 #endif
 
     remote[0]->addr = params.xbr;
@@ -1917,10 +1912,11 @@ public:
 #ifdef RDH_SERIAL
     fAutoDome.process();
 #endif
+#ifndef VMUSIC_SERIAL
     if (params.audiohw == AUDIO_HW_HCR) {
       // fHCR.update();
     }
-#ifdef VMUSIC_SERIAL
+#else
     if (params.audiohw == AUDIO_HW_VMUSIC) {
       fVMusic.process();
     }
@@ -2103,22 +2099,6 @@ private:
   float fDomeThrottle = 0;
   float fDriveThrottle = 0;
 
-  class ConfigParser {
-  public:
-    ConfigParser(AmidalaConsole &console) : fConsole(console) {}
-
-    virtual void process(char ch) {
-      // if (ch == '\r')
-      //     DEBUG_PRINTLN();
-      // else
-      //     DEBUG_PRINT(ch);
-      fConsole.process(ch, true);
-    }
-
-  private:
-    AmidalaConsole &fConsole;
-  };
-
   inline float getDomeThrottle() { return fDomeThrottle; }
 
   inline void setDomeThrottle(float throttle) { fDomeThrottle = throttle; }
@@ -2144,6 +2124,7 @@ private:
 
 AmidalaController amidala;
 
+#ifndef VMUSIC_SERIAL
 static void hcrDelayedInit() {
   AmidalaController::AmidalaParameters &params = amidala.params;
   amidala.fHCR.SetVolume(CH_V, params.volume);
@@ -2157,6 +2138,7 @@ static void hcrDelayedInit() {
     amidala.fHCR.Trigger(params.startupem, params.startuplvl);
   }
 }
+#endif  // !VMUSIC_SERIAL
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -2178,20 +2160,23 @@ void AmidalaConsole::randomToggle() {
   params.rndon = !params.rndon;
   print(F("Random "));
   println((params.rndon) ? F("On") : F("Off"));
+#ifndef VMUSIC_SERIAL
   if (params.audiohw == AUDIO_HW_HCR) {
     fController->fHCR.SetMuse(params.rndon ? 1 : 0);
   }
+#endif
 }
 
 void AmidalaConsole::setVolumeNoResponse(uint8_t volume) {
   AmidalaController::AmidalaParameters &params = fController->params;
+#ifndef VMUSIC_SERIAL
   if (params.audiohw == AUDIO_HW_HCR) {
     fController->fHCR.SetVolume(CH_V, volume);
     fController->fHCR.SetVolume(CH_A, volume);
     fController->fHCR.SetVolume(CH_B, volume);
   }
-#ifdef VMUSIC_SERIAL
-  else if (params.audiohw == AUDIO_HW_VMUSIC) {
+#else
+  if (params.audiohw == AUDIO_HW_VMUSIC) {
     fController->fVMusic.setVolumeNoResponse(volume);
   }
 #endif
@@ -2321,6 +2306,7 @@ void AmidalaConsole::process(ButtonAction &button) {
     }
     break;
   case button.kHCREmote:
+#ifndef VMUSIC_SERIAL
     if (params.audiohw == AUDIO_HW_HCR) {
       if (button.emote.emotion == OVERLOAD) {
         fController->fHCR.Overload();
@@ -2328,20 +2314,25 @@ void AmidalaConsole::process(ButtonAction &button) {
         fController->fHCR.Trigger(button.emote.emotion, button.emote.level);
       }
     }
+#endif
     break;
   case button.kHCRMuse:
+#ifndef VMUSIC_SERIAL
     if (params.audiohw == AUDIO_HW_HCR) {
       fController->fHCR.SetMuse(1 - fController->fHCR.GetMuse());
     }
+#endif
     break;
   }
   // Play ack emote for non-audio actions when ackon is enabled
+#ifndef VMUSIC_SERIAL
   if (params.ackon && params.audiohw == AUDIO_HW_HCR &&
       button.action != ButtonAction::kNone &&
       button.action != ButtonAction::kHCREmote &&
       button.action != ButtonAction::kHCRMuse) {
     fController->fHCR.Trigger(params.ackem, params.acklvl);
   }
+#endif
   if (button.aux.auxstring != 0 &&
       button.aux.auxstring <= params.getAuxStringCount()) {
     DEBUG_PRINT("AUX #");

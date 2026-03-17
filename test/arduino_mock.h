@@ -78,3 +78,44 @@ public:
     return 1;
   }
 };
+
+// ---- Serial stub (used by config_reader.h) ----
+struct SerialClass {
+  void println(const char*) {}
+  void println()            {}
+  void print(const char*)   {}
+  void print(char)          {}
+  template<typename T> void println(T) {}
+  template<typename T> void print(T)   {}
+};
+static SerialClass Serial;
+
+// ---- SD / File stubs (used by config_reader.h in SD path) ----
+
+class File {
+public:
+  File() : fData(nullptr), fPos(0), fValid(false) {}
+  explicit File(const char* data)
+      : fData(data), fPos(0), fValid(data != nullptr) {}
+
+  explicit operator bool() const { return fValid; }
+  bool available() const { return fValid && fData && fData[fPos] != '\0'; }
+  char read()            { return (fData && fValid) ? fData[fPos++] : '\0'; }
+  void close()           { fValid = false; }
+
+private:
+  const char* fData;
+  size_t      fPos;
+  bool        fValid;
+};
+
+struct MockSDClass {
+  bool        beginResult  = true;
+  const char* fileContent  = nullptr;
+
+  bool begin(int /*pin*/)        { return beginResult; }
+  File open(const char* /*name*/) {
+    return fileContent ? File(fileContent) : File();
+  }
+};
+static MockSDClass SD;
