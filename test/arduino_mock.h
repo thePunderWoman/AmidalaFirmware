@@ -26,9 +26,32 @@ typedef uint8_t byte;
 #define A3 57
 #endif
 
+// ---- Arduino pin mode constants ----
+#define INPUT         0
+#define OUTPUT        1
+#define INPUT_PULLUP  2
+
 // ---- Arduino digital I/O and timing stubs ----
 static inline uint8_t digitalRead(uint8_t /*pin*/) { return LOW; }
+static inline void    digitalWrite(uint8_t /*pin*/, uint8_t /*val*/) {}
+static inline void    pinMode(uint8_t /*pin*/, uint8_t /*mode*/) {}
 static inline uint32_t micros() { return 0; }
+static inline void    delay(unsigned long /*ms*/) {}
+static inline void    delayMicroseconds(unsigned int /*us*/) {}
+
+// ---- Wire (I2C) mock ----
+struct MockWire {
+  byte endTransmissionResult = 0;  // configurable for tests
+  void begin()                          {}
+  void end()                            {}
+  void beginTransmission(byte /*addr*/) {}
+  void write(byte /*b*/)                {}
+  void write(const char * /*s*/)        {}
+  void setClock(uint32_t /*hz*/)        {}
+  void setWireTimeout(uint32_t /*us*/, bool /*reset*/) {}
+  byte endTransmission() { return endTransmissionResult; }
+};
+static MockWire Wire;
 
 // ---- DEBUG macros (Reeltwo ReelTwo.h provides these in real builds) ----
 #ifndef DEBUG_PRINTLN
