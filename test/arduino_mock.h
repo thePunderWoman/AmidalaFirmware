@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 // ---- Arduino integer types ----
 typedef bool    boolean;
@@ -39,6 +40,15 @@ static inline uint32_t micros() { return 0; }
 static inline uint32_t millis() { return 0; }
 static inline void    delay(unsigned long /*ms*/) {}
 static inline void    delayMicroseconds(unsigned int /*us*/) {}
+
+// ---- EEPROM mock ----
+struct MockEEPROM {
+  uint8_t data[4096];
+  MockEEPROM() { memset(data, 0, sizeof(data)); }
+  uint8_t read(int addr)           { return (addr >= 0 && addr < (int)sizeof(data)) ? data[addr] : 0; }
+  void    write(int addr, uint8_t v) { if (addr >= 0 && addr < (int)sizeof(data)) data[addr] = v; }
+};
+static MockEEPROM EEPROM;
 
 // ---- Wire (I2C) mock ----
 struct MockWire {
