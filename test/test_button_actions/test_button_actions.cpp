@@ -1,0 +1,368 @@
+// test_button_actions.cpp
+// Tests for include/button_actions.h:
+//   ButtonAction  — action type constants, union field access, printDescription
+//   GestureAction — gesture + action pairing, printDescription
+//   AuxString     — struct layout
+
+#include "arduino_mock.h"
+#include "button_actions.h"
+#include <unity.h>
+#include <string.h>
+
+void setUp(void) {}
+void tearDown(void) {}
+
+// ---- Action type constants --------------------------------------------------
+
+void test_action_type_constants() {
+    TEST_ASSERT_EQUAL(0, ButtonAction::kNone);
+    TEST_ASSERT_EQUAL(1, ButtonAction::kSound);
+    TEST_ASSERT_EQUAL(2, ButtonAction::kServo);
+    TEST_ASSERT_EQUAL(3, ButtonAction::kDigitalOut);
+    TEST_ASSERT_EQUAL(4, ButtonAction::kI2CCmd);
+    TEST_ASSERT_EQUAL(5, ButtonAction::kAuxStr);
+    TEST_ASSERT_EQUAL(6, ButtonAction::kI2CStr);
+    TEST_ASSERT_EQUAL(7, ButtonAction::kHCREmote);
+    TEST_ASSERT_EQUAL(8, ButtonAction::kHCRMuse);
+}
+
+// ---- HCR emotion constants (provided by header in native builds) ------------
+
+void test_hcr_emotion_constants() {
+    TEST_ASSERT_EQUAL(0, HAPPY);
+    TEST_ASSERT_EQUAL(1, SAD);
+    TEST_ASSERT_EQUAL(2, MAD);
+    TEST_ASSERT_EQUAL(3, SCARED);
+    TEST_ASSERT_EQUAL(4, OVERLOAD);
+    TEST_ASSERT_EQUAL(0, EMOTE_MODERATE);
+    TEST_ASSERT_EQUAL(1, EMOTE_STRONG);
+}
+
+// ---- Union field access -----------------------------------------------------
+
+void test_zeroed_button_action_is_none() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    TEST_ASSERT_EQUAL(ButtonAction::kNone, b.action);
+}
+
+void test_sound_fields_accessible() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action = ButtonAction::kSound;
+    b.sound.soundbank = 3;
+    b.sound.sound     = 7;
+    b.sound.auxstring = 2;
+    TEST_ASSERT_EQUAL(3, b.sound.soundbank);
+    TEST_ASSERT_EQUAL(7, b.sound.sound);
+    TEST_ASSERT_EQUAL(2, b.sound.auxstring);
+}
+
+void test_servo_fields_accessible() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action     = ButtonAction::kServo;
+    b.servo.num  = 4;
+    b.servo.pos  = 90;
+    TEST_ASSERT_EQUAL(4,  b.servo.num);
+    TEST_ASSERT_EQUAL(90, b.servo.pos);
+}
+
+void test_dout_fields_accessible() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action     = ButtonAction::kDigitalOut;
+    b.dout.num   = 2;
+    b.dout.state = 1;
+    TEST_ASSERT_EQUAL(2, b.dout.num);
+    TEST_ASSERT_EQUAL(1, b.dout.state);
+}
+
+void test_emote_fields_accessible() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action       = ButtonAction::kHCREmote;
+    b.emote.emotion = SAD;
+    b.emote.level   = EMOTE_STRONG;
+    TEST_ASSERT_EQUAL(SAD,          b.emote.emotion);
+    TEST_ASSERT_EQUAL(EMOTE_STRONG, b.emote.level);
+}
+
+void test_union_members_share_storage() {
+    // All union members must be 3 bytes so they overlay the same memory.
+    ButtonAction b;
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.servo));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.dout));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.i2ccmd));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.aux));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.i2cstr));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.emote));
+    TEST_ASSERT_EQUAL(3, sizeof(b.sound));
+}
+
+// ---- printDescription -------------------------------------------------------
+
+void test_print_none_produces_only_newline() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action = ButtonAction::kNone;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_EQUAL_STRING("\n", out.buf);
+}
+
+void test_print_sound_bank_only() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action          = ButtonAction::kSound;
+    b.sound.soundbank = 2;
+    b.sound.sound     = 0;  // no specific file
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Sound Bank #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "2"));
+    // When sound==0 no comma-file is appended
+    TEST_ASSERT_NULL(strstr(out.buf, ","));
+}
+
+void test_print_sound_with_specific_file() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action          = ButtonAction::kSound;
+    b.sound.soundbank = 1;
+    b.sound.sound     = 5;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Sound Bank #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, ","));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "5"));
+}
+
+void test_print_servo() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action    = ButtonAction::kServo;
+    b.servo.num = 3;
+    b.servo.pos = 90;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Servo #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "On Pos="));
+}
+
+void test_print_dout_no() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action     = ButtonAction::kDigitalOut;
+    b.dout.num   = 1;
+    b.dout.state = 0;  // Normally Open
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "DOut #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "NO"));
+}
+
+void test_print_dout_nc() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action     = ButtonAction::kDigitalOut;
+    b.dout.num   = 2;
+    b.dout.state = 1;  // Normally Closed
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "NC"));
+}
+
+void test_print_dout_mon() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action     = ButtonAction::kDigitalOut;
+    b.dout.num   = 3;
+    b.dout.state = 2;  // Momentary
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "MON"));
+}
+
+void test_print_i2c_cmd() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kI2CCmd;
+    b.i2ccmd.target = 99;
+    b.i2ccmd.cmd    = 42;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "i2c Dest #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Cmd="));
+}
+
+void test_print_aux_str() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action         = ButtonAction::kAuxStr;
+    b.aux.auxstring  = 5;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Aux #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "5"));
+}
+
+void test_print_i2c_str() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action         = ButtonAction::kI2CStr;
+    b.i2cstr.target  = 10;
+    b.i2cstr.cmd     = 3;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "i2c Aux Output #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dest "));
+}
+
+void test_print_hcr_emote_happy_moderate() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kHCREmote;
+    b.emote.emotion = HAPPY;
+    b.emote.level   = EMOTE_MODERATE;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "HCR "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Happy"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Moderate"));
+}
+
+void test_print_hcr_emote_sad_strong() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kHCREmote;
+    b.emote.emotion = SAD;
+    b.emote.level   = EMOTE_STRONG;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Sad"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Strong"));
+}
+
+void test_print_hcr_emote_overload_has_no_level() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kHCREmote;
+    b.emote.emotion = OVERLOAD;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Overload"));
+    // OVERLOAD has no Moderate/Strong suffix
+    TEST_ASSERT_NULL(strstr(out.buf, "Moderate"));
+    TEST_ASSERT_NULL(strstr(out.buf, "Strong"));
+}
+
+void test_print_hcr_muse() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action = ButtonAction::kHCRMuse;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "HCR Muse Toggle"));
+}
+
+void test_print_appends_aux_string_for_non_aux_actions() {
+    // When aux.auxstring != 0 and action is not kAuxStr/kHCREmote/kHCRMuse,
+    // ", Aux #<n>" is appended.
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action          = ButtonAction::kSound;
+    b.sound.soundbank = 1;
+    b.sound.auxstring = 3;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, ", Aux #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "3"));
+}
+
+void test_print_does_not_append_aux_for_aux_action() {
+    // kAuxStr itself must not double-print ", Aux #".
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kAuxStr;
+    b.aux.auxstring = 2;
+    StringPrint out;
+    b.printDescription(&out);
+    // Should have "Aux #2" but NOT ", Aux #2" appended again
+    const char *first = strstr(out.buf, "Aux #");
+    TEST_ASSERT_NOT_NULL(first);
+    // There must be no second ", Aux #" occurrence
+    TEST_ASSERT_NULL(strstr(first + 1, ", Aux #"));
+}
+
+// ---- GestureAction ----------------------------------------------------------
+
+void test_gesture_action_empty_gesture_prints_nothing() {
+    GestureAction g;
+    memset(&g, 0, sizeof(g));
+    // gesture is empty by default (fGesture == 0)
+    StringPrint out;
+    g.printDescription(&out);
+    TEST_ASSERT_EQUAL_STRING("", out.buf);
+}
+
+void test_gesture_action_prints_gesture_then_action() {
+    GestureAction g;
+    memset(&g, 0, sizeof(g));
+    g.gesture.setGesture("3");
+    g.action.action          = ButtonAction::kSound;
+    g.action.sound.soundbank = 1;
+    StringPrint out;
+    g.printDescription(&out);
+    // Output must start with the gesture string
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "3"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, ": "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Sound Bank #"));
+}
+
+// ---- AuxString --------------------------------------------------------------
+
+void test_aux_string_capacity() {
+    TEST_ASSERT_EQUAL(32, sizeof(AuxString::str));
+}
+
+// ---- main -------------------------------------------------------------------
+
+int main(int argc, char **argv) {
+    (void)argc; (void)argv;
+    UNITY_BEGIN();
+
+    RUN_TEST(test_action_type_constants);
+    RUN_TEST(test_hcr_emotion_constants);
+
+    RUN_TEST(test_zeroed_button_action_is_none);
+    RUN_TEST(test_sound_fields_accessible);
+    RUN_TEST(test_servo_fields_accessible);
+    RUN_TEST(test_dout_fields_accessible);
+    RUN_TEST(test_emote_fields_accessible);
+    RUN_TEST(test_union_members_share_storage);
+
+    RUN_TEST(test_print_none_produces_only_newline);
+    RUN_TEST(test_print_sound_bank_only);
+    RUN_TEST(test_print_sound_with_specific_file);
+    RUN_TEST(test_print_servo);
+    RUN_TEST(test_print_dout_no);
+    RUN_TEST(test_print_dout_nc);
+    RUN_TEST(test_print_dout_mon);
+    RUN_TEST(test_print_i2c_cmd);
+    RUN_TEST(test_print_aux_str);
+    RUN_TEST(test_print_i2c_str);
+    RUN_TEST(test_print_hcr_emote_happy_moderate);
+    RUN_TEST(test_print_hcr_emote_sad_strong);
+    RUN_TEST(test_print_hcr_emote_overload_has_no_level);
+    RUN_TEST(test_print_hcr_muse);
+    RUN_TEST(test_print_appends_aux_string_for_non_aux_actions);
+    RUN_TEST(test_print_does_not_append_aux_for_aux_action);
+
+    RUN_TEST(test_gesture_action_empty_gesture_prints_nothing);
+    RUN_TEST(test_gesture_action_prints_gesture_then_action);
+
+    RUN_TEST(test_aux_string_capacity);
+
+    return UNITY_END();
+}
