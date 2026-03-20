@@ -11,8 +11,6 @@
 
 #define DEFAULT_BAUD_RATE 115200 /*57600*/
 
-#define CONSOLE_BUFFER_SIZE 64
-
 // #define RDH_SERIAL           Serial3
 #define RDH_BAUD_RATE 9600
 
@@ -108,77 +106,7 @@ static void hcrDelayedInit();
 ////////////////////////////////
 
 #include "button_actions.h"
-
-////////////////////////////////
-
-class AmidalaConsole : public Print {
-public:
-  AmidalaConsole() : fPos(0) {}
-  virtual ~AmidalaConsole() {}
-
-  void init(AmidalaController *controller);
-  void process();
-  bool processConfig(const char *cmd);
-  void processCommand(const char *cmd);
-  bool process(char ch, bool config = false);
-
-  void processGesture(const char *gesture);
-  void process(ButtonAction &button);
-  void processButton(unsigned num);
-  void processLongButton(unsigned num);
-
-  virtual size_t write(uint8_t ch) { return write(&ch, 1); }
-
-  virtual size_t write(const uint8_t *buffer, size_t size) override {
-    if (fPrompt) {
-      CONSOLE_SERIAL.println();
-      fPrompt = false;
-    }
-    return CONSOLE_SERIAL.write(buffer, size);
-  }
-
-  void printNum(unsigned num, unsigned width = 4) {
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%d", num);
-    for (size_t len = strlen(buf); len < width;) {
-      buf[len++] = ' ';
-      buf[len] = '\0';
-    }
-    print(buf);
-  }
-
-  void printServoPos(uint16_t num) {
-    if (servoDispatch.isActive(num)) {
-      printNum(servoDispatch.currentPos(num));
-    } else {
-      print("----");
-    }
-  }
-
-  void randomToggle();
-  void setVolumeNoResponse(uint8_t volume);
-  void playSound(int sndbank, int snd = 0);
-  void setServo();
-  void setDigitalOut();
-  void outputString();
-  void showXBEE();
-  void printVersion();
-  void printHelp();
-  void showLoadEEPROM(bool load = false);
-  void showCurrentConfiguration();
-  void writeCurrentConfiguration();
-  void monitorToggle();
-  void monitorOutput();
-  void setMinimal(bool minimal) { fMinimal = minimal; }
-
-private:
-  AmidalaController *fController = nullptr;
-  unsigned fPos;
-  char fBuffer[CONSOLE_BUFFER_SIZE];
-  bool fMonitor = false;
-  bool fPrompt = false;
-  bool fMinimal = true;
-};
+#include "console.h"
 
 // ServoPD class is defined in amidala_core.h
 
@@ -1082,6 +1010,28 @@ static void hcrDelayedInit() {
   }
 }
 #endif  // !VMUSIC_SERIAL
+
+//////////////////////////////////////////////////////////////////////////
+
+size_t AmidalaConsole::write(uint8_t ch) {
+  return write(&ch, 1);
+}
+
+size_t AmidalaConsole::write(const uint8_t *buffer, size_t size) {
+  if (fPrompt) {
+    CONSOLE_SERIAL.println();
+    fPrompt = false;
+  }
+  return CONSOLE_SERIAL.write(buffer, size);
+}
+
+void AmidalaConsole::printServoPos(uint16_t num) {
+  if (servoDispatch.isActive(num)) {
+    printNum(servoDispatch.currentPos(num));
+  } else {
+    print("----");
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////
 
