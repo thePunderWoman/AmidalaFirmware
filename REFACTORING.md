@@ -14,5 +14,5 @@ Each item gets its own branch, new `.h` file, tests, and a confirmed clean build
 | Medium | XBee remote | ~~`include/xbee_remote.h`~~ | `XBeePocketRemote`, `DriveController`, `DomeController` | ~~Done — PR #14~~ |
 | Medium | Amidala parameters | ~~`include/amidala_params.h`~~ | `AmidalaParameters` struct + EEPROM load/save | ~~Done — PR #15~~ |
 | Medium | Console | ~~`include/console.h`~~ | `AmidalaConsole` class | ~~Done — PR #16~~ |
-| Low | Drive & dome controllers | `include/xbee_controllers.h` | `DriveController` and `DomeController` (inner classes of `AmidalaController` that extend `XBeePocketRemote`) | To do |
-| Low | Jevois camera steering | `include/jevois_console.h` | `JevoisConsole` class (experimental autonomous steering via Jevois camera, guarded by `EXPERIMENTAL_JEVOIS_STEERING`) | To do |
+| Low | Drive & dome controllers | ~~`include/xbee_remote.h`~~ | `DriveController` and `DomeController` (extracted alongside `XBeePocketRemote`) | ~~Done — PR #14~~ |
+| Low | Jevois camera steering | ~~`include/jevois_console.h`~~ | `JevoisConsole` class (experimental autonomous steering via Jevois camera, guarded by `EXPERIMENTAL_JEVOIS_STEERING`) | ~~Done — PR #17~~ |
