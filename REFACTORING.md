@@ -13,6 +13,6 @@ Each item gets its own branch, new `.h` file, tests, and a confirmed clean build
 | High | I2C utilities | ~~`include/i2c_utils.h`~~ | `recoverI2CBus()`, `sendI2CCmd()`, `sendI2CStr()` | ~~Done — PR #13~~ |
 | Medium | XBee remote | ~~`include/xbee_remote.h`~~ | `XBeePocketRemote`, `DriveController`, `DomeController` | ~~Done — PR #14~~ |
 | Medium | Amidala parameters | ~~`include/amidala_params.h`~~ | `AmidalaParameters` struct + EEPROM load/save | ~~Done — PR #15~~ |
-| Medium | Console | `include/console.h` | `AmidalaConsole` class | To do |
+| Medium | Console | ~~`include/console.h`~~ | `AmidalaConsole` class | ~~Done — PR #16~~ |
 | Low | Drive & dome controllers | `include/xbee_controllers.h` | `DriveController` and `DomeController` (inner classes of `AmidalaController` that extend `XBeePocketRemote`) | To do |
 | Low | Jevois camera steering | `include/jevois_console.h` | `JevoisConsole` class (experimental autonomous steering via Jevois camera, guarded by `EXPERIMENTAL_JEVOIS_STEERING`) | To do |
