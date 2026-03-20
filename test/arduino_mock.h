@@ -30,6 +30,12 @@ typedef uint8_t byte;
 static inline uint8_t digitalRead(uint8_t /*pin*/) { return LOW; }
 static inline uint32_t micros() { return 0; }
 
+// ---- DEBUG macros (Reeltwo ReelTwo.h provides these in real builds) ----
+#ifndef DEBUG_PRINTLN
+#define DEBUG_PRINTLN(s) do {} while (0)
+#define DEBUG_PRINT(s)   do {} while (0)
+#endif
+
 // ---- Arduino min / max / map() ----
 // Arduino.h defines min/max as macros (not templates) so they handle
 // mixed-type arguments.  Use macros here and set the amidala_core.h sentinel
@@ -84,6 +90,56 @@ public:
   size_t println(unsigned int n, int b = 10) { size_t r = print(n, b); return r + print("\n"); }
   size_t println(long n, int b = 10)         { size_t r = print(n, b); return r + print("\n"); }
   size_t println(unsigned long n, int b = 10){ size_t r = print(n, b); return r + print("\n"); }
+};
+
+// ---- Stream stub (Print + read-side for serial I/O) ----
+class Stream : public Print {
+public:
+  virtual int available() = 0;
+  virtual int read() = 0;
+  virtual int peek() = 0;
+};
+
+// MockStream: captures written bytes and serves pre-loaded input bytes.
+class MockStream : public Stream {
+public:
+  char outBuf[512];
+  size_t outLen;
+
+  MockStream() : outLen(0) {
+    outBuf[0] = '\0';
+    inBuf[0] = '\0';
+    inPos = 0;
+    inLen = 0;
+  }
+
+  void reset() {
+    outLen = 0; outBuf[0] = '\0';
+    inPos = 0;  inLen = 0; inBuf[0] = '\0';
+  }
+
+  // Pre-load bytes that subsequent read()/available() calls will return.
+  void feedInput(const char *data) {
+    inLen = strlen(data);
+    memcpy(inBuf, data, inLen + 1);
+    inPos = 0;
+  }
+
+  // Print interface
+  virtual size_t write(uint8_t c) override {
+    if (outLen < sizeof(outBuf) - 1) { outBuf[outLen++] = (char)c; outBuf[outLen] = '\0'; }
+    return 1;
+  }
+
+  // Stream interface
+  virtual int available() override { return (int)(inLen - inPos); }
+  virtual int read()      override { return (inPos < inLen) ? (uint8_t)inBuf[inPos++] : -1; }
+  virtual int peek()      override { return (inPos < inLen) ? (uint8_t)inBuf[inPos]   : -1; }
+
+private:
+  char   inBuf[512];
+  size_t inPos;
+  size_t inLen;
 };
 
 // ---- Minimal String stub (capture output in tests) ----
