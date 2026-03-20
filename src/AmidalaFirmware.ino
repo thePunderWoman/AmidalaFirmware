@@ -157,71 +157,13 @@
 #endif
 #include "amidala_core.h"
 #include "config_reader.h"
+#include "pin_config.h"
 
 ////////////////////////////////
 
 // Audio hardware selection
 #define AUDIO_HW_HCR    1  // Human Cyborg Relations board (default)
 #define AUDIO_HW_VMUSIC 2  // VMusic2
-
-////////////////////////////////
-
-#define SERVO1_PIN 2
-#define SERVO2_PIN 3
-#define SERVO3_PIN 4
-#define SERVO4_PIN 5
-#define SERVO5_PIN 6
-#define SERVO6_PIN 7
-#define SERVO7_PIN 8
-#define SERVO8_PIN 9
-#define SERVO9_PIN 10
-#define SERVO10_PIN 11
-#define SERVO11_PIN 12
-#define SERVO12_PIN 13
-
-#define DOUT1_PIN 22
-#define DOUT2_PIN 23
-#define DOUT3_PIN 24
-#define DOUT4_PIN 25
-#define DOUT5_PIN 26
-#define DOUT6_PIN 27
-#define DOUT7_PIN 28
-#define DOUT8_PIN 29
-
-#define DRIVE_ACTIVE_PIN DOUT7_PIN
-#define DOME_ACTIVE_PIN DOUT8_PIN
-
-#define PPMIN_PIN 49
-
-#define ANALOG1_PIN A0
-#define ANALOG2_PIN A1
-
-#define RCSEL_PIN 30
-#define SEL2_PIN 31
-
-#define STATUS_J1_PIN 32
-#define STATUS_J2_PIN 33
-#define STATUS_RC_PIN 34
-#define STATUS_S1_PIN 35
-#define STATUS_S2_PIN 36
-#define STATUS_S3_PIN 37
-#define STATUS_S4_PIN 38
-
-#define CONSOLE_SERIAL Serial
-#define XBEE_SERIAL Serial1
-// #define VMUSIC_SERIAL       Serial2
-#ifdef VMUSIC_SERIAL
-#include <audio/VMusic.h>
-#endif
-#if !defined(DOME_DRIVE_SERIAL) && !defined(RDH_SERIAL)
-#define AUX_SERIAL Serial3
-#endif
-////////////////////////////////
-
-// I2C bus recovery pin definitions
-// On Arduino Mega: SDA = pin 20, SCL = pin 21
-#define I2C_SDA_PIN 20
-#define I2C_SCL_PIN 21
 
 ////////////////////////////////
 
