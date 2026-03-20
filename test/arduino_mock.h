@@ -18,6 +18,14 @@ typedef uint8_t byte;
 #define LOW  0
 #define HIGH 1
 
+// ---- Analog pin numbers (Arduino Mega 2560 mapping) ----
+#ifndef A0
+#define A0 54
+#define A1 55
+#define A2 56
+#define A3 57
+#endif
+
 // ---- Arduino map() ----
 static inline long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
