@@ -108,6 +108,7 @@ ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 #include <EEPROM.h>
 #include <XBee.h>
 #include "ppm_decoder.h"
+#include "i2c_utils.h"
 
 ////////////////////////////////
 
@@ -1158,66 +1159,6 @@ public:
     return false;
   }
 
-  // --- I2C bus recovery and safe transmission ---
-
-  static void recoverI2CBus() {
-    Wire.end();
-    pinMode(I2C_SDA_PIN, INPUT_PULLUP);
-    pinMode(I2C_SCL_PIN, OUTPUT);
-    // Clock out up to 9 bits to release a stuck slave
-    for (int i = 0; i < 9; i++) {
-      digitalWrite(I2C_SCL_PIN, LOW);
-      delayMicroseconds(5);
-      digitalWrite(I2C_SCL_PIN, HIGH);
-      delayMicroseconds(5);
-      if (digitalRead(I2C_SDA_PIN) == HIGH)
-        break;
-    }
-    // Generate a STOP condition
-    pinMode(I2C_SDA_PIN, OUTPUT);
-    digitalWrite(I2C_SDA_PIN, LOW);
-    delayMicroseconds(5);
-    digitalWrite(I2C_SCL_PIN, HIGH);
-    delayMicroseconds(5);
-    digitalWrite(I2C_SDA_PIN, HIGH);
-    delayMicroseconds(5);
-    Wire.begin();
-    Wire.setClock(100000L);
-#if defined(WIRE_HAS_TIMEOUT)
-    Wire.setWireTimeout(3000, true);
-#endif
-  }
-
-  static byte sendI2CCmd(byte addr, byte cmd) {
-    Wire.beginTransmission(addr);
-    Wire.write(cmd);
-    byte err = Wire.endTransmission();
-    if (err != 0) {
-      Serial.print(F("I2C err "));
-      Serial.print(err);
-      Serial.print(F(" @"));
-      Serial.println(addr);
-      recoverI2CBus();
-    }
-    delay(5);
-    return err;
-  }
-
-  static byte sendI2CStr(byte addr, const char *str) {
-    Wire.beginTransmission(addr);
-    Wire.write(str);
-    byte err = Wire.endTransmission();
-    if (err != 0) {
-      Serial.print(F("I2C err "));
-      Serial.print(err);
-      Serial.print(F(" @"));
-      Serial.println(addr);
-      recoverI2CBus();
-    }
-    delay(5);
-    return err;
-  }
-
   bool loadConfig() {
 #ifdef VMUSIC_SERIAL
     fConsole.println(F("Waiting for VMusic"));
@@ -1756,7 +1697,7 @@ void AmidalaConsole::process(ButtonAction &button) {
     DEBUG_PRINT(button.i2ccmd.target);
     DEBUG_PRINT(" cmd=");
     DEBUG_PRINTLN(button.i2ccmd.cmd);
-    AmidalaController::sendI2CCmd(button.i2ccmd.target, button.i2ccmd.cmd);
+    sendI2CCmd(button.i2ccmd.target, button.i2ccmd.cmd);
     break;
   case button.kI2CStr:
     if (button.i2cstr.cmd != 0 &&
@@ -1766,7 +1707,7 @@ void AmidalaConsole::process(ButtonAction &button) {
       DEBUG_PRINT(button.i2cstr.target);
       DEBUG_PRINT(" str=");
       DEBUG_PRINTLN(str);
-      AmidalaController::sendI2CStr(button.i2cstr.target, str);
+      sendI2CStr(button.i2cstr.target, str);
     }
     break;
   case button.kHCREmote:
@@ -2745,7 +2686,7 @@ void AmidalaConsole::processCommand(const char *cmd) {
     int i2caddr = atoi(cmd + 1, 3);
     int i2ccmd = atoi(cmd + 5, 3);
     println("I2C addr=" + String(i2caddr) + ", " + String(i2ccmd));
-    AmidalaController::sendI2CCmd(i2caddr, i2ccmd);
+    sendI2CCmd(i2caddr, i2ccmd);
     return;
   } else if (startswith(cmd, "autod=") && isdigit(cmd, 1) && cmd[1] == '\0') {
     int autod = atoi(cmd, 1);
