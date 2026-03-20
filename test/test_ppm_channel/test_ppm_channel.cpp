@@ -1,18 +1,15 @@
 // test_ppm_channel.cpp
-// Unit tests for the PPMDecoder::channel() mapping logic.
+// Unit tests for PPMDecoder (include/ppm_decoder.h).
 //
-// PPMDecoder::channel() maps a raw PPM pulse width (µs) to a user-space range.
-// The function:
-//   1. Returns neutralvalue when the stored pulse is 0 (no signal).
-//   2. Clamps the pulse to [600, 1600] µs before mapping.
-//   3. Maps [600, 1600] linearly to [minvalue, maxvalue].
-//
-// Because channel() is a method that reads private state (fChannel[]), we
-// reproduce the mapping formula here as a free function and test it directly.
-// Any change to the formula in AmidalaFirmware.ino must be mirrored here,
-// which serves as an explicit regression guard.
+// Section 1 — Direct class tests: construction, init, decode with no signal,
+//             and channel() neutral behaviour.
+// Section 2 — Mapping formula tests: reproduce the channel() formula as a
+//             free function to exhaustively test the clamping + map logic
+//             independently of private state.
 
 #include "arduino_mock.h"
+#include "pin_config.h"
+#include "ppm_decoder.h"
 #include <unity.h>
 
 // Mapping formula extracted from PPMDecoder::channel():
@@ -37,6 +34,41 @@ static uint16_t ppm_channel_map(uint16_t pulse,
 
 void setUp(void) {}
 void tearDown(void) {}
+
+// ---- PPMDecoder class -------------------------------------------------------
+
+void test_decoder_constructs_without_crash() {
+  PPMDecoder dec(PPMIN_PIN, 6);
+  // If we get here without crashing, construction and init() succeeded.
+  TEST_PASS();
+}
+
+void test_decoder_decode_returns_false_when_no_signal() {
+  // digitalRead() stub always returns LOW so readPulse() never fires an edge;
+  // decode() must return false.
+  PPMDecoder dec(PPMIN_PIN, 6);
+  TEST_ASSERT_FALSE(dec.decode());
+}
+
+void test_decoder_channel_returns_neutral_before_any_signal() {
+  PPMDecoder dec(PPMIN_PIN, 6);
+  // fChannel[] is zero-initialised; channel() must return neutralvalue.
+  TEST_ASSERT_EQUAL_UINT16(512, dec.channel(0, 0, 1024, 512));
+  TEST_ASSERT_EQUAL_UINT16(512, dec.channel(5, 0, 1024, 512));
+}
+
+void test_decoder_channel_out_of_range_returns_neutral() {
+  PPMDecoder dec(PPMIN_PIN, 6);
+  // ch >= channelCount → pulse treated as 0 → neutralvalue returned.
+  TEST_ASSERT_EQUAL_UINT16(512, dec.channel(6,  0, 1024, 512));
+  TEST_ASSERT_EQUAL_UINT16(512, dec.channel(99, 0, 1024, 512));
+}
+
+void test_decoder_init_resets_state() {
+  PPMDecoder dec(PPMIN_PIN, 6);
+  dec.init();  // second call must not crash
+  TEST_ASSERT_EQUAL_UINT16(0, dec.channel(0, 0, 1024, 0));
+}
 
 // ---- Zero pulse → neutral --------------------------------------------------
 
@@ -124,6 +156,12 @@ void test_ppm_reversed_axis_min_maps_to_max_output() {
 int main(int argc, char **argv) {
   (void)argc; (void)argv;
   UNITY_BEGIN();
+
+  RUN_TEST(test_decoder_constructs_without_crash);
+  RUN_TEST(test_decoder_decode_returns_false_when_no_signal);
+  RUN_TEST(test_decoder_channel_returns_neutral_before_any_signal);
+  RUN_TEST(test_decoder_channel_out_of_range_returns_neutral);
+  RUN_TEST(test_decoder_init_resets_state);
 
   RUN_TEST(test_ppm_zero_pulse_returns_neutral);
   RUN_TEST(test_ppm_zero_pulse_neutral_at_center);

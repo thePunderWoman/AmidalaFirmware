@@ -26,7 +26,19 @@ typedef uint8_t byte;
 #define A3 57
 #endif
 
-// ---- Arduino map() ----
+// ---- Arduino digital I/O and timing stubs ----
+static inline uint8_t digitalRead(uint8_t /*pin*/) { return LOW; }
+static inline uint32_t micros() { return 0; }
+
+// ---- Arduino min / max / map() ----
+// Arduino.h defines min/max as macros (not templates) so they handle
+// mixed-type arguments.  Use macros here and set the amidala_core.h sentinel
+// so it does not try to add template versions on top.
+#ifndef _AMIDALA_MINMAX_DEFINED
+#define _AMIDALA_MINMAX_DEFINED
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+#endif
 static inline long map(long x, long in_min, long in_max, long out_min, long out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
