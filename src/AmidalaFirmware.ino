@@ -311,6 +311,7 @@ private:
 ////////////////////////////////
 
 #include "rdh_serial.h"
+#include "xbee_remote.h"
 
 ////////////////////////////////
 
@@ -650,341 +651,6 @@ public:
         (void)unknown;
       }
       sInited = true;
-    }
-  };
-
-  class XBeePocketRemote : public JoystickController {
-  public:
-    XBeePocketRemote() {
-      memset(&state, '\0', sizeof(state));
-      memset(&event, '\0', sizeof(event));
-      memset(&longpress, '\0', sizeof(longpress));
-      fConnecting = true;
-      fConnected = false;
-      failsafeNotice = true;
-    }
-
-    uint32_t addr;
-    uint16_t y;
-    uint16_t x;
-    uint16_t w1;
-    uint16_t w2;
-    bool button[5];
-    enum Type { kFailsafe, kXBee, kRC };
-    struct LongPress {
-      uint32_t pressTime;
-      bool longPress;
-    };
-    struct {
-      LongPress l3;
-      LongPress triangle;
-      LongPress circle;
-      LongPress cross;
-      LongPress square;
-    } longpress;
-    Type type;
-    bool failsafeNotice;
-    uint32_t lastPacket;
-
-    bool failsafe() { return (type == XBeePocketRemote::kFailsafe); }
-
-    void update() {
-      Event evt = {};
-      State prev = state;
-
-      state.analog.stick.lx = map(x, 0, 1024, 127, -128);
-      state.analog.stick.ly = map(y, 0, 1024, 127, -128);
-      state.analog.stick.rx = state.analog.stick.lx;
-      state.analog.stick.ry = state.analog.stick.ly;
-      state.analog.button.l1 = map(w1, 0, 1024, 255, 0);
-      state.analog.button.l2 = map(w2, 0, 1024, 255, 0);
-      // Serial.print(state.analog.button.l1); Serial.print(" - ");
-      // Serial.println(state.analog.button.l2);
-      state.analog.button.r1 = state.analog.button.l1;
-      state.analog.button.r2 = state.analog.button.l2;
-      state.button.triangle = button[0];
-      state.button.circle = button[1];
-      state.button.cross = button[2];
-      state.button.square = button[3];
-      state.button.l3 = button[4];
-
-      // for (int i = 0; i < SizeOfArray(button); i++)
-      // {
-      //     if (button[i])
-      //     {
-      //         CONSOLE_SERIAL.print("BUTTON_DOWN ");
-      //         CONSOLE_SERIAL.println(i);
-      //     }
-      // }
-#define CHECK_BUTTON_DOWN(b)                                                   \
-  evt.button_down.b = (!prev.button.b && state.button.b)
-      CHECK_BUTTON_DOWN(l3);
-      CHECK_BUTTON_DOWN(triangle);
-      CHECK_BUTTON_DOWN(circle);
-      CHECK_BUTTON_DOWN(cross);
-      CHECK_BUTTON_DOWN(square);
-#define CHECK_BUTTON_UP(b) evt.button_up.b = (prev.button.b && !state.button.b)
-      CHECK_BUTTON_UP(l3);
-      CHECK_BUTTON_UP(triangle);
-      CHECK_BUTTON_UP(circle);
-      CHECK_BUTTON_UP(cross);
-      CHECK_BUTTON_UP(square);
-#define CHECK_BUTTON_LONGPRESS(b)                                              \
-  {                                                                            \
-    evt.long_button_up.b = false;                                              \
-    if (evt.button_down.b) {                                                   \
-      longpress.b.pressTime = millis();                                        \
-      longpress.b.longPress = false;                                           \
-    } else if (evt.button_up.b) {                                              \
-      longpress.b.pressTime = 0;                                               \
-      if (longpress.b.longPress)                                               \
-        evt.button_up.b = false;                                               \
-      longpress.b.longPress = false;                                           \
-    } else if (longpress.b.pressTime != 0 && state.button.b) {                 \
-      if (longpress.b.pressTime + LONG_PRESS_TIME < millis()) {                \
-        longpress.b.pressTime = 0;                                             \
-        longpress.b.longPress = true;                                          \
-        evt.long_button_up.b = true;                                           \
-      }                                                                        \
-    }                                                                          \
-  }
-      CHECK_BUTTON_LONGPRESS(l3);
-      CHECK_BUTTON_LONGPRESS(triangle);
-      CHECK_BUTTON_LONGPRESS(circle);
-      CHECK_BUTTON_LONGPRESS(cross);
-      CHECK_BUTTON_LONGPRESS(square);
-
-      /* Analog events */
-      evt.analog_changed.stick.lx =
-          state.analog.stick.lx - prev.analog.stick.lx;
-      evt.analog_changed.stick.ly =
-          state.analog.stick.ly - prev.analog.stick.ly;
-      evt.analog_changed.button.l1 =
-          state.analog.button.l1 - prev.analog.button.l1;
-      evt.analog_changed.button.l2 =
-          state.analog.button.l2 - prev.analog.button.l2;
-      evt.analog_changed.button.r1 =
-          state.analog.button.r1 - prev.analog.button.r1;
-      evt.analog_changed.button.r2 =
-          state.analog.button.r2 - prev.analog.button.r2;
-      if (fConnecting) {
-        fConnecting = false;
-        fConnected = true;
-        onConnect();
-      }
-      if (fConnected) {
-        event = evt;
-        notify();
-        if (failsafe()) {
-          fConnected = false;
-          fConnecting = true;
-          onDisconnect();
-        }
-      }
-    }
-  };
-
-  class DriveController : public XBeePocketRemote {
-  public:
-    DriveController(AmidalaController *driver) : fDriver(driver) {}
-
-    virtual void notify() override {
-      uint32_t lagTime = millis() - lastPacket;
-      if (event.analog_changed.button.l2) {
-        fDriver->setDriveThrottle(float(state.analog.button.l2) / 255.0);
-      }
-      if (lagTime > 5000) {
-        DEBUG_PRINTLN("More than 5 seconds. Disconnect");
-        fDriver->emergencyStop();
-        disconnect();
-      } else if (lagTime > 500) {
-        DEBUG_PRINTLN("It has been 500ms. Shutdown motors");
-        fDriver->emergencyStop();
-      } else {
-        if (event.button_up.l3)
-          fDriver->processButton(5);
-        if (event.button_up.cross)
-          fDriver->processButton(3);
-        if (event.button_up.circle)
-          fDriver->processButton(2);
-        if (event.button_up.triangle)
-          fDriver->processButton(1);
-        if (event.button_up.square)
-          fDriver->processButton(4);
-
-        if (event.long_button_up.l3)
-          fDriver->processLongButton(5);
-        if (event.long_button_up.cross)
-          fDriver->processLongButton(3);
-        if (event.long_button_up.circle)
-          fDriver->processLongButton(2);
-        if (event.long_button_up.triangle)
-          fDriver->processLongButton(1);
-        if (event.long_button_up.square)
-          fDriver->processLongButton(4);
-      }
-    }
-
-    virtual void onConnect() override {
-      DEBUG_PRINTLN("Drive Stick Connected");
-      fDriver->enableController();
-    }
-
-    virtual void onDisconnect() override {
-      DEBUG_PRINTLN("Drive Stick Disconnected");
-      fDriver->disableController();
-    }
-
-    AmidalaController *fDriver;
-  };
-
-  class DomeController : public XBeePocketRemote {
-  public:
-    DomeController(AmidalaController *driver) : fDriver(driver) {}
-
-    virtual void notify() override {
-      uint32_t lagTime = millis() - lastPacket;
-      if (lagTime > 5000) {
-        DEBUG_PRINTLN("More than 5 seconds. Disconnect");
-        fDriver->domeEmergencyStop();
-        disconnect();
-      } else if (lagTime > 500) {
-        DEBUG_PRINTLN("It has been 500ms. Shutdown motors");
-        fDriver->domeEmergencyStop();
-      } else {
-        process();
-      }
-    }
-
-    void process() {
-      if (event.analog_changed.button.l1) {
-        /* Volume */
-        fDriver->setVolumeNoResponse(
-            map(state.analog.button.l1, 0, 255, 0, 100));
-      }
-      if (event.analog_changed.button.l2) {
-        /* Throttle */
-        // Serial.println(state.analog.button.l2);//map(state.button.l1, 0, 255,
-        // 100, 0));
-        fDriver->setDomeThrottle(float(state.analog.button.l2) / 255.0);
-      }
-
-      if (!fGestureCollect) {
-        if (event.button_up.l3) {
-          DEBUG_PRINTLN("GESTURE START COLLECTING\n");
-          fDriver->disableDomeController();
-          fGestureCollect = true;
-          fGesturePtr = fGestureBuffer;
-          fGestureTimeOut = millis() + GESTURE_TIMEOUT_MS;
-        } else {
-          if (event.button_up.cross)
-            fDriver->processButton(8);
-          if (event.button_up.circle)
-            fDriver->processButton(7);
-          if (event.button_up.triangle)
-            fDriver->processButton(6);
-          if (event.button_up.square)
-            fDriver->processButton(9);
-
-          if (event.long_button_up.cross)
-            fDriver->processLongButton(8);
-          if (event.long_button_up.circle)
-            fDriver->processLongButton(7);
-          if (event.long_button_up.triangle)
-            fDriver->processLongButton(6);
-          if (event.long_button_up.square)
-            fDriver->processLongButton(9);
-
-          // if (event.long_button_up.triangle)
-          // {
-          //     CONSOLE_SERIAL.println("Processing Long Button 6");
-          //     fDriver->setDomeHomePosition();
-          // }
-          // if (event.long_button_up.square)
-          // {
-          //     // toggle random dome mode
-          //     CONSOLE_SERIAL.println("Processing Long Button 9");
-          //     fDriver->toggleRandomDome();
-          // }
-        }
-        return;
-      } else if (fGestureTimeOut < millis()) {
-        DEBUG_PRINTLN("GESTURE TIMEOUT\n");
-        fDriver->enableDomeController();
-        fGesturePtr = fGestureBuffer;
-        fGestureCollect = false;
-      } else {
-        if (event.button_up.l3) {
-          // delete trailing '5' from gesture
-          unsigned glen = strlen(fGestureBuffer);
-          if (glen > 0 && fGestureBuffer[glen - 1] == '5')
-            fGestureBuffer[glen - 1] = 0;
-          fDriver->enableDomeController();
-          fGestureCollect = false;
-          fDriver->processGesture(fGestureBuffer);
-          return;
-        }
-
-        if (event.button_up.triangle)
-          addGesture('A');
-        if (event.button_up.circle)
-          addGesture('B');
-        if (event.button_up.cross)
-          addGesture('C');
-        if (event.button_up.square)
-          addGesture('D');
-        if (!fGestureAxis) {
-          if (abs(state.analog.stick.lx) > 50 &&
-              abs(state.analog.stick.ly) > 50) {
-            // Diagonal
-            if (state.analog.stick.lx < 0)
-              fGestureAxis = (state.analog.stick.ly < 0) ? '1' : '7';
-            else
-              fGestureAxis = (state.analog.stick.ly < 0) ? '3' : '9';
-            addGesture(fGestureAxis);
-          } else if (abs(state.analog.stick.lx) > 100) {
-            // Horizontal
-            fGestureAxis = (state.analog.stick.lx < 0) ? '4' : '6';
-            addGesture(fGestureAxis);
-          } else if (abs(state.analog.stick.ly) > 100) {
-            // Vertical
-            fGestureAxis = (state.analog.stick.ly < 0) ? '2' : '8';
-            addGesture(fGestureAxis);
-          }
-        }
-        if (fGestureAxis && abs(state.analog.stick.lx) < 10 &&
-            abs(state.analog.stick.ly) < 10) {
-          addGesture('5');
-          fGestureAxis = 0;
-        }
-      }
-    }
-
-    virtual void onConnect() override {
-      DEBUG_PRINTLN("Dome Stick Connected");
-      fDriver->enableDomeController();
-    }
-
-    virtual void onDisconnect() override {
-      DEBUG_PRINTLN("Dome Stick Disconnected");
-      fDriver->disableDomeController();
-    }
-
-    AmidalaController *fDriver;
-
-  protected:
-    bool fGestureCollect = false;
-    char fGestureBuffer[MAX_GESTURE_LENGTH + 1];
-    char *fGesturePtr = fGestureBuffer;
-    char fGestureAxis = 0;
-    uint32_t fGestureTimeOut = 0;
-
-    void addGesture(char ch) {
-      if (size_t(fGesturePtr - fGestureBuffer) < sizeof(fGestureBuffer) - 1) {
-        *fGesturePtr++ = ch;
-        *fGesturePtr = '\0';
-        fGestureTimeOut = millis() + GESTURE_TIMEOUT_MS;
-      }
     }
   };
 
@@ -1525,7 +1191,177 @@ private:
   }
 
   friend class AmidalaConsole;
+  friend class DriveController;
+  friend class DomeController;
 };
+
+////////////////////////////////
+// DriveController / DomeController method bodies
+// (defined here because they call AmidalaController methods)
+////////////////////////////////
+
+void DriveController::notify() {
+  uint32_t lagTime = millis() - lastPacket;
+  if (event.analog_changed.button.l2) {
+    fDriver->setDriveThrottle(float(state.analog.button.l2) / 255.0);
+  }
+  if (lagTime > 5000) {
+    DEBUG_PRINTLN("More than 5 seconds. Disconnect");
+    fDriver->emergencyStop();
+    disconnect();
+  } else if (lagTime > 500) {
+    DEBUG_PRINTLN("It has been 500ms. Shutdown motors");
+    fDriver->emergencyStop();
+  } else {
+    if (event.button_up.l3)
+      fDriver->processButton(5);
+    if (event.button_up.cross)
+      fDriver->processButton(3);
+    if (event.button_up.circle)
+      fDriver->processButton(2);
+    if (event.button_up.triangle)
+      fDriver->processButton(1);
+    if (event.button_up.square)
+      fDriver->processButton(4);
+
+    if (event.long_button_up.l3)
+      fDriver->processLongButton(5);
+    if (event.long_button_up.cross)
+      fDriver->processLongButton(3);
+    if (event.long_button_up.circle)
+      fDriver->processLongButton(2);
+    if (event.long_button_up.triangle)
+      fDriver->processLongButton(1);
+    if (event.long_button_up.square)
+      fDriver->processLongButton(4);
+  }
+}
+
+void DriveController::onConnect() {
+  DEBUG_PRINTLN("Drive Stick Connected");
+  fDriver->enableController();
+}
+
+void DriveController::onDisconnect() {
+  DEBUG_PRINTLN("Drive Stick Disconnected");
+  fDriver->disableController();
+}
+
+void DomeController::notify() {
+  uint32_t lagTime = millis() - lastPacket;
+  if (lagTime > 5000) {
+    DEBUG_PRINTLN("More than 5 seconds. Disconnect");
+    fDriver->domeEmergencyStop();
+    disconnect();
+  } else if (lagTime > 500) {
+    DEBUG_PRINTLN("It has been 500ms. Shutdown motors");
+    fDriver->domeEmergencyStop();
+  } else {
+    process();
+  }
+}
+
+void DomeController::process() {
+  if (event.analog_changed.button.l1) {
+    /* Volume */
+    fDriver->setVolumeNoResponse(
+        map(state.analog.button.l1, 0, 255, 0, 100));
+  }
+  if (event.analog_changed.button.l2) {
+    /* Throttle */
+    fDriver->setDomeThrottle(float(state.analog.button.l2) / 255.0);
+  }
+
+  if (!fGestureCollect) {
+    if (event.button_up.l3) {
+      DEBUG_PRINTLN("GESTURE START COLLECTING\n");
+      fDriver->disableDomeController();
+      fGestureCollect = true;
+      fGesturePtr = fGestureBuffer;
+      fGestureTimeOut = millis() + GESTURE_TIMEOUT_MS;
+    } else {
+      if (event.button_up.cross)
+        fDriver->processButton(8);
+      if (event.button_up.circle)
+        fDriver->processButton(7);
+      if (event.button_up.triangle)
+        fDriver->processButton(6);
+      if (event.button_up.square)
+        fDriver->processButton(9);
+
+      if (event.long_button_up.cross)
+        fDriver->processLongButton(8);
+      if (event.long_button_up.circle)
+        fDriver->processLongButton(7);
+      if (event.long_button_up.triangle)
+        fDriver->processLongButton(6);
+      if (event.long_button_up.square)
+        fDriver->processLongButton(9);
+    }
+    return;
+  } else if (fGestureTimeOut < millis()) {
+    DEBUG_PRINTLN("GESTURE TIMEOUT\n");
+    fDriver->enableDomeController();
+    fGesturePtr = fGestureBuffer;
+    fGestureCollect = false;
+  } else {
+    if (event.button_up.l3) {
+      // delete trailing '5' from gesture
+      unsigned glen = strlen(fGestureBuffer);
+      if (glen > 0 && fGestureBuffer[glen - 1] == '5')
+        fGestureBuffer[glen - 1] = 0;
+      fDriver->enableDomeController();
+      fGestureCollect = false;
+      fDriver->processGesture(fGestureBuffer);
+      return;
+    }
+
+    if (event.button_up.triangle)
+      addGesture('A');
+    if (event.button_up.circle)
+      addGesture('B');
+    if (event.button_up.cross)
+      addGesture('C');
+    if (event.button_up.square)
+      addGesture('D');
+    if (!fGestureAxis) {
+      if (abs(state.analog.stick.lx) > 50 &&
+          abs(state.analog.stick.ly) > 50) {
+        // Diagonal
+        if (state.analog.stick.lx < 0)
+          fGestureAxis = (state.analog.stick.ly < 0) ? '1' : '7';
+        else
+          fGestureAxis = (state.analog.stick.ly < 0) ? '3' : '9';
+        addGesture(fGestureAxis);
+      } else if (abs(state.analog.stick.lx) > 100) {
+        // Horizontal
+        fGestureAxis = (state.analog.stick.lx < 0) ? '4' : '6';
+        addGesture(fGestureAxis);
+      } else if (abs(state.analog.stick.ly) > 100) {
+        // Vertical
+        fGestureAxis = (state.analog.stick.ly < 0) ? '2' : '8';
+        addGesture(fGestureAxis);
+      }
+    }
+    if (fGestureAxis && abs(state.analog.stick.lx) < 10 &&
+        abs(state.analog.stick.ly) < 10) {
+      addGesture('5');
+      fGestureAxis = 0;
+    }
+  }
+}
+
+void DomeController::onConnect() {
+  DEBUG_PRINTLN("Dome Stick Connected");
+  fDriver->enableDomeController();
+}
+
+void DomeController::onDisconnect() {
+  DEBUG_PRINTLN("Dome Stick Disconnected");
+  fDriver->disableDomeController();
+}
+
+////////////////////////////////
 
 AmidalaController amidala;
 

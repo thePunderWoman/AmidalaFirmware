@@ -36,6 +36,7 @@ static inline uint8_t digitalRead(uint8_t /*pin*/) { return LOW; }
 static inline void    digitalWrite(uint8_t /*pin*/, uint8_t /*val*/) {}
 static inline void    pinMode(uint8_t /*pin*/, uint8_t /*mode*/) {}
 static inline uint32_t micros() { return 0; }
+static inline uint32_t millis() { return 0; }
 static inline void    delay(unsigned long /*ms*/) {}
 static inline void    delayMicroseconds(unsigned int /*us*/) {}
 
