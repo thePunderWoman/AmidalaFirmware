@@ -1,7 +1,9 @@
 #include "controller.h"
 
-// Hardware globals defined in src/globals.cpp:
-extern ServoDispatchDirect<12> servoDispatch;
+// Hardware globals defined in src/globals.cpp.
+// ServoDispatch& avoids including ServoDispatchDirect.h here, which would
+// pull in ServoDispatchPrivate.h and duplicate ISR definitions.
+extern ServoDispatch& servoDispatch;
 extern ServoPD panservo;
 extern ServoPD tiltservo;
 
@@ -18,7 +20,7 @@ AmidalaController::AmidalaController()
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
       fTankDrive(128, DRIVE_SERIAL, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-      fTankDrive(servoDispatch, 1, 0, 4 fDriveStick),
+      fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM
       fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_SERIAL
