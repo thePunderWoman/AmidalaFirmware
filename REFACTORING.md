@@ -146,58 +146,114 @@ and `pio run -e megaatmega2560` succeeds with identical footprint.
 #### ~~PR 2b — `drive-controllers-impl`: `src/drive_controllers.cpp`~~ ✅ PR #20
 
 Move from `.ino` to new file:
-- `DriveController::notify()` / `::onConnect()` / `::onDisconnect()` (lines 731–775)
-- `DomeController::notify()` / `::process()` / `::onConnect()` / `::onDisconnect()` (lines 778–890)
-- `static void hcrDelayedInit()` (lines 892–910)
+- `DriveController::notify()` / `::onConnect()` / `::onDisconnect()`
+- `DomeController::notify()` / `::process()` / `::onConnect()` / `::onDisconnect()`
 
 **`src/drive_controllers.cpp`** preamble:
 ```cpp
 #include "amidala_controller.h"
 ```
-That single include brings in everything needed.
 
-`hcrDelayedInit()` is declared `static void` at the top of the `.ino` as a
-forward declaration.  Moving the definition to a `.cpp` means it can no longer
-be `static` (static = internal linkage).  Change it to a plain `void` in the
-`.cpp` and remove the `static` from the forward declaration in the `.ino`.
-The function is only called from `AmidalaController::setup()`, so there is no
-name-collision risk.
+`hcrDelayedInit()` was initially considered for this file but belongs in
+`AmidalaFirmware.ino` — it initialises the HCR audio system and has no
+connection to the drive/dome controllers.  It stays `static` in the `.ino`.
 
-Remove the moved lines from the `.ino`.
+> **Lessons from PR 2b**: including `amidala_controller.h` in a second TU
+> exposed two latent bugs:
+> 1. `ServoDispatchPrivate.h` defines ISR handlers — included via
+>    `ServoDispatchDirect.h`.  Fix: move `ServoDispatchDirect.h` and
+>    `ServoEasing.h` back to `AmidalaFirmware.ino` (the only TU that needs
+>    them).  `amidala_controller.h` no longer includes those files.
+> 2. 13 free functions in `amidala_core.h` had definitions without `inline`,
+>    causing ODR violations when compiled into two TUs.  Fixed by adding
+>    `inline` to all of them.
 
 ---
 
-#### PR 2c — `amidala-console-impl`: `src/amidala_console.cpp`
+#### ~~PR 2c — `amidala-audio-impl`: `src/amidala_audio.cpp`~~ ✅ PR #21
 
-Move from `.ino` to new file — everything between the `AmidalaConsole::write()`
-lines and the `JevoisConsole` section (~lines 912–2153, ~1240 lines):
+Move the cleanly separable audio methods out of the `.ino` and into a
+dedicated file.  Audio-related `case` branches inside `process(ButtonAction&)`,
+`processConfig()`, and `processCommand()` are too interleaved with other
+console logic to separate cleanly — those stay in `amidala_console.cpp`.
+
+Methods to move:
+
+```
+static void hcrDelayedInit()           ← already in .ino, move here
+AmidalaConsole::randomToggle()
+AmidalaConsole::setVolumeNoResponse()
+AmidalaConsole::playSound()
+```
+
+**`src/amidala_audio.cpp`** preamble:
+```cpp
+#include "amidala_controller.h"
+
+// amidala is the global AmidalaController instance defined in AmidalaFirmware.ino.
+extern AmidalaController amidala;
+```
+
+`hcrDelayedInit()` references `amidala` directly (the global instance), so
+it needs the `extern` declaration.  It can now be a plain `void` rather than
+`static` since it crosses TU boundaries.  Update the forward declaration in
+`AmidalaFirmware.ino` accordingly (remove `static`).
+
+The three `AmidalaConsole` methods access the controller only through
+`fController` (their stored pointer) and `params` — no extra `extern`s needed.
+
+---
+
+#### PR 2d — `amidala-buttons-impl`: `src/amidala_buttons.cpp`
+
+Move the button/gesture dispatch pipeline out of the `.ino`.  These four
+methods are the "input → action" layer: they receive a button press or gesture
+string and translate it into hardware commands.  They are cleanly separable
+from configuration and command-parsing, which stays in `amidala_console.cpp`.
+
+```
+AmidalaConsole::process(ButtonAction&)   ← dispatches one action (sound/I2C/servo/aux/emote)
+AmidalaConsole::processGesture()         ← matches gesture string → configured action
+AmidalaConsole::processButton()          ← maps button number → configured ButtonAction
+AmidalaConsole::processLongButton()      ← maps long-press number → configured ButtonAction
+```
+
+Note: the button-related `case` branches in `processConfig()` (which configure
+what button N does) and the `$nn,mm` sound command in `processCommand()` are
+configuration/parsing logic — they stay in `amidala_console.cpp`.
+
+**`src/amidala_buttons.cpp`** preamble:
+```cpp
+#include "amidala_controller.h"
+```
+All needed types are available through that single include.
+
+---
+
+#### PR 2e — `amidala-console-impl`: `src/amidala_console.cpp`
+
+Move from `.ino` to new file — all remaining `AmidalaConsole` methods (~1070
+lines after audio and button methods have been extracted):
 
 ```
 AmidalaConsole::write(uint8_t)
 AmidalaConsole::write(const uint8_t*, size_t)
 AmidalaConsole::printServoPos()
 AmidalaConsole::init()
-AmidalaConsole::randomToggle()
-AmidalaConsole::setVolumeNoResponse()
-AmidalaConsole::playSound()
 AmidalaConsole::setServo()
 AmidalaConsole::setDigitalOut()
 AmidalaConsole::outputString()
 AmidalaConsole::showXBEE()
 AmidalaConsole::printVersion()
 AmidalaConsole::printHelp()
-AmidalaConsole::process(ButtonAction&)
-AmidalaConsole::processGesture()
-AmidalaConsole::processButton()
-AmidalaConsole::processLongButton()
 AmidalaConsole::showLoadEEPROM()
 AmidalaConsole::showCurrentConfiguration()
 AmidalaConsole::writeCurrentConfiguration()
 AmidalaConsole::monitorOutput()
 AmidalaConsole::monitorToggle()
-static bool isdigit(const char*, int)   ← file-scope helper at line ~1556
-AmidalaConsole::processConfig()
-AmidalaConsole::processCommand()
+static bool isdigit(const char*, int)     ← file-scope helper, keep static
+AmidalaConsole::processConfig()           ← configures button/gesture/audio params
+AmidalaConsole::processCommand()          ← parses runtime text commands
 AmidalaConsole::process(char, bool)
 AmidalaConsole::process()
 ```
@@ -205,33 +261,17 @@ AmidalaConsole::process()
 **`src/amidala_console.cpp`** preamble:
 ```cpp
 #include "amidala_controller.h"
-// CONSOLE_SERIAL and servoDispatch are available via amidala_controller.h
-// (which includes pin_config.h and the framework headers that declare them
-// as globals).
+extern ServoDispatchDirect<12> servoDispatch;  // defined in AmidalaFirmware.ino
 ```
 
-> **Globals access**: `AmidalaConsole` methods reference `servoDispatch`
-> (in `printServoPos`, `showCurrentConfiguration`, `writeCurrentConfiguration`)
-> and `CONSOLE_SERIAL` (in `write()`).  `servoDispatch` is defined in the
-> `.ino` — it must be `extern`-declared at the top of `amidala_console.cpp`:
-> ```cpp
-> extern ServoDispatchDirect<12> servoDispatch;
-> ```
-> Use the concrete size `12` (from `servoSettings` array length) rather than
-> `SizeOfArray(servoSettings)` to avoid the macro dependency.
->
-> `CONSOLE_SERIAL` is a `#define Serial` from `pin_config.h` — already
-> available once `amidala_controller.h` is included.
-
-The `static bool isdigit(const char*, int)` helper at line ~1556 is a
-file-scope function, not a class member.  Preserve the `static` keyword in
-the new `.cpp` so it remains translation-unit-local.
-
-**This is the biggest single win**: removes ~1240 lines from the `.ino`.
+Use the concrete size `12` rather than `SizeOfArray(servoSettings)`.
+`CONSOLE_SERIAL` is a `#define Serial` from `pin_config.h` — already available.
+The `static bool isdigit(const char*, int)` helper stays `static` to remain
+translation-unit-local and avoid shadowing `std::isdigit` in other TUs.
 
 ---
 
-#### PR 2d — `jevois-console-impl`: `src/jevois_console.cpp`
+#### PR 2f — `jevois-console-impl`: `src/jevois_console.cpp`
 
 Move `JevoisConsole::init/processCommand/process` (lines 2155–2249) to a new
 file.  Wrap in `#ifdef EXPERIMENTAL_JEVOIS_STEERING / #endif` as they are now.
@@ -247,10 +287,22 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 
 ---
 
-### After Phase 2 — remaining `.ino` structure
+### After Phase 2 — resulting file structure
+
+| File | Contents |
+|------|---------|
+| `src/AmidalaFirmware.ino` | Includes, globals, `AmidalaController` ctor/setup/animate, `hcrDelayedInit`, Arduino `setup()`/`loop()` |
+| `src/drive_controllers.cpp` | `DriveController::*`, `DomeController::*` ✅ |
+| `src/amidala_audio.cpp` | `hcrDelayedInit`, `AmidalaConsole::randomToggle/setVolumeNoResponse/playSound` |
+| `src/amidala_buttons.cpp` | `AmidalaConsole::process(ButtonAction&)`, `processGesture`, `processButton`, `processLongButton` |
+| `src/amidala_console.cpp` | All remaining `AmidalaConsole::*` methods (I/O, config, command parsing) |
+| `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
+| `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |
+
+### Remaining `.ino` structure after all PRs
 
 ```
-AmidalaFirmware.ino  (~420 lines)
+AmidalaFirmware.ino  (~400 lines)
 ─────────────────────────────────────────────────────
   1–  9   Version / name #defines
  10        #include "drive_config.h"

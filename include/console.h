@@ -54,9 +54,6 @@ public:
   // printServoPos() uses servoDispatch (a global), defined in AmidalaFirmware.ino.
   void printServoPos(uint16_t num);
 
-  void randomToggle();
-  void setVolumeNoResponse(uint8_t volume);
-  void playSound(int sndbank, int snd = 0);
   void setServo();
   void setDigitalOut();
   void outputString();
