@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "amidala_core.h"
+#include "core.h"
 
 // ---- HCR emotion / level constants (fallbacks for non-embedded builds) ------
 

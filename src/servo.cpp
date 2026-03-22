@@ -1,5 +1,5 @@
-#include "amidala_controller.h"
-#include "amidala_config.h"
+#include "controller.h"
+#include "config.h"
 
 // servoDispatch is the global ServoDispatchDirect instance defined in
 // AmidalaFirmware.ino. The concrete size (12) matches SizeOfArray(servoSettings).

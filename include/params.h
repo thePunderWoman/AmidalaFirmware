@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "amidala_core.h"
+#include "core.h"
 #include "drive_config.h"
 #include "button_actions.h"
 

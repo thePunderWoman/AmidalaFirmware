@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
 

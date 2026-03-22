@@ -10,7 +10,7 @@
 //   - An empty file returns true (opened OK) but delivers no characters.
 
 #include "arduino_mock.h"  // must come first – defines SD, File, Serial, etc.
-#include "amidala_config.h"
+#include "config.h"
 #include <unity.h>
 
 void setUp(void) {

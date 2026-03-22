@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 // isdigit(const char*, int) and atoi(const char*, int) are file-scope helpers
 // used only by processCommand() for servo/digital-out command parsing.

@@ -31,8 +31,8 @@
 #ifndef VMUSIC_SERIAL
 #include <hcr.h>
 #endif
-#include "amidala_core.h"
-#include "amidala_version.h"
+#include "core.h"
+#include "version.h"
 #include "pin_config.h"
 #include <EEPROM.h>
 #include <XBee.h>
@@ -43,13 +43,13 @@
 class AmidalaController;
 
 #include "button_actions.h"
-#include "amidala_audio.h"
-#include "amidala_config.h"
+#include "audio.h"
+#include "config.h"
 #include "console.h"
 #include "jevois_console.h"
 #include "rdh_serial.h"
 #include "xbee_remote.h"
-#include "amidala_params.h"
+#include "params.h"
 
 class AmidalaController : public SetupEvent, public AnimatedEvent {
 public:

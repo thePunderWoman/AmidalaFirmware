@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 // Hardware globals defined in AmidalaFirmware.ino:
 extern ServoDispatchDirect<12> servoDispatch;

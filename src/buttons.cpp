@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 void AmidalaConsole::process(ButtonAction &button) {
   AmidalaParameters &params = fController->params;

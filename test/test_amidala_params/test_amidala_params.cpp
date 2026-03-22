@@ -3,7 +3,7 @@
 //   AmidalaParameters — default values, EEPROM load, capacity constants
 
 #include "arduino_mock.h"
-#include "amidala_params.h"
+#include "params.h"
 #include <unity.h>
 #include <string.h>
 
