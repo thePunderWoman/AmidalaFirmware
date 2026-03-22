@@ -2,7 +2,7 @@
 //
 // Uncomment any of these before building to enable the corresponding
 // debug output over CONSOLE_SERIAL.  Must be included before ReelTwo.h
-// (i.e. before amidala_controller.h) so the macros are defined in time.
+// (i.e. before controller.h) so the macros are defined in time.
 
 #pragma once
 

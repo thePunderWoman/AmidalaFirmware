@@ -10,10 +10,10 @@
 //                    dome-side methods (volume, dome throttle, gesture input).
 //
 // DriveController and DomeController method bodies that call AmidalaController
-// are defined after AmidalaController in AmidalaFirmware.ino (same pattern as
-// JevoisConsole::init()) to avoid a circular header dependency.
+// are defined in src/drive_controllers.cpp to avoid a circular header
+// dependency.
 //
-// Depends on: JoystickController.h (Reeltwo), amidala_core.h,
+// Depends on: JoystickController.h (Reeltwo), core.h,
 //             millis() (Arduino / arduino_mock.h),
 //             map() (Arduino / arduino_mock.h)
 
@@ -161,7 +161,7 @@ public:
 
 // ---- DriveController --------------------------------------------------------
 // Method bodies (notify, onConnect, onDisconnect) are defined after
-// AmidalaController in AmidalaFirmware.ino.
+// AmidalaController in src/drive_controllers.cpp.
 
 class DriveController : public XBeePocketRemote {
 public:
@@ -176,7 +176,7 @@ public:
 
 // ---- DomeController ---------------------------------------------------------
 // Method bodies (notify, process, onConnect, onDisconnect) are defined after
-// AmidalaController in AmidalaFirmware.ino.
+// AmidalaController in src/drive_controllers.cpp.
 
 class DomeController : public XBeePocketRemote {
 public:

@@ -1,6 +1,6 @@
 #include "controller.h"
 
-// Hardware globals defined in AmidalaFirmware.ino:
+// Hardware globals defined in src/globals.cpp:
 extern ServoDispatchDirect<12> servoDispatch;
 extern ServoPD panservo;
 extern ServoPD tiltservo;
@@ -270,6 +270,7 @@ void AmidalaController::animate() {
         DEBUG_PRINTLN();
         DEBUG_PRINT("Expected I/O Sample, but got ");
         DEBUG_PRINT_HEX(fXBee.getResponse().getApiId());
+        DEBUG_PRINTLN();
       }
     } else if (fXBee.getResponse().isError()) {
 #ifdef USE_POCKET_REMOTE_DEBUG

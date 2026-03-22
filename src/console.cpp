@@ -148,7 +148,7 @@ void AmidalaConsole::monitorOutput() {
   print(F("\e[11;6H"));
   printNum(fController->getVolume(), 3);
   // Sound delay
-  print("\e[11;24H60 to 120 secs");
+  print(F("\e[11;24H60 to 120 secs"));
   // Dome mode
   print(F("\e[11;44H"));
   printNum(fController->getDomeMode(), 1);
@@ -156,7 +156,7 @@ void AmidalaConsole::monitorOutput() {
   print(F("\e[12;6H"));
   printNum(fController->getDomePosition(), 3);
   // Dome delay
-  print("\e[12;24H1 to 10 secs");
+  print(F("\e[12;24H1 to 10 secs"));
   // Dome home
   print(F("\e[12;44H"));
   printNum(fController->getDomeHome(), 3);

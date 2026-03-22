@@ -1,7 +1,7 @@
-// amidala_version.h
+// version.h
 // Firmware identity and communication-baud constants.
 //
-// Included by amidala_controller.h so every .cpp that pulls in the controller
+// Included by controller.h so every .cpp that pulls in the controller
 // header automatically gets these definitions.  FIRMWARE_NAME, VERSION_NUM,
 // BUILD_NUM, and BUILD_DATE are used by AmidalaConsole; RDH_BAUD_RATE is used
 // by AmidalaController::setup() and the .ino entry point.

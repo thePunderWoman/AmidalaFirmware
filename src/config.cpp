@@ -360,7 +360,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       case ButtonAction::kServo:
         b->servo.num = max(1, min(args[2], 8));
         b->servo.pos = (argcount >= 4) ? args[3] : 0;
-        b->servo.pos = min(max(b->servo.pos, 180), 90);
+        b->servo.pos = min(max(b->servo.pos, 0), 180);
         b->action = args[1];
         break;
       case ButtonAction::kDigitalOut:
@@ -376,8 +376,8 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         break;
       case ButtonAction::kAuxStr:
         b->aux.auxstring = min(args[2], MAX_AUX_STRINGS);
-        Serial.print("BUTTON AUX #");
-        Serial.println(b->aux.auxstring);
+        DEBUG_PRINT("BUTTON AUX #");
+        DEBUG_PRINTLN(b->aux.auxstring);
         if (b->action == 0)
           b->action = args[1];
         break;
@@ -427,7 +427,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       case ButtonAction::kServo:
         b->servo.num = max(1, min(args[2], 8));
         b->servo.pos = (argcount >= 4) ? args[3] : 0;
-        b->servo.pos = min(max(b->servo.pos, 180), 90);
+        b->servo.pos = min(max(b->servo.pos, 0), 180);
         b->action = args[1];
         break;
       case ButtonAction::kDigitalOut:
@@ -512,7 +512,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         case ButtonAction::kServo:
           b->servo.num = max(1, min(args[1], 8));
           b->servo.pos = (argcount >= 3) ? args[2] : 0;
-          b->servo.pos = min(max(b->servo.pos, 180), 90);
+          b->servo.pos = min(max(b->servo.pos, 0), 180);
           break;
         case ButtonAction::kDigitalOut:
           b->dout.num = max(1, min(args[1], 8));
@@ -525,8 +525,8 @@ bool AmidalaConfig::processConfig(const char *cmd) {
           break;
         case ButtonAction::kAuxStr:
           b->aux.auxstring = min(args[1], MAX_AUX_STRINGS);
-          Serial.print("GESTURE AUX #");
-          Serial.println(b->aux.auxstring);
+          DEBUG_PRINT("GESTURE AUX #");
+          DEBUG_PRINTLN(b->aux.auxstring);
           break;
         case ButtonAction::kI2CStr:
           b->i2cstr.target = min(args[1], 100);
@@ -566,9 +566,9 @@ bool AmidalaConfig::processConfig(const char *cmd) {
              intparam(cmd, "mindelay=", params.mindelay, 0, 1000) ||
              intparam(cmd, "maxdelay=", params.maxdelay, 0, 1000) ||
              intparam(cmd, "rvrmin=", params.rvrmin, 0, 100) ||
-             intparam(cmd, "rvrmax=", params.rvrmin, 900, 1023) ||
-             intparam(cmd, "rvlmin=", params.rvrmin, 0, 100) ||
-             intparam(cmd, "rvlmax=", params.rvrmin, 900, 1023) ||
+             intparam(cmd, "rvrmax=", params.rvrmax, 900, 1023) ||
+             intparam(cmd, "rvlmin=", params.rvlmin, 0, 100) ||
+             intparam(cmd, "rvlmax=", params.rvlmax, 900, 1023) ||
              intparam(cmd, "minpulse=", params.minpulse, 0, 2500) ||
              intparam(cmd, "maxpulse=", params.maxpulse, 0, 2500) ||
              intparam(cmd, "rcchn=", params.rcchn, 6, 8) ||
@@ -601,6 +601,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     params.xbl = strtoul(cmd, NULL, 16);
     return true;
   } else if (boolparam(cmd, "domeimu=", boolarg)) {
+    params.domeimu = boolarg;
     return true;
   } else if (intparam(cmd, "domespeed=", params.domespeed, 0, 100)) {
     domeDrive->setMaxSpeed(params.domespeed);

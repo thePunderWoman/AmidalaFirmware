@@ -1,6 +1,6 @@
-// amidala_core.h
-// Pure-logic classes and helper functions extracted from AmidalaFirmware.ino.
-// Included by AmidalaFirmware.ino (where Arduino types are already available)
+// core.h
+// Pure-logic classes and helper functions for Amidala Firmware.
+// Included by controller.h (where Arduino types are already available)
 // and by unit tests (where test/arduino_mock.h provides the necessary stubs).
 
 #pragma once

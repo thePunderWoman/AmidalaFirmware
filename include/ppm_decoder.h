@@ -33,8 +33,8 @@ public:
     fPass = 0;
     fPinState = LOW;
     fCurrent = fChannelCount;
-    memset(fChannel, '\0', sizeof(fChannelCount) * sizeof(uint16_t));
-    memset(fLastChannel, '\0', sizeof(fChannelCount) * sizeof(uint16_t));
+    memset(fChannel,     0, fChannelCount * sizeof(uint16_t));
+    memset(fLastChannel, 0, fChannelCount * sizeof(uint16_t));
   }
 
   bool decode() {
@@ -60,7 +60,7 @@ public:
 #ifdef USE_PPM_DEBUG
             DEBUG_PRINT("CH");
             DEBUG_PRINT(i + 1);
-            DEBUG_PRINT.print(": ");
+            DEBUG_PRINT(": ");
             DEBUG_PRINT(fChannel[i]);
             DEBUG_PRINT(" ");
 #endif

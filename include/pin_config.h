@@ -4,8 +4,8 @@
 // that wiring changes require edits in exactly one place.
 //
 // Note: AUX_SERIAL is conditionally defined based on DOME_DRIVE_SERIAL and
-// RDH_SERIAL. Those symbols come from the drive-system #defines at the top of
-// AmidalaFirmware.ino, which are resolved before this header is included.
+// RDH_SERIAL. Those symbols come from drive_config.h and rdh_serial.h,
+// which must be included (via controller.h) before this header is included.
 //
 // Note: If VMUSIC_SERIAL is ever enabled, move #include "pin_config.h" in the
 // .ino to before the #ifndef VMUSIC_SERIAL / #include <hcr.h> block so that

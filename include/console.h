@@ -1,8 +1,8 @@
 // console.h
 // AmidalaConsole: serial command console for Amidala Firmware.
 //
-// Class declaration only — all method bodies are defined in AmidalaFirmware.ino
-// after AmidalaController is fully declared (they call back into the controller).
+// Class declaration only — all method bodies are defined in src/console.cpp
+// and src/buttons.cpp (they call back into the controller).
 //
 // Depends on: Print (Arduino / arduino_mock.h),
 //             button_actions.h (ButtonAction)
@@ -37,7 +37,7 @@ public:
   void processButton(unsigned num);
   void processLongButton(unsigned num);
 
-  // write() uses CONSOLE_SERIAL (a global), defined in AmidalaFirmware.ino.
+  // write() uses CONSOLE_SERIAL, defined in pin_config.h.
   virtual size_t write(uint8_t ch) override;
   virtual size_t write(const uint8_t *buffer, size_t size) override;
 
@@ -53,8 +53,8 @@ public:
     print(buf);
   }
 
-  // printServoPos() uses servoDispatch (a global),
-  // defined in AmidalaFirmware.ino. Body is in src/amidala_servo.cpp.
+  // printServoPos() uses servoDispatch (extern global from src/globals.cpp).
+  // Body is in src/servo.cpp.
   void printServoPos(uint16_t num);
 
   void setServo();

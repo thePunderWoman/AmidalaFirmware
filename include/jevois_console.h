@@ -3,8 +3,8 @@
 //
 // Only compiled when EXPERIMENTAL_JEVOIS_STEERING is defined.
 // Class declaration only — processCommand(), process(), and init() bodies are
-// defined in AmidalaFirmware.ino (they reference globals tiltservo, AUX_SERIAL,
-// and AmidalaController).
+// defined in src/jevois_console.cpp (they reference globals tiltservo,
+// AUX_SERIAL, and AmidalaController).
 //
 // Depends on: drive/TargetSteering.h (TargetSteering)
 
@@ -19,7 +19,7 @@
 // Minimal stub for native unit tests.  The full TargetSteering requires
 // Reeltwo/Arduino headers (ReelTwo.h → Arduino.h) that are unavailable on the
 // host.  All JevoisConsole methods that call TargetSteering are out-of-class
-// and compiled only in the embedded build (AmidalaFirmware.ino).
+// and compiled only in the embedded build (src/jevois_console.cpp).
 #ifndef TargetSteering_h
 #define TargetSteering_h
 struct TargetSteering {
@@ -37,7 +37,7 @@ class AmidalaController;
 
 class JevoisConsole {
 public:
-  JevoisConsole() : fSteering(300) {}
+  JevoisConsole() : fSteering(300), fPos(0), fLastTime(0) {}
   virtual ~JevoisConsole() {}
 
   void init(AmidalaController *controller);

@@ -1,9 +1,9 @@
-// amidala_config.h
+// config.h
 // Configuration layer: AmidalaConfig class + readConfig() template functions.
 //
 // AmidalaConfig manages parsing, displaying, and persisting the robot's
-// configuration. Method bodies are in src/amidala_config.cpp, except for
-// applyServoConfig() which lives in src/amidala_servo.cpp so all servoDispatch
+// configuration. Method bodies are in src/config.cpp, except for
+// applyServoConfig() which lives in src/servo.cpp so all servoDispatch
 // access stays in one file.
 //
 // readConfig() reads config.txt from either a VMusic2 USB board (when
@@ -38,8 +38,8 @@ public:
   void showCurrentConfiguration();
   void writeCurrentConfiguration();
 
-  // Implemented in src/amidala_servo.cpp — bridges into servoDispatch so that
-  // amidala_config.cpp has no direct dependency on the servo global.
+  // Implemented in src/servo.cpp — bridges into servoDispatch so that
+  // config.cpp has no direct dependency on the servo global.
   void applyServoConfig(unsigned num, uint16_t minpulse, uint16_t maxpulse,
                         float neutral);
 

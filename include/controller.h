@@ -4,9 +4,9 @@
 // AmidalaController class declaration.
 //
 // The constructor, setup(), animate(), emergencyStop(), and domeEmergencyStop()
-// are declared here and defined in src/amidala_controller.cpp — they reference
+// are declared here and defined in src/controller.cpp — they reference
 // servoDispatch, panservo, and tiltservo, which are globals defined in
-// AmidalaFirmware.ino (accessed via extern declarations in the .cpp).
+// src/globals.cpp (accessed via extern declarations in controller.cpp).
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ReelTwo.h"
@@ -53,7 +53,7 @@ class AmidalaController;
 
 class AmidalaController : public SetupEvent, public AnimatedEvent {
 public:
-  // Defined in src/amidala_controller.cpp — initialiser list references
+  // Defined in src/controller.cpp — initialiser list references
   // servoDispatch (extern declared in that translation unit).
   AmidalaController();
 
@@ -199,7 +199,7 @@ public:
 #endif
   }
 
-  // Defined in src/amidala_controller.cpp — references servoDispatch global.
+  // Defined in src/controller.cpp — references servoDispatch global.
   void emergencyStop();
 
   void enableDomeController() {
@@ -215,7 +215,7 @@ public:
 #endif
   }
 
-  // Defined in src/amidala_controller.cpp — references servoDispatch global.
+  // Defined in src/controller.cpp — references servoDispatch global.
   void domeEmergencyStop();
 
   void setDigitalPin(int pin, bool state) {
@@ -257,11 +257,11 @@ public:
     AUX_SERIAL.write(ch);
   }
 
-  // Defined in src/amidala_controller.cpp — references servoDispatch, panservo,
+  // Defined in src/controller.cpp — references servoDispatch, panservo,
   // and tiltservo (extern declared in that translation unit).
   virtual void setup() override;
 
-  // Defined in src/amidala_controller.cpp — references servoDispatch global.
+  // Defined in src/controller.cpp — references servoDispatch global.
   virtual void animate() override;
 
 private:
@@ -294,9 +294,4 @@ private:
 #endif
   }
 
-  friend class AmidalaAudio;
-  friend class AmidalaConfig;
-  friend class AmidalaConsole;
-  friend class DriveController;
-  friend class DomeController;
 };

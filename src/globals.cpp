@@ -1,4 +1,4 @@
-// amidala_globals.cpp — hardware-level globals.
+// globals.cpp — hardware-level globals.
 //
 // ServoDispatchDirect.h is included HERE and nowhere else.
 // ServoDispatchPrivate.h (pulled in transitively) defines hardware ISR
