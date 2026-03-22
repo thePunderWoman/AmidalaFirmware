@@ -80,7 +80,7 @@ after each step before committing.  Footprint must remain 85.1%/28.5%.
 
 ---
 
-#### PR 2a — `amidala-controller-header`: create `include/amidala_controller.h`
+#### ~~PR 2a — `amidala-controller-header`: create `include/amidala_controller.h`~~ ✅ PR #19
 
 This is the key enabler.  No method bodies move yet — just extract the class
 *declaration* so that other `.cpp` files can include it.

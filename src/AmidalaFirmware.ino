@@ -43,33 +43,7 @@
 
 ////////////////////////////////
 
-#include "ReelTwo.h"
-#if DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-#include "drive/TankDrivePWM.h"
-#endif
-#if DRIVE_SYSTEM >= DRIVE_SYSTEM_ROBOTEQ_PWM &&                                \
-    DRIVE_SYSTEM <= DRIVE_SYSTEM_ROBOTEQ_PWM_SERIAL
-#include "drive/TankDriveRoboteq.h"
-#endif
-#if DOME_DRIVE == DRIVE_SYSTEM_SABER
-#include "drive/TankDriveSabertooth.h"
-#endif
-#if DOME_DRIVE == DOME_DRIVE_PWM
-#include "drive/DomeDrivePWM.h"
-#elif DOME_DRIVE == DOME_DRIVE_SABER
-#include "drive/DomeDriveSabertooth.h"
-#endif
-#include "ServoDispatchDirect.h"
-#include "ServoEasing.h"
-#include "core/MedianSampleBuffer.h"
-#include "core/DelayCall.h"
-#include <Wire.h>
-#ifndef VMUSIC_SERIAL
-#include <hcr.h>
-#endif
-#include "amidala_core.h"
-#include "config_reader.h"
-#include "pin_config.h"
+#include "amidala_controller.h"
 
 ////////////////////////////////
 
@@ -89,25 +63,6 @@ ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
 
 ////////////////////////////////
 
-// Gesture class is defined in amidala_core.h
-
-////////////////////////////////
-
-#include <EEPROM.h>
-#include <XBee.h>
-#include "ppm_decoder.h"
-#include "i2c_utils.h"
-
-////////////////////////////////
-
-class AmidalaController;
-static void hcrDelayedInit();
-
-////////////////////////////////
-
-#include "button_actions.h"
-#include "console.h"
-
 // ServoPD class is defined in amidala_core.h
 
 // Pan and tilt servos zero values and +/- angular range, in degrees:
@@ -122,606 +77,373 @@ ServoPD tiltservo(300, 100, TILTZERO, TILTRANGE);
 
 ////////////////////////////////
 
-#include "jevois_console.h"
+static void hcrDelayedInit();
 
 ////////////////////////////////
-
-#include "rdh_serial.h"
-#include "xbee_remote.h"
-#include "amidala_params.h"
-
+// AmidalaController method bodies that reference servoDispatch or other
+// globals defined above.
 ////////////////////////////////
 
-class AmidalaController : public SetupEvent, public AnimatedEvent {
-public:
-  AmidalaController()
-      : fConsole(),
-        fHCR(&Serial3, HCR_BAUD_RATE),
+AmidalaController::AmidalaController()
+    : fConsole(),
+      fHCR(&Serial3, HCR_BAUD_RATE),
 #ifdef VMUSIC_SERIAL
-        fVMusic(VMUSIC_SERIAL),
+      fVMusic(VMUSIC_SERIAL),
 #endif
-        fDriveStick(this), fDomeStick(this),
+      fDriveStick(this), fDomeStick(this),
 #ifdef RDH_SERIAL
-        fAutoDome(RDH_SERIAL),
+      fAutoDome(RDH_SERIAL),
 #endif
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
-        fTankDrive(128, DRIVE_SERIAL, fDriveStick),
+      fTankDrive(128, DRIVE_SERIAL, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-        fTankDrive(servoDispatch, 1, 0, 4 fDriveStick),
+      fTankDrive(servoDispatch, 1, 0, 4 fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM
-        fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
+      fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_SERIAL
-        fTankDrive(DRIVE_SERIAL, fDriveStick),
+      fTankDrive(DRIVE_SERIAL, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM_SERIAL
-        fTankDrive(DRIVE_SERIAL, servoDispatch, 1, 0, 4, fDriveStick),
+      fTankDrive(DRIVE_SERIAL, servoDispatch, 1, 0, 4, fDriveStick),
 #elif defined(DRIVE_SYSTEM)
 #error Unsupported DRIVE_SYSTEM
 #endif
 #if DOME_DRIVE == DOME_DRIVE_SABER
-        fDomeDrive(129, DOME_DRIVE_SERIAL, fDomeStick),
+      fDomeDrive(129, DOME_DRIVE_SERIAL, fDomeStick),
 #elif DOME_DRIVE == DOME_DRIVE_PWM
-        fDomeDrive(servoDispatch, 3, fDomeStick),
+      fDomeDrive(servoDispatch, 3, fDomeStick),
 #elif defined(DOME_DRIVE)
 #error Unsupported DOME_DRIVE
 #endif
-        fPPMDecoder(PPMIN_PIN, params.getRadioChannelCount()) {
-  }
+      fPPMDecoder(PPMIN_PIN, params.getRadioChannelCount()) {
+}
 
-  inline void processGesture(const char *gesture) {
-    fConsole.processGesture(gesture);
-  }
-
-  inline void processButton(unsigned num) { fConsole.processButton(num); }
-
-  inline void processLongButton(unsigned num) {
-    fConsole.processLongButton(num);
-  }
-
-  inline void setVolumeNoResponse(unsigned volume) {
-    fConsole.setVolumeNoResponse(volume);
-  }
-
-
-  AmidalaConsole fConsole;
-#ifdef VMUSIC_SERIAL
-  VMusic fVMusic;
-#else
-  HCRVocalizer fHCR;
-#endif
-#ifdef EXPERIMENTAL_JEVOIS_STEERING
-  JevoisConsole fJevois;
-#endif
-  DriveController fDriveStick;
-  DomeController fDomeStick;
-  XBeePocketRemote *remote[2] = {&fDriveStick, &fDomeStick};
-  AmidalaParameters params;
-#ifdef RDH_SERIAL
-  RDHSerial fAutoDome;
-#endif
-
-#if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
-  TankDriveSabertooth fTankDrive;
-#elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-  TankDrivePWM fTankDrive;
-#elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM
-  TankDriveRoboteq fTankDrive;
-#elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_SERIAL
-  TankDriveRoboteq fTankDrive;
-#elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM_SERIAL
-  TankDriveRoboteq fTankDrive;
-#elif defined(DRIVE_SYSTEM)
-#error Unsupported DRIVE_SYSTEM
-#endif
-
-#if DOME_DRIVE == DOME_DRIVE_SABER
-  DomeDriveSabertooth fDomeDrive;
-#elif DOME_DRIVE == DOME_DRIVE_PWM
-  DomeDrivePWM fDomeDrive;
-#elif defined(DOME_DRIVE)
-#error Unsupported DOME_DRIVE
-#endif
-
-  bool checkRCMode() {
-    static bool sRCMode;
-    if (digitalRead(RCSEL_PIN) == LOW) {
-      if (!sRCMode) {
-        fConsole.println("RC Enabled (" +
-                         String(params.getRadioChannelCount()) + " Channels)");
-        digitalWrite(STATUS_RC_PIN, HIGH);
-        sRCMode = true;
-      }
-      return true;
-    }
-    if (sRCMode) {
-      digitalWrite(STATUS_RC_PIN, LOW);
-      sRCMode = false;
-    }
-    return false;
-  }
-
-  bool checkSel2Mode() {
-    static bool sSel2Mode;
-    if (digitalRead(SEL2_PIN) == LOW) {
-      if (!sSel2Mode) {
-        // digitalWrite?
-        sSel2Mode = true;
-      }
-      return true;
-    }
-    if (sSel2Mode) {
-      // digitalWrite?
-      sSel2Mode = false;
-    }
-    return false;
-  }
-
-  unsigned getDomeMode() {
-#ifdef RDH_SERIAL
-    return fAutoDome.getMode();
-#else
-    return 0;
-#endif
-  }
-
-  unsigned getDomeHome() {
-#ifdef RDH_SERIAL
-    return fAutoDome.getHome();
-#else
-    return 0;
-#endif
-  }
-
-  unsigned getDomePosition() {
-#ifdef RDH_SERIAL
-    return fAutoDome.getAngle();
-#else
-    return 0;
-#endif
-  }
-
-  bool getDomeIMU() { return params.domeimu; }
-
-  void setDomeHome(unsigned pos) {
-#ifdef RDH_SERIAL
-    fAutoDome.setDomeHomePosition(pos);
-#endif
-  }
-
-  unsigned getVolume() { return params.volume; }
-
-  void setTargetSteering(TargetSteering *steering) {
+void AmidalaController::emergencyStop() {
 #ifdef DRIVE_SYSTEM
-    fTankDrive.setTargetSteering(steering);
+  fTankDrive.stop();
+  // Force neutral PWM signals as a safety backup
+  servoDispatch.moveTo(1, 0.5); // Drive Left
+  servoDispatch.moveTo(0, 0.5); // Drive Right
+  // If using serial, the Roboteq script handles its own RWD 100 watchdog
 #endif
-  }
+}
 
-  void enableController() {
-#ifdef DRIVE_SYSTEM
-    fTankDrive.setEnable(true);
-#endif
-  }
-
-  void disableController() {
-    emergencyStop();
-#ifdef DRIVE_SYSTEM
-    fTankDrive.setEnable(false);
-#endif
-  }
-
-  void emergencyStop() {
-#ifdef DRIVE_SYSTEM
-    fTankDrive.stop();
-    // Force neutral PWM signals as a safety backup
-    servoDispatch.moveTo(1, 0.5); // Drive Left
-    servoDispatch.moveTo(0, 0.5); // Drive Right
-    // If using serial, the Roboteq script handles its own RWD 100 watchdog
-#endif
-  }
-
-  void enableDomeController() {
+void AmidalaController::domeEmergencyStop() {
 #ifdef DOME_DRIVE
-    fDomeDrive.setEnable(true);
+  fDomeDrive.stop();
+  // Force neutral PWM signal as a safety backup
+  servoDispatch.moveTo(3, 0.5); // Dome
 #endif
-  }
+}
 
-  void disableDomeController() {
-#ifdef DOME_DRIVE
-    domeEmergencyStop();
-    fDomeDrive.setEnable(false);
-#endif
-  }
+void AmidalaController::setup() {
+  fConsole.println(F("Loading config from EEPROM"));
+  params.init();
 
-  void domeEmergencyStop() {
-#ifdef DOME_DRIVE
-    fDomeDrive.stop();
-    // Force neutral PWM signal as a safety backup
-    servoDispatch.moveTo(3, 0.5); // Dome
-#endif
-  }
-
-  void setDigitalPin(int pin, bool state) {
-    if (pin >= 1 && pin <= 8) {
-      params.D[--pin].state = state;
-      digitalWrite(DOUT1_PIN + pin, (state) ? HIGH : LOW);
-    }
-  }
-
-  bool getDigitalPin(int pin) {
-    if (pin >= 1 && pin <= 8) {
-      return params.D[--pin].state;
-    }
-    return false;
-  }
-
-  bool loadConfig() {
-#ifdef VMUSIC_SERIAL
-    fConsole.println(F("Waiting for VMusic"));
-    if (!fVMusic.init()) {
-      fConsole.println(F("VMusic unavailable"));
-      return false;
-    }
-    fConsole.println(F("Reading Config File"));
-    return readConfig(fVMusic, fConsole);
-#else
-    return readConfig(fConsole);
-#endif
-  }
-
-  void sendAuxString(const char *str) {
-    char ch;
-    while ((ch = *str++) != '\0') {
-      if (ch == params.auxdelim)
-        ch = params.auxeol;
-      AUX_SERIAL.write(ch);
-    }
-    ch = params.auxeol;
-    AUX_SERIAL.write(ch);
-  }
-
-  virtual void setup() override {
-    fConsole.println(F("Loading config from EEPROM"));
-    params.init();
-
-    fConsole.init(this);
+  fConsole.init(this);
 
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
-    fJevois.init(this);
+  fJevois.init(this);
 #endif
 
-    fConsole.println(F("Reading Config File"));
-    fConsole.setMinimal(!loadConfig());
-    fConsole.showCurrentConfiguration();
+  fConsole.println(F("Reading Config File"));
+  fConsole.setMinimal(!loadConfig());
+  fConsole.showCurrentConfiguration();
 
-    fConsole.println(F("Activating Servos"));
-    fConsole.println(F("Activating Digital Outputs"));
-    fConsole.println(F("Init i2c Bus"));
+  fConsole.println(F("Activating Servos"));
+  fConsole.println(F("Activating Digital Outputs"));
+  fConsole.println(F("Init i2c Bus"));
 
-    Wire.begin();
-    Wire.setClock(100000L);
+  Wire.begin();
+  Wire.setClock(100000L);
 #if defined(WIRE_HAS_TIMEOUT)
-    Wire.setWireTimeout(3000, true);
+  Wire.setWireTimeout(3000, true);
 #endif
 
-    if (params.autocorrect)
-      fConsole.println(F("Auto Correct Gestures Enabled"));
+  if (params.autocorrect)
+    fConsole.println(F("Auto Correct Gestures Enabled"));
 
 #ifdef AUX_SERIAL
-    AUX_SERIAL.begin(params.auxbaud);
-    sendAuxString(params.auxinit);
+  AUX_SERIAL.begin(params.auxbaud);
+  sendAuxString(params.auxinit);
 #ifndef VMUSIC_SERIAL
-    if (params.audiohw == AUDIO_HW_HCR) {
-      fHCR.begin();
-      DelayCall::schedule(hcrDelayedInit, 5000);
-    }
+  if (params.audiohw == AUDIO_HW_HCR) {
+    fHCR.begin();
+    DelayCall::schedule(hcrDelayedInit, 5000);
+  }
 #endif
 #endif
 
-    remote[0]->addr = params.xbr;
-    remote[1]->addr = params.xbl;
-    remote[0]->type = remote[0]->kFailsafe;
-    remote[1]->type = remote[1]->kFailsafe;
+  remote[0]->addr = params.xbr;
+  remote[1]->addr = params.xbl;
+  remote[0]->type = remote[0]->kFailsafe;
+  remote[1]->type = remote[1]->kFailsafe;
 
-    pinMode(STATUS_J1_PIN, OUTPUT);
-    pinMode(STATUS_J2_PIN, OUTPUT);
-    pinMode(STATUS_RC_PIN, OUTPUT);
-    pinMode(STATUS_S1_PIN, OUTPUT);
-    pinMode(STATUS_S2_PIN, OUTPUT);
-    pinMode(STATUS_S3_PIN, OUTPUT);
-    pinMode(STATUS_S4_PIN, OUTPUT);
+  pinMode(STATUS_J1_PIN, OUTPUT);
+  pinMode(STATUS_J2_PIN, OUTPUT);
+  pinMode(STATUS_RC_PIN, OUTPUT);
+  pinMode(STATUS_S1_PIN, OUTPUT);
+  pinMode(STATUS_S2_PIN, OUTPUT);
+  pinMode(STATUS_S3_PIN, OUTPUT);
+  pinMode(STATUS_S4_PIN, OUTPUT);
 
-    pinMode(DOUT1_PIN, OUTPUT);
-    pinMode(DOUT2_PIN, OUTPUT);
-    pinMode(DOUT3_PIN, OUTPUT);
-    pinMode(DOUT4_PIN, OUTPUT);
-    pinMode(DOUT5_PIN, OUTPUT);
-    pinMode(DOUT6_PIN, OUTPUT);
-    pinMode(DOUT7_PIN, OUTPUT);
-    pinMode(DOUT8_PIN, OUTPUT);
+  pinMode(DOUT1_PIN, OUTPUT);
+  pinMode(DOUT2_PIN, OUTPUT);
+  pinMode(DOUT3_PIN, OUTPUT);
+  pinMode(DOUT4_PIN, OUTPUT);
+  pinMode(DOUT5_PIN, OUTPUT);
+  pinMode(DOUT6_PIN, OUTPUT);
+  pinMode(DOUT7_PIN, OUTPUT);
+  pinMode(DOUT8_PIN, OUTPUT);
 
-    pinMode(ANALOG2_PIN, INPUT);
+  pinMode(ANALOG2_PIN, INPUT);
 
-    pinMode(PPMIN_PIN, INPUT);
+  pinMode(PPMIN_PIN, INPUT);
 
-    pinMode(SEL2_PIN, INPUT_PULLUP);
-    pinMode(RCSEL_PIN, INPUT_PULLUP);
+  pinMode(SEL2_PIN, INPUT_PULLUP);
+  pinMode(RCSEL_PIN, INPUT_PULLUP);
 
-    setDigitalPin(1, false);
-    setDigitalPin(2, false);
-    setDigitalPin(3, false);
-    setDigitalPin(4, false);
-    setDigitalPin(5, false);
-    setDigitalPin(6, false);
-    setDigitalPin(7, false);
-    setDigitalPin(8, false);
+  setDigitalPin(1, false);
+  setDigitalPin(2, false);
+  setDigitalPin(3, false);
+  setDigitalPin(4, false);
+  setDigitalPin(5, false);
+  setDigitalPin(6, false);
+  setDigitalPin(7, false);
+  setDigitalPin(8, false);
 
-    fXBee.setSerial(XBEE_SERIAL);
+  fXBee.setSerial(XBEE_SERIAL);
 
-    fTankDrive.setMaxSpeed(MAXIMUM_SPEED);
-    fTankDrive.setThrottleAccelerationScale(ACCELERATION_SCALE);
-    fTankDrive.setThrottleDecelerationScale(DECELRATION_SCALE);
-    fTankDrive.setTurnAccelerationScale(ACCELERATION_SCALE * 2);
-    fTankDrive.setTurnDecelerationScale(DECELRATION_SCALE);
-    fTankDrive.setGuestSpeedModifier(MAXIMUM_GUEST_SPEED);
-    fTankDrive.setScaling(SCALING);
-    fTankDrive.setChannelMixing(CHANNEL_MIXING);
+  fTankDrive.setMaxSpeed(MAXIMUM_SPEED);
+  fTankDrive.setThrottleAccelerationScale(ACCELERATION_SCALE);
+  fTankDrive.setThrottleDecelerationScale(DECELRATION_SCALE);
+  fTankDrive.setTurnAccelerationScale(ACCELERATION_SCALE * 2);
+  fTankDrive.setTurnDecelerationScale(DECELRATION_SCALE);
+  fTankDrive.setGuestSpeedModifier(MAXIMUM_GUEST_SPEED);
+  fTankDrive.setScaling(SCALING);
+  fTankDrive.setChannelMixing(CHANNEL_MIXING);
 
 #ifdef DOME_DRIVE
-    fDomeDrive.setMaxSpeed(DOME_MAXIMUM_SPEED);
-    fDomeDrive.setInverted(DEFAULT_DOME_INVERTED);
-    fDomeDrive.setScaling(false);
-    fDomeDrive.setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
-    fDomeDrive.setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);
-    // fDomeDrive.setDomePosition(&fAutoDome);
+  fDomeDrive.setMaxSpeed(DOME_MAXIMUM_SPEED);
+  fDomeDrive.setInverted(DEFAULT_DOME_INVERTED);
+  fDomeDrive.setScaling(false);
+  fDomeDrive.setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
+  fDomeDrive.setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);
+  // fDomeDrive.setDomePosition(&fAutoDome);
 #endif
 
-    for (unsigned i = 0; i < params.getServoCount(); i++) {
-      uint16_t minpulse =
-          params.S[i].minpulse ? params.S[i].minpulse : params.minpulse;
-      uint16_t maxpulse =
-          params.S[i].maxpulse ? params.S[i].maxpulse : params.maxpulse;
+  for (unsigned i = 0; i < params.getServoCount(); i++) {
+    uint16_t minpulse =
+        params.S[i].minpulse ? params.S[i].minpulse : params.minpulse;
+    uint16_t maxpulse =
+        params.S[i].maxpulse ? params.S[i].maxpulse : params.maxpulse;
 
-      float neutral_percent = float(params.S[i].n) / 180.0f;
-      bool reversed = params.S[i].r;
+    float neutral_percent = float(params.S[i].n) / 180.0f;
+    bool reversed = params.S[i].r;
 
-      if (i == 3) {
-        if (!params.domeflip) {
-          reversed = !reversed;
-        }
-      } else if (reversed) {
-        uint16_t temp = maxpulse;
-        maxpulse = minpulse;
-        minpulse = temp;
+    if (i == 3) {
+      if (!params.domeflip) {
+        reversed = !reversed;
       }
-
-      uint16_t neutralpulse =
-          (uint16_t)((int32_t)minpulse +
-                     (int32_t)(neutral_percent *
-                               ((int32_t)maxpulse - (int32_t)minpulse)));
-
-      servoDispatch.setServo(i, SERVO1_PIN + i, minpulse, maxpulse,
-                             neutralpulse, 0);
+    } else if (reversed) {
+      uint16_t temp = maxpulse;
+      maxpulse = minpulse;
+      minpulse = temp;
     }
-  }
 
-  virtual void animate() override {
-    fConsole.process();
+    uint16_t neutralpulse =
+        (uint16_t)((int32_t)minpulse +
+                   (int32_t)(neutral_percent *
+                             ((int32_t)maxpulse - (int32_t)minpulse)));
+
+    servoDispatch.setServo(i, SERVO1_PIN + i, minpulse, maxpulse,
+                           neutralpulse, 0);
+  }
+}
+
+void AmidalaController::animate() {
+  fConsole.process();
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
-    fJevois.process();
+  fJevois.process();
 #endif
 #ifdef RDH_SERIAL
-    fAutoDome.process();
+  fAutoDome.process();
 #endif
 #ifndef VMUSIC_SERIAL
-    if (params.audiohw == AUDIO_HW_HCR) {
-      // fHCR.update();
-    }
+  if (params.audiohw == AUDIO_HW_HCR) {
+    // fHCR.update();
+  }
 #else
-    if (params.audiohw == AUDIO_HW_VMUSIC) {
-      fVMusic.process();
-    }
+  if (params.audiohw == AUDIO_HW_VMUSIC) {
+    fVMusic.process();
+  }
 #endif
 
-    // TODO THIS IS HARDCODED FOR PWM!!!
-    if (servoDispatch.currentPos(0) != 1450 ||
-        servoDispatch.currentPos(1) != 1500) {
-      // digital out 7
-      if (fDriveStateMillis + 1000 < millis()) {
-        setDigitalPin(7, true);
-        fDriveStateMillis = millis();
-      }
-    }
-    // TODO THIS IS HARDCODED FOR PWM!!!
-    else if (getDigitalPin(7) && fDriveStateMillis + 1000 < millis()) {
-      setDigitalPin(7, false);
+  // TODO THIS IS HARDCODED FOR PWM!!!
+  if (servoDispatch.currentPos(0) != 1450 ||
+      servoDispatch.currentPos(1) != 1500) {
+    // digital out 7
+    if (fDriveStateMillis + 1000 < millis()) {
+      setDigitalPin(7, true);
       fDriveStateMillis = millis();
     }
+  }
+  // TODO THIS IS HARDCODED FOR PWM!!!
+  else if (getDigitalPin(7) && fDriveStateMillis + 1000 < millis()) {
+    setDigitalPin(7, false);
+    fDriveStateMillis = millis();
+  }
 
-    // TODO THIS IS HARDCODED FOR PWM!!!
-    if (fDomeDrive.isMoving() && fDomeDrive.idle()) {
-      if (getDomeThrottle() < 0.1 && fDomeStateMillis + 1000 < millis()) {
-        // digital out 8
-        DEBUG_PRINTLN("DOME ACTIVE");
-        setDigitalPin(8, true);
-        fDomeStateMillis = millis();
-      }
-    }
-    // TODO THIS IS HARDCODED FOR PWM!!!
-    else if (getDigitalPin(8)) {
-      DEBUG_PRINTLN("DOME INACTIVE");
-      setDigitalPin(8, false);
+  // TODO THIS IS HARDCODED FOR PWM!!!
+  if (fDomeDrive.isMoving() && fDomeDrive.idle()) {
+    if (getDomeThrottle() < 0.1 && fDomeStateMillis + 1000 < millis()) {
+      // digital out 8
+      DEBUG_PRINTLN("DOME ACTIVE");
+      setDigitalPin(8, true);
       fDomeStateMillis = millis();
     }
+  }
+  // TODO THIS IS HARDCODED FOR PWM!!!
+  else if (getDigitalPin(8)) {
+    DEBUG_PRINTLN("DOME INACTIVE");
+    setDigitalPin(8, false);
+    fDomeStateMillis = millis();
+  }
 
-    if (checkRCMode() && remote[0]->failsafe() && remote[0]->failsafeNotice &&
-        remote[1]->failsafe() && remote[1]->failsafeNotice) {
-      // Both Pocket Remotes are disabled enable RC controller
-      fPPMDecoder.init();
-      remote[0]->type = remote[0]->kRC;
-      remote[1]->type = remote[1]->kRC;
+  if (checkRCMode() && remote[0]->failsafe() && remote[0]->failsafeNotice &&
+      remote[1]->failsafe() && remote[1]->failsafeNotice) {
+    // Both Pocket Remotes are disabled enable RC controller
+    fPPMDecoder.init();
+    remote[0]->type = remote[0]->kRC;
+    remote[1]->type = remote[1]->kRC;
+  }
+  if (checkRCMode() && remote[0]->type == remote[0]->kRC &&
+      !XBEE_SERIAL.available()) {
+    if (fPPMDecoder.decode()) {
+      remote[0]->x = fPPMDecoder.channel(0, 0, 1024, 512);
+      remote[0]->y = fPPMDecoder.channel(1, 0, 1024, 512);
+      remote[0]->w1 = fPPMDecoder.channel(4, 0, 1024, 0);
+      remote[0]->update();
+
+      // DEBUG_PRINT("OUT ");
+      // DEBUG_PRINT(remote[0]->x);
+      // DEBUG_PRINT(' ');
+      // DEBUG_PRINT(remote[0]->y);
+      // DEBUG_PRINTLN();
+
+      remote[1]->x = fPPMDecoder.channel(2, 0, 1024, 512);
+      remote[1]->y = fPPMDecoder.channel(3, 0, 1024, 512);
+      remote[1]->w1 = fPPMDecoder.channel(5, 0, 1024, 0);
+      remote[1]->update();
     }
-    if (checkRCMode() && remote[0]->type == remote[0]->kRC &&
-        !XBEE_SERIAL.available()) {
-      if (fPPMDecoder.decode()) {
-        remote[0]->x = fPPMDecoder.channel(0, 0, 1024, 512);
-        remote[0]->y = fPPMDecoder.channel(1, 0, 1024, 512);
-        remote[0]->w1 = fPPMDecoder.channel(4, 0, 1024, 0);
-        remote[0]->update();
+  } else {
+    fXBee.readPacket();
+    if (fXBee.getResponse().isAvailable()) {
+      if (fXBee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
+        fXBee.getResponse().getZBRxIoSampleResponse(fResponse);
+        if (fResponse.containsAnalog() && fResponse.containsDigital()) {
+          uint32_t addr = fResponse.getRemoteAddress64().getLsb();
+          for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
+            auto r = remote[i];
+            if (addr == r->addr) {
+              r->y = fResponse.getAnalog(0);
+              r->x = fResponse.getAnalog(1);
+              r->w1 = fResponse.getAnalog(2);
+              r->w2 = fResponse.getAnalog(3);
 
-        // DEBUG_PRINT("OUT ");
-        // DEBUG_PRINT(remote[0]->x);
-        // DEBUG_PRINT(' ');
-        // DEBUG_PRINT(remote[0]->y);
-        // DEBUG_PRINTLN();
-
-        remote[1]->x = fPPMDecoder.channel(2, 0, 1024, 512);
-        remote[1]->y = fPPMDecoder.channel(3, 0, 1024, 512);
-        remote[1]->w1 = fPPMDecoder.channel(5, 0, 1024, 0);
-        remote[1]->update();
-      }
-    } else {
-      fXBee.readPacket();
-      if (fXBee.getResponse().isAvailable()) {
-        if (fXBee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
-          fXBee.getResponse().getZBRxIoSampleResponse(fResponse);
-          if (fResponse.containsAnalog() && fResponse.containsDigital()) {
-            uint32_t addr = fResponse.getRemoteAddress64().getLsb();
-            for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
-              auto r = remote[i];
-              if (addr == r->addr) {
-                r->y = fResponse.getAnalog(0);
-                r->x = fResponse.getAnalog(1);
-                r->w1 = fResponse.getAnalog(2);
-                r->w2 = fResponse.getAnalog(3);
-
-                // for (int i = 0; i < 12; i++)
-                // {
-                //     if (!fResponse.isDigitalOn(i))
-                //     {
-                //         CONSOLE_SERIAL.print("BUTTON ");
-                //         CONSOLE_SERIAL.print(i);
-                //         CONSOLE_SERIAL.print(": ");
-                //         CONSOLE_SERIAL.println(!fResponse.isDigitalOn(i));
-                //     }
-                // }
-                bool *b = r->button;
-                b[0] = !fResponse.isDigitalOn(5);
-                b[1] = !fResponse.isDigitalOn(6);
-                b[2] = !fResponse.isDigitalOn(10);
-                b[3] = !fResponse.isDigitalOn(11);
-                b[4] = !fResponse.isDigitalOn(4);
-                r->lastPacket = millis();
-                if (r->type != r->kXBee)
-                  r->type = r->kXBee;
-                break;
-              }
+              // for (int i = 0; i < 12; i++)
+              // {
+              //     if (!fResponse.isDigitalOn(i))
+              //     {
+              //         CONSOLE_SERIAL.print("BUTTON ");
+              //         CONSOLE_SERIAL.print(i);
+              //         CONSOLE_SERIAL.print(": ");
+              //         CONSOLE_SERIAL.println(!fResponse.isDigitalOn(i));
+              //     }
+              // }
+              bool *b = r->button;
+              b[0] = !fResponse.isDigitalOn(5);
+              b[1] = !fResponse.isDigitalOn(6);
+              b[2] = !fResponse.isDigitalOn(10);
+              b[3] = !fResponse.isDigitalOn(11);
+              b[4] = !fResponse.isDigitalOn(4);
+              r->lastPacket = millis();
+              if (r->type != r->kXBee)
+                r->type = r->kXBee;
+              break;
             }
           }
-        } else {
-          DEBUG_PRINTLN();
-          DEBUG_PRINT("Expected I/O Sample, but got ");
-          DEBUG_PRINT_HEX(fXBee.getResponse().getApiId());
         }
-      } else if (fXBee.getResponse().isError()) {
-#ifdef USE_POCKET_REMOTE_DEBUG
+      } else {
         DEBUG_PRINTLN();
-        DEBUG_PRINT("Error reading packet.  Error code: ");
-        DEBUG_PRINTLN(fXBee.getResponse().getErrorCode());
-#endif
-        for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++)
-          remote[i]->lastPacket = 0;
+        DEBUG_PRINT("Expected I/O Sample, but got ");
+        DEBUG_PRINT_HEX(fXBee.getResponse().getApiId());
       }
-      bool stickActive = false;
-      for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
-        auto r = remote[i];
-        if (r->type == r->kXBee) {
-          stickActive = true;
+    } else if (fXBee.getResponse().isError()) {
 #ifdef USE_POCKET_REMOTE_DEBUG
-          DEBUG_PRINT('J');
-          DEBUG_PRINT(i + 1);
-          DEBUG_PRINT('[');
-          DEBUG_PRINT(r->y);
-          DEBUG_PRINT(',');
-          DEBUG_PRINT(r->x);
-          DEBUG_PRINT(']');
-          for (unsigned b = 0; b < sizeof(r->button) / sizeof(r->button[0]);
-               b++) {
-            DEBUG_PRINT(" B");
-            DEBUG_PRINT(i * 5 + b + 1);
-            DEBUG_PRINT('=');
-            DEBUG_PRINT(r->button[b]);
-          }
-          DEBUG_PRINT(" W[");
-          DEBUG_PRINT(r->w1);
-          DEBUG_PRINT(",");
-          DEBUG_PRINT(r->w2);
-          DEBUG_PRINT("] ");
+      DEBUG_PRINTLN();
+      DEBUG_PRINT("Error reading packet.  Error code: ");
+      DEBUG_PRINTLN(fXBee.getResponse().getErrorCode());
 #endif
-          if (r->lastPacket + params.fst < millis())
-            r->type = r->kFailsafe;
-          r->update();
-        }
-      }
-      if (stickActive) {
+      for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++)
+        remote[i]->lastPacket = 0;
+    }
+    bool stickActive = false;
+    for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
+      auto r = remote[i];
+      if (r->type == r->kXBee) {
+        stickActive = true;
 #ifdef USE_POCKET_REMOTE_DEBUG
-        DEBUG_PRINT('\r');
-#endif
-      }
-      for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
-        auto r = remote[i];
-        // Serial.print("R"); Serial.print(i); Serial.print(" F");
-        // Serial.print(r->failsafe()); Serial.print(" N");
-        // Serial.print(r->failsafeNotice);
-        if (r->failsafe() != r->failsafeNotice) {
-          if (stickActive)
-            fConsole.println();
-          fConsole.print('J');
-          fConsole.print(i + 1);
-          fConsole.print(F(" FS "));
-          fConsole.println(r->failsafe() ? F("ON") : F("OFF"));
-          if (i == 0)
-            digitalWrite(STATUS_J1_PIN, r->failsafe() ? LOW : HIGH);
-          else if (i == 1)
-            digitalWrite(STATUS_J2_PIN, r->failsafe() ? LOW : HIGH);
-          r->failsafeNotice = r->failsafe();
+        DEBUG_PRINT('J');
+        DEBUG_PRINT(i + 1);
+        DEBUG_PRINT('[');
+        DEBUG_PRINT(r->y);
+        DEBUG_PRINT(',');
+        DEBUG_PRINT(r->x);
+        DEBUG_PRINT(']');
+        for (unsigned b = 0; b < sizeof(r->button) / sizeof(r->button[0]);
+             b++) {
+          DEBUG_PRINT(" B");
+          DEBUG_PRINT(i * 5 + b + 1);
+          DEBUG_PRINT('=');
+          DEBUG_PRINT(r->button[b]);
         }
+        DEBUG_PRINT(" W[");
+        DEBUG_PRINT(r->w1);
+        DEBUG_PRINT(",");
+        DEBUG_PRINT(r->w2);
+        DEBUG_PRINT("] ");
+#endif
+        if (r->lastPacket + params.fst < millis())
+          r->type = r->kFailsafe;
+        r->update();
+      }
+    }
+    if (stickActive) {
+#ifdef USE_POCKET_REMOTE_DEBUG
+      DEBUG_PRINT('\r');
+#endif
+    }
+    for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
+      auto r = remote[i];
+      // Serial.print("R"); Serial.print(i); Serial.print(" F");
+      // Serial.print(r->failsafe()); Serial.print(" N");
+      // Serial.print(r->failsafeNotice);
+      if (r->failsafe() != r->failsafeNotice) {
+        if (stickActive)
+          fConsole.println();
+        fConsole.print('J');
+        fConsole.print(i + 1);
+        fConsole.print(F(" FS "));
+        fConsole.println(r->failsafe() ? F("ON") : F("OFF"));
+        if (i == 0)
+          digitalWrite(STATUS_J1_PIN, r->failsafe() ? LOW : HIGH);
+        else if (i == 1)
+          digitalWrite(STATUS_J2_PIN, r->failsafe() ? LOW : HIGH);
+        r->failsafeNotice = r->failsafe();
       }
     }
   }
-
-private:
-  XBee fXBee;
-  ZBRxIoSampleResponse fResponse;
-  PPMDecoder fPPMDecoder;
-  bool fMinimal = true;
-  uint32_t fDriveStateMillis = 0;
-  uint32_t fDomeStateMillis = 0;
-  float fDomeThrottle = 0;
-  float fDriveThrottle = 0;
-
-  inline float getDomeThrottle() { return fDomeThrottle; }
-
-  inline void setDomeThrottle(float throttle) { fDomeThrottle = throttle; }
-
-  inline float getDriveThrottle() { return fDriveThrottle; }
-
-  inline void setDriveThrottle(float throttle) { fDriveThrottle = throttle; }
-
-  void setDomeHomePosition() {
-#ifdef RDH_SERIAL
-    fAutoDome.setDomeHomePosition();
-#endif
-  }
-
-  void toggleRandomDome() {
-#ifdef RDH_SERIAL
-    fAutoDome.toggleRandomDome();
-#endif
-  }
-
-  friend class AmidalaConsole;
-  friend class DriveController;
-  friend class DomeController;
-};
+}
 
 ////////////////////////////////
 // DriveController / DomeController method bodies
