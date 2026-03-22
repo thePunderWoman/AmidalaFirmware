@@ -265,6 +265,11 @@ public:
   virtual void animate() override;
 
 private:
+  // DriveController and DomeController call setDriveThrottle/setDomeThrottle,
+  // which are intentionally private to all other callers.
+  friend class DriveController;
+  friend class DomeController;
+
   XBee fXBee;
   ZBRxIoSampleResponse fResponse;
   PPMDecoder fPPMDecoder;

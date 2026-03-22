@@ -1,9 +1,11 @@
 #include "controller.h"
 #include "config.h"
 
-// servoDispatch is the global ServoDispatchDirect instance defined in
-// src/globals.cpp. The concrete size (12) matches SizeOfArray(servoSettings).
-extern ServoDispatchDirect<12> servoDispatch;
+// servoDispatch is defined in src/globals.cpp as a ServoDispatch& reference to
+// the concrete ServoDispatchDirect instance.  Using the base-class reference
+// avoids including ServoDispatchDirect.h here, which would duplicate the ISR
+// handlers defined in ServoDispatchPrivate.h.
+extern ServoDispatch& servoDispatch;
 
 void AmidalaConsole::printServoPos(uint16_t num) {
   if (servoDispatch.isActive(num)) {

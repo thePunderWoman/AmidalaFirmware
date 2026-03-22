@@ -20,7 +20,14 @@ const ServoSettings servoSettings[] PROGMEM = {
     {SERVO9_PIN, 1000, 2000, 0},  {SERVO10_PIN, 1000, 2000, 0},
     {SERVO11_PIN, 1000, 2000, 0}, {SERVO12_PIN, 1000, 2000, 0}};
 
-ServoDispatchDirect<SizeOfArray(servoSettings)> servoDispatch(servoSettings);
+// The concrete instance lives here — the only TU that includes
+// ServoDispatchDirect.h (and its ISR handlers via ServoDispatchPrivate.h).
+static ServoDispatchDirect<SizeOfArray(servoSettings)> _servoImpl(servoSettings);
+
+// Base-class reference exported to other TUs.  They declare it as
+// `extern ServoDispatch& servoDispatch;` so they never need to include
+// ServoDispatchDirect.h and trigger duplicate ISR-definition errors.
+ServoDispatch& servoDispatch = _servoImpl;
 
 // Experimental camera pan/tilt servo PD controllers.
 // Pan and tilt zero positions and +/- angular range, in degrees:
