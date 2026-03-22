@@ -143,7 +143,7 @@ and `pio run -e megaatmega2560` succeeds with identical footprint.
 
 ---
 
-#### PR 2b — `drive-controllers-impl`: `src/drive_controllers.cpp`
+#### ~~PR 2b — `drive-controllers-impl`: `src/drive_controllers.cpp`~~ ✅ PR #20
 
 Move from `.ino` to new file:
 - `DriveController::notify()` / `::onConnect()` / `::onDisconnect()` (lines 731–775)
