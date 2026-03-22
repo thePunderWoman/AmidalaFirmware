@@ -1,4 +1,4 @@
-// amidala_params.h
+// params.h
 // Runtime configuration struct for Amidala Firmware.
 //
 // AmidalaParameters holds all tunable settings (servo channels, sound banks,
@@ -8,7 +8,7 @@
 //
 // Depends on: EEPROM (Arduino <EEPROM.h> / arduino_mock.h),
 //             button_actions.h (ButtonAction, GestureAction, AuxString),
-//             amidala_core.h   (Gesture),
+//             core.h           (Gesture),
 //             drive_config.h   (DEFAULT_DOME_* / DOME_MAXIMUM_SPEED),
 //             button_actions.h (HAPPY, EMOTE_MODERATE fallback constants),
 //             <math.h>         (ceil)
@@ -126,7 +126,7 @@ struct AmidalaParameters {
   Gesture slowgest;
   Gesture domegest;
 
-  uint16_t domepos; // delete?
+  uint16_t domepos; // current dome position (used only in RDH_SERIAL builds)
   uint16_t domehome;
   uint8_t domemode;
   uint8_t domehomemin;
@@ -141,8 +141,8 @@ struct AmidalaParameters {
   uint8_t domespeedseek;
   uint16_t domespmin; // only for analog
   uint16_t domespmax; // only for analog
-  bool domech6;       // delete?
-  bool domeimu;       // delete?
+  bool domech6;  // dome channel-6 mode flag (configurable but effect unimplemented)
+  bool domeimu;  // dome IMU flag (configurable; read by getDomeIMU())
   bool domeflip;
 
   constexpr unsigned getSoundBankCount() {
@@ -212,9 +212,10 @@ struct AmidalaParameters {
       domespmax = 935;
       domech6 = false;
       domeflip = DEFAULT_DOME_INVERTED;
-      domeimu = true; /* no longer used */
+      domeimu = true;
       minpulse = DEFAULT_DOME_MIN_PULSE;
       maxpulse = DEFAULT_DOME_MAX_PULSE;
+      sRAMInited = true;
     }
     size_t offs = 0;
     if (EEPROM.read(offs) == 'D' && EEPROM.read(offs + 1) == 'B' &&

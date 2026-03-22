@@ -5,7 +5,7 @@
 // GestureAction — a (Gesture, ButtonAction) pair stored in config.
 // AuxString     — a short string sent to the auxiliary serial port.
 //
-// Depends on: Gesture (amidala_core.h), Print (Arduino / arduino_mock.h)
+// Depends on: Gesture (core.h), Print (Arduino / arduino_mock.h)
 // In embedded builds hcr.h is included before this header and supplies the
 // HCR constants. The #ifndef guards below provide fallbacks for native tests.
 

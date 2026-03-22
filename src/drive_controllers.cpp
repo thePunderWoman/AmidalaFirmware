@@ -74,7 +74,7 @@ void DomeController::process() {
 
   if (!fGestureCollect) {
     if (event.button_up.l3) {
-      DEBUG_PRINTLN("GESTURE START COLLECTING\n");
+      DEBUG_PRINTLN("GESTURE START COLLECTING");
       fDriver->disableDomeController();
       fGestureCollect = true;
       fGesturePtr = fGestureBuffer;
@@ -100,7 +100,7 @@ void DomeController::process() {
     }
     return;
   } else if (fGestureTimeOut < millis()) {
-    DEBUG_PRINTLN("GESTURE TIMEOUT\n");
+    DEBUG_PRINTLN("GESTURE TIMEOUT");
     fDriver->enableDomeController();
     fGesturePtr = fGestureBuffer;
     fGestureCollect = false;

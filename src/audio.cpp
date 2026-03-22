@@ -1,6 +1,6 @@
 #include "controller.h"
 
-// amidala is the global AmidalaController instance defined in AmidalaFirmware.ino.
+// amidala is the global AmidalaController instance defined in AmidalaFirmware.ino (entry point).
 extern AmidalaController amidala;
 
 #ifndef VMUSIC_SERIAL

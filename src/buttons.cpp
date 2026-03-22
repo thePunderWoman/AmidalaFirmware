@@ -4,10 +4,10 @@ void AmidalaConsole::process(ButtonAction &button) {
   AmidalaParameters &params = fController->params;
   switch (button.action) {
   case button.kSound:
-    Serial.print("PLAY SOUND BANK ");
-    Serial.print(button.sound.soundbank);
-    Serial.print(" # ");
-    Serial.println(button.sound.sound);
+    DEBUG_PRINT("PLAY SOUND BANK ");
+    DEBUG_PRINT(button.sound.soundbank);
+    DEBUG_PRINT(" # ");
+    DEBUG_PRINTLN(button.sound.sound);
     if (button.sound.sound != 0) {
       fController->fAudio.playSound(button.sound.soundbank, button.sound.sound);
     } else {
@@ -69,7 +69,7 @@ void AmidalaConsole::processButton(unsigned num) {
   println(num);
   AmidalaParameters &params = fController->params;
 
-  if (num < params.getButtonCount()) {
+  if (num >= 1 && num <= params.getButtonCount()) {
     process(params.B[num - 1]);
   }
 }
@@ -79,7 +79,7 @@ void AmidalaConsole::processLongButton(unsigned num) {
   println(num);
   AmidalaParameters &params = fController->params;
 
-  if (num < params.getButtonCount()) {
+  if (num >= 1 && num <= params.getButtonCount()) {
     process(params.LB[num - 1]);
   }
 }

@@ -2,7 +2,8 @@
 // Unit tests for PPMDecoder (include/ppm_decoder.h).
 //
 // Section 1 — Direct class tests: construction, init, decode with no signal,
-//             and channel() neutral behaviour.
+//             and channel() neutral behaviour (including regression for the
+//             sizeof(fChannelCount) memset bug — must zero ALL channels).
 // Section 2 — Mapping formula tests: reproduce the channel() formula as a
 //             free function to exhaustively test the clamping + map logic
 //             independently of private state.
@@ -55,6 +56,16 @@ void test_decoder_channel_returns_neutral_before_any_signal() {
   // fChannel[] is zero-initialised; channel() must return neutralvalue.
   TEST_ASSERT_EQUAL_UINT16(512, dec.channel(0, 0, 1024, 512));
   TEST_ASSERT_EQUAL_UINT16(512, dec.channel(5, 0, 1024, 512));
+}
+
+// Regression for sizeof(fChannelCount) memset bug: init() must zero ALL
+// channel slots, not just the first sizeof(unsigned) bytes.
+void test_decoder_all_channels_zero_after_init() {
+  PPMDecoder dec(PPMIN_PIN, 6);
+  dec.init();
+  for (unsigned i = 0; i < 6; i++) {
+    TEST_ASSERT_EQUAL_UINT16(0, dec.channel(i, 0, 1024, 0));
+  }
 }
 
 void test_decoder_channel_out_of_range_returns_neutral() {
@@ -160,6 +171,7 @@ int main(int argc, char **argv) {
   RUN_TEST(test_decoder_constructs_without_crash);
   RUN_TEST(test_decoder_decode_returns_false_when_no_signal);
   RUN_TEST(test_decoder_channel_returns_neutral_before_any_signal);
+  RUN_TEST(test_decoder_all_channels_zero_after_init);
   RUN_TEST(test_decoder_channel_out_of_range_returns_neutral);
   RUN_TEST(test_decoder_init_resets_state);
 

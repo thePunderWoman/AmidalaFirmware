@@ -1,9 +1,9 @@
-// amidala_audio.h
+// audio.h
 // AmidalaAudio: audio hardware abstraction layer (HCR / VMusic).
 //
 // Provides a unified API for all audio interactions — volume, sound playback,
 // emotes, muse toggling, and acknowledgement triggers.
-// Method bodies are defined in src/amidala_audio.cpp.
+// Method bodies are defined in src/audio.cpp.
 //
 // Depends on: AmidalaController (via forward declaration only)
 

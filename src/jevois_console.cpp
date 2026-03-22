@@ -2,7 +2,7 @@
 
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
 
-// tiltservo is a ServoPD global defined in AmidalaFirmware.ino.
+// tiltservo is a ServoPD global defined in src/globals.cpp.
 extern ServoPD tiltservo;
 
 void JevoisConsole::init(AmidalaController *controller) {

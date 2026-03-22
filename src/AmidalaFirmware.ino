@@ -1,6 +1,6 @@
 // AmidalaFirmware.ino — entry point.
-// Hardware globals live in src/amidala_globals.cpp.
-// Controller logic lives in src/amidala_controller.cpp.
+// Hardware globals live in src/globals.cpp.
+// Controller logic lives in src/controller.cpp.
 
 #include "debug.h"
 #include "drive_config.h"
