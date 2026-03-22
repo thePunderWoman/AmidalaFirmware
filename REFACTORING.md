@@ -222,29 +222,60 @@ All needed types are available through that single include.
 
 ---
 
-#### PR 2e — `amidala-console-impl`: `src/amidala_console.cpp`
+#### ~~PR 2e — `amidala-servo-impl`: `src/amidala_servo.cpp`~~ ✅ PR #23
 
-Move from `.ino` to new file — all remaining `AmidalaConsole` methods (~1070
-lines after audio and button methods have been extracted):
+Move servo-related console methods to a dedicated file.  Keeps servo concerns
+together so the file is the obvious home for any future servo work.
+
+```
+AmidalaConsole::printServoPos()   ← uses servoDispatch directly
+AmidalaConsole::setServo()        ← stub today, natural home when implemented
+```
+
+**`src/amidala_servo.cpp`** preamble:
+```cpp
+#include "amidala_controller.h"
+extern ServoDispatchDirect<12> servoDispatch;  // defined in AmidalaFirmware.ino
+```
+
+---
+
+#### PR 2f — `amidala-config-impl`: `src/amidala_config.cpp`
+
+Move config display and persistence methods out of the `.ino`.
+`readConfig()` stays in `config_reader.h` — it is a template function and
+must remain header-only.
+
+```
+AmidalaConsole::processConfig()              ← parses *key=value config commands
+AmidalaConsole::showLoadEEPROM()
+AmidalaConsole::showCurrentConfiguration()
+AmidalaConsole::writeCurrentConfiguration()
+```
+
+**`src/amidala_config.cpp`** preamble:
+```cpp
+#include "amidala_controller.h"
+```
+
+---
+
+#### PR 2g — `amidala-console-impl`: `src/amidala_console.cpp`
+
+Move from `.ino` to new file — all remaining `AmidalaConsole` methods:
 
 ```
 AmidalaConsole::write(uint8_t)
 AmidalaConsole::write(const uint8_t*, size_t)
-AmidalaConsole::printServoPos()
 AmidalaConsole::init()
-AmidalaConsole::setServo()
 AmidalaConsole::setDigitalOut()
 AmidalaConsole::outputString()
 AmidalaConsole::showXBEE()
 AmidalaConsole::printVersion()
 AmidalaConsole::printHelp()
-AmidalaConsole::showLoadEEPROM()
-AmidalaConsole::showCurrentConfiguration()
-AmidalaConsole::writeCurrentConfiguration()
 AmidalaConsole::monitorOutput()
 AmidalaConsole::monitorToggle()
 static bool isdigit(const char*, int)     ← file-scope helper, keep static
-AmidalaConsole::processConfig()           ← configures button/gesture/audio params
 AmidalaConsole::processCommand()          ← parses runtime text commands
 AmidalaConsole::process(char, bool)
 AmidalaConsole::process()
@@ -253,17 +284,15 @@ AmidalaConsole::process()
 **`src/amidala_console.cpp`** preamble:
 ```cpp
 #include "amidala_controller.h"
-extern ServoDispatchDirect<12> servoDispatch;  // defined in AmidalaFirmware.ino
 ```
 
-Use the concrete size `12` rather than `SizeOfArray(servoSettings)`.
 `CONSOLE_SERIAL` is a `#define Serial` from `pin_config.h` — already available.
 The `static bool isdigit(const char*, int)` helper stays `static` to remain
 translation-unit-local and avoid shadowing `std::isdigit` in other TUs.
 
 ---
 
-#### PR 2f — `jevois-console-impl`: `src/jevois_console.cpp`
+#### PR 2h — `jevois-console-impl`: `src/jevois_console.cpp`
 
 Move `JevoisConsole::init/processCommand/process` (lines 2155–2249) to a new
 file.  Wrap in `#ifdef EXPERIMENTAL_JEVOIS_STEERING / #endif` as they are now.
@@ -288,7 +317,9 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 | `include/amidala_audio.h` | `AmidalaAudio` class declaration ✅ |
 | `src/amidala_audio.cpp` | `AmidalaAudio::*` — all audio hardware concerns ✅ |
 | `src/amidala_buttons.cpp` | `AmidalaConsole::process(ButtonAction&)`, `processGesture`, `processButton`, `processLongButton` ✅ |
-| `src/amidala_console.cpp` | All remaining `AmidalaConsole::*` methods (I/O, config, command parsing) |
+| `src/amidala_servo.cpp` | `AmidalaConsole::printServoPos`, `setServo` ✅ |
+| `src/amidala_config.cpp` | `AmidalaConsole::processConfig`, `showLoadEEPROM`, `showCurrentConfiguration`, `writeCurrentConfiguration` |
+| `src/amidala_console.cpp` | Remaining `AmidalaConsole::*` — I/O, command parsing, monitor |
 | `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
 | `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |
 
