@@ -1,5 +1,5 @@
 // test_servopd.cpp
-// Unit tests for the ServoPD class in amidala_core.h.
+// Unit tests for the ServoPD class in core.h.
 //
 // ServoPD implements a simple PD (proportional-derivative) controller used for
 // camera pan and tilt servos.  Tests verify:

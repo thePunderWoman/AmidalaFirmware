@@ -1,5 +1,5 @@
 // test_config_reader.cpp
-// Unit tests for readConfig() in include/amidala_config.h (SD card path, UNIT_TEST build).
+// Unit tests for readConfig() in include/config.h (SD card path, UNIT_TEST build).
 //
 // These tests exercise:
 //   - readConfig() returns true and forwards every character to the console
