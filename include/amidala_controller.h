@@ -24,8 +24,6 @@
 #elif DOME_DRIVE == DOME_DRIVE_SABER
 #include "drive/DomeDriveSabertooth.h"
 #endif
-#include "ServoDispatchDirect.h"
-#include "ServoEasing.h"
 #include "core/MedianSampleBuffer.h"
 #include "core/DelayCall.h"
 #include <Wire.h>

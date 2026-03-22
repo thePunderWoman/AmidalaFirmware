@@ -156,7 +156,7 @@ private:
 // Helper functions (used by processConfig / processCommand)
 ////////////////////////////////
 
-bool startswith(const char *&cmd, const char *str) {
+inline bool startswith(const char *&cmd, const char *str) {
   size_t len = strlen(str);
   if (strncmp(cmd, str, strlen(str)) == 0) {
     cmd += len;
@@ -165,7 +165,7 @@ bool startswith(const char *&cmd, const char *str) {
   return false;
 }
 
-int32_t strtol(const char *cmd, const char **endptr) {
+inline int32_t strtol(const char *cmd, const char **endptr) {
   bool sign = false;
   int32_t result = 0;
   if (*cmd == '-') {
@@ -180,7 +180,7 @@ int32_t strtol(const char *cmd, const char **endptr) {
   return (sign) ? -result : result;
 }
 
-uint32_t strtolu(const char *cmd, const char **endptr) {
+inline uint32_t strtolu(const char *cmd, const char **endptr) {
   uint32_t result = 0;
   while (isdigit(*cmd)) {
     result = result * 10L + (*cmd - '0');
@@ -190,7 +190,7 @@ uint32_t strtolu(const char *cmd, const char **endptr) {
   return result;
 }
 
-bool boolparam(const char *cmd, const char *match, bool &value) {
+inline bool boolparam(const char *cmd, const char *match, bool &value) {
   if (startswith(cmd, match)) {
     if (strcmp(cmd, "y") == 0) {
       value = true;
@@ -203,7 +203,7 @@ bool boolparam(const char *cmd, const char *match, bool &value) {
   return false;
 }
 
-bool charparam(const char *cmd, const char *match, const char *oneof,
+inline bool charparam(const char *cmd, const char *match, const char *oneof,
                char &value) {
   if (startswith(cmd, match) && cmd[1] == '\0') {
     while (*oneof != '\0') {
@@ -216,7 +216,7 @@ bool charparam(const char *cmd, const char *match, const char *oneof,
   return false;
 }
 
-bool sintparam(const char *cmd, const char *match, int32_t &value) {
+inline bool sintparam(const char *cmd, const char *match, int32_t &value) {
   if (startswith(cmd, match)) {
     int32_t val = strtol(cmd, &cmd);
     if (*cmd == '\0') {
@@ -227,7 +227,7 @@ bool sintparam(const char *cmd, const char *match, int32_t &value) {
   return false;
 }
 
-bool sintparam2(const char *cmd, const char *match, int32_t &value1,
+inline bool sintparam2(const char *cmd, const char *match, int32_t &value1,
                 int32_t &value2) {
   if (startswith(cmd, match)) {
     int32_t val = strtol(cmd, &cmd);
@@ -243,7 +243,7 @@ bool sintparam2(const char *cmd, const char *match, int32_t &value1,
   return false;
 }
 
-bool intparam(const char *cmd, const char *match, uint32_t &value,
+inline bool intparam(const char *cmd, const char *match, uint32_t &value,
               uint32_t minval, uint32_t maxval) {
   if (startswith(cmd, match)) {
     uint32_t val = strtolu(cmd, &cmd);
@@ -255,7 +255,7 @@ bool intparam(const char *cmd, const char *match, uint32_t &value,
   return false;
 }
 
-bool intparam(const char *cmd, const char *match, uint16_t &value,
+inline bool intparam(const char *cmd, const char *match, uint16_t &value,
               uint16_t minval, uint16_t maxval) {
   if (startswith(cmd, match)) {
     uint16_t val = (uint16_t)strtolu(cmd, &cmd);
@@ -267,7 +267,7 @@ bool intparam(const char *cmd, const char *match, uint16_t &value,
   return false;
 }
 
-bool intparam(const char *cmd, const char *match, uint8_t &value,
+inline bool intparam(const char *cmd, const char *match, uint8_t &value,
               uint8_t minval, uint8_t maxval) {
   if (startswith(cmd, match)) {
     uint8_t val = (uint8_t)strtolu(cmd, &cmd);
@@ -279,7 +279,7 @@ bool intparam(const char *cmd, const char *match, uint8_t &value,
   return false;
 }
 
-bool gestureparam(const char *cmd, const char *match, Gesture &gesture) {
+inline bool gestureparam(const char *cmd, const char *match, Gesture &gesture) {
   if (startswith(cmd, match)) {
     gesture.setGesture(cmd);
     return true;
@@ -287,7 +287,7 @@ bool gestureparam(const char *cmd, const char *match, Gesture &gesture) {
   return false;
 }
 
-bool numberparams(const char *cmd, uint8_t &argcount, int *args,
+inline bool numberparams(const char *cmd, uint8_t &argcount, int *args,
                   uint8_t maxcount) {
   for (argcount = 0; argcount < maxcount; argcount++) {
     args[argcount] = strtol(cmd, &cmd);
@@ -302,7 +302,7 @@ bool numberparams(const char *cmd, uint8_t &argcount, int *args,
   return true;
 }
 
-bool numberparams(const char *cmd, uint8_t &argcount, uint8_t *args,
+inline bool numberparams(const char *cmd, uint8_t &argcount, uint8_t *args,
                   uint8_t maxcount) {
   for (argcount = 0; argcount < maxcount; argcount++) {
     args[argcount] = (uint8_t)strtolu(cmd, &cmd);
