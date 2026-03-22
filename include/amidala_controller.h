@@ -4,8 +4,9 @@
 // AmidalaController class declaration.
 //
 // The constructor, setup(), animate(), emergencyStop(), and domeEmergencyStop()
-// are declared here but defined in src/AmidalaFirmware.ino — they reference
-// servoDispatch, which is a global defined in that translation unit.
+// are declared here and defined in src/amidala_controller.cpp — they reference
+// servoDispatch, panservo, and tiltservo, which are globals defined in
+// AmidalaFirmware.ino (accessed via extern declarations in the .cpp).
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "ReelTwo.h"
@@ -31,6 +32,7 @@
 #include <hcr.h>
 #endif
 #include "amidala_core.h"
+#include "amidala_version.h"
 #include "pin_config.h"
 #include <EEPROM.h>
 #include <XBee.h>
@@ -51,8 +53,8 @@ class AmidalaController;
 
 class AmidalaController : public SetupEvent, public AnimatedEvent {
 public:
-  // Defined in src/AmidalaFirmware.ino — initialiser list references
-  // servoDispatch (a global in that translation unit).
+  // Defined in src/amidala_controller.cpp — initialiser list references
+  // servoDispatch (extern declared in that translation unit).
   AmidalaController();
 
   inline void processGesture(const char *gesture) {
@@ -197,7 +199,7 @@ public:
 #endif
   }
 
-  // Defined in src/AmidalaFirmware.ino — references servoDispatch global.
+  // Defined in src/amidala_controller.cpp — references servoDispatch global.
   void emergencyStop();
 
   void enableDomeController() {
@@ -213,7 +215,7 @@ public:
 #endif
   }
 
-  // Defined in src/AmidalaFirmware.ino — references servoDispatch global.
+  // Defined in src/amidala_controller.cpp — references servoDispatch global.
   void domeEmergencyStop();
 
   void setDigitalPin(int pin, bool state) {
@@ -255,11 +257,11 @@ public:
     AUX_SERIAL.write(ch);
   }
 
-  // Defined in src/AmidalaFirmware.ino — references servoDispatch, panservo,
-  // tiltservo, hcrDelayedInit, and other globals in that translation unit.
+  // Defined in src/amidala_controller.cpp — references servoDispatch, panservo,
+  // and tiltservo (extern declared in that translation unit).
   virtual void setup() override;
 
-  // Defined in src/AmidalaFirmware.ino — references servoDispatch global.
+  // Defined in src/amidala_controller.cpp — references servoDispatch global.
   virtual void animate() override;
 
 private:
