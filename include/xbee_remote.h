@@ -20,7 +20,7 @@
 #pragma once
 
 #include "JoystickController.h"
-#include "amidala_core.h"
+#include "core.h"
 
 // ---- Timing constants (overrideable before including this header) -----------
 

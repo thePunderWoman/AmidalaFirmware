@@ -6,7 +6,7 @@
 
 #include "ServoDispatchDirect.h"
 #include "ServoEasing.h"
-#include "amidala_controller.h"
+#include "controller.h"
 
 // Group ID is used by the ServoSequencer and some ServoDispatch functions to
 // identify a group of servos.

@@ -4,7 +4,7 @@
 
 #include "debug.h"
 #include "drive_config.h"
-#include "amidala_controller.h"
+#include "controller.h"
 
 AmidalaController amidala;
 

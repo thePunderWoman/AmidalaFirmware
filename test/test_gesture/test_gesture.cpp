@@ -10,7 +10,7 @@
 //   - Edge cases: empty string, all-digit, hex-digit (A-D), multi-char
 
 #include "arduino_mock.h"
-#include "amidala_core.h"
+#include "core.h"
 #include <unity.h>
 
 void setUp(void) {}

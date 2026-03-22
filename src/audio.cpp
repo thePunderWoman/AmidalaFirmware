@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 // amidala is the global AmidalaController instance defined in AmidalaFirmware.ino.
 extern AmidalaController amidala;

@@ -10,7 +10,7 @@
 //   - constrain() is respected (position never exceeds zero ± range)
 
 #include "arduino_mock.h"
-#include "amidala_core.h"
+#include "core.h"
 #include <unity.h>
 
 // Firmware constants (mirror of AmidalaFirmware.ino)

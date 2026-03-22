@@ -1,4 +1,4 @@
-#include "amidala_controller.h"
+#include "controller.h"
 
 void AmidalaConfig::init(AmidalaController *controller) {
   fController = controller;
