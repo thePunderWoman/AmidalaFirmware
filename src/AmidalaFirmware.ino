@@ -79,8 +79,6 @@ ServoPD tiltservo(300, 100, TILTZERO, TILTRANGE);
 
 ////////////////////////////////
 
-static void hcrDelayedInit();
-
 ////////////////////////////////
 // AmidalaController method bodies that reference servoDispatch or other
 // globals defined above.
@@ -167,12 +165,7 @@ void AmidalaController::setup() {
 #ifdef AUX_SERIAL
   AUX_SERIAL.begin(params.auxbaud);
   sendAuxString(params.auxinit);
-#ifndef VMUSIC_SERIAL
-  if (params.audiohw == AUDIO_HW_HCR) {
-    fHCR.begin();
-    DelayCall::schedule(hcrDelayedInit, 5000);
-  }
-#endif
+  fAudio.init(this);
 #endif
 
   remote[0]->addr = params.xbr;
@@ -270,15 +263,7 @@ void AmidalaController::animate() {
 #ifdef RDH_SERIAL
   fAutoDome.process();
 #endif
-#ifndef VMUSIC_SERIAL
-  if (params.audiohw == AUDIO_HW_HCR) {
-    // fHCR.update();
-  }
-#else
-  if (params.audiohw == AUDIO_HW_VMUSIC) {
-    fVMusic.process();
-  }
-#endif
+  fAudio.process();
 
   // TODO THIS IS HARDCODED FOR PWM!!!
   if (servoDispatch.currentPos(0) != 1450 ||
@@ -451,22 +436,6 @@ void AmidalaController::animate() {
 
 AmidalaController amidala;
 
-#ifndef VMUSIC_SERIAL
-static void hcrDelayedInit() {
-  AmidalaParameters &params = amidala.params;
-  amidala.fHCR.SetVolume(CH_V, params.volume);
-  amidala.fHCR.SetVolume(CH_A, params.volume);
-  amidala.fHCR.SetVolume(CH_B, params.volume);
-  if (params.rndon) {
-    amidala.fHCR.Muse(params.mindelay, params.maxdelay);
-    amidala.fHCR.SetMuse(1);
-  }
-  if (params.startup) {
-    amidala.fHCR.Trigger(params.startupem, params.startuplvl);
-  }
-}
-#endif  // !VMUSIC_SERIAL
-
 //////////////////////////////////////////////////////////////////////////
 
 size_t AmidalaConsole::write(uint8_t ch) {
@@ -502,69 +471,6 @@ void AmidalaConsole::init(AmidalaController *controller) {
   print(BUILD_DATE);
   print(F(") Serial: "));
   println(fController->params.serial);
-}
-
-void AmidalaConsole::randomToggle() {
-  AmidalaParameters &params = fController->params;
-  params.rndon = !params.rndon;
-  print(F("Random "));
-  println((params.rndon) ? F("On") : F("Off"));
-#ifndef VMUSIC_SERIAL
-  if (params.audiohw == AUDIO_HW_HCR) {
-    fController->fHCR.SetMuse(params.rndon ? 1 : 0);
-  }
-#endif
-}
-
-void AmidalaConsole::setVolumeNoResponse(uint8_t volume) {
-  AmidalaParameters &params = fController->params;
-#ifndef VMUSIC_SERIAL
-  if (params.audiohw == AUDIO_HW_HCR) {
-    fController->fHCR.SetVolume(CH_V, volume);
-    fController->fHCR.SetVolume(CH_A, volume);
-    fController->fHCR.SetVolume(CH_B, volume);
-  }
-#else
-  if (params.audiohw == AUDIO_HW_VMUSIC) {
-    fController->fVMusic.setVolumeNoResponse(volume);
-  }
-#endif
-}
-
-void AmidalaConsole::playSound(int sndbank, int snd) {
-  AmidalaParameters &params = fController->params;
-#ifdef VMUSIC_SERIAL
-  if (params.audiohw == AUDIO_HW_VMUSIC) {
-    if (fController->fVMusic.isPlaying()) {
-      println(F("Busy"));
-      return;
-    }
-    AmidalaParameters::SoundBank *sb = params.SB;
-    if (sndbank >= 1 && sndbank <= params.sbcount) {
-      sb += (sndbank - 1);
-      if (snd == 0) {
-        if (sb->random) {
-          snd = random(0, sb->numfiles);
-        } else if (sb->numfiles > 0) {
-          snd = sb->playindex++;
-          if (sb->playindex >= sb->numfiles)
-            sb->playindex = 0;
-        } else {
-          snd = -1;
-        }
-      }
-      if (snd >= 0 && snd <= sb->numfiles) {
-        char fname[16];
-        snprintf(fname, sizeof(fname), "%s-%d.MP3", sb->dir, snd + 1);
-        DEBUG_PRINT("PLAY: ");
-        DEBUG_PRINTLN(fname);
-        fController->fVMusic.play(fname, sb->dir);
-      }
-    }
-    return;
-  }
-#endif
-  println(F("Invalid"));
 }
 
 void AmidalaConsole::setServo() {
@@ -631,9 +537,9 @@ void AmidalaConsole::process(ButtonAction &button) {
     Serial.print(" # ");
     Serial.println(button.sound.sound);
     if (button.sound.sound != 0) {
-      playSound(button.sound.soundbank, button.sound.sound);
+      fController->fAudio.playSound(button.sound.soundbank, button.sound.sound);
     } else {
-      playSound(button.sound.soundbank);
+      fController->fAudio.playSound(button.sound.soundbank);
     }
     break;
   case button.kI2CCmd:
@@ -655,33 +561,18 @@ void AmidalaConsole::process(ButtonAction &button) {
     }
     break;
   case button.kHCREmote:
-#ifndef VMUSIC_SERIAL
-    if (params.audiohw == AUDIO_HW_HCR) {
-      if (button.emote.emotion == OVERLOAD) {
-        fController->fHCR.Overload();
-      } else {
-        fController->fHCR.Trigger(button.emote.emotion, button.emote.level);
-      }
-    }
-#endif
+    fController->fAudio.playEmote(button.emote.emotion, button.emote.level);
     break;
   case button.kHCRMuse:
-#ifndef VMUSIC_SERIAL
-    if (params.audiohw == AUDIO_HW_HCR) {
-      fController->fHCR.SetMuse(1 - fController->fHCR.GetMuse());
-    }
-#endif
+    fController->fAudio.toggleMuse();
     break;
   }
   // Play ack emote for non-audio actions when ackon is enabled
-#ifndef VMUSIC_SERIAL
-  if (params.ackon && params.audiohw == AUDIO_HW_HCR &&
-      button.action != ButtonAction::kNone &&
+  if (button.action != ButtonAction::kNone &&
       button.action != ButtonAction::kHCREmote &&
       button.action != ButtonAction::kHCRMuse) {
-    fController->fHCR.Trigger(params.ackem, params.acklvl);
+    fController->fAudio.playAck();
   }
-#endif
   if (button.aux.auxstring != 0 &&
       button.aux.auxstring <= params.getAuxStringCount()) {
     DEBUG_PRINT("AUX #");
@@ -1567,7 +1458,7 @@ void AmidalaConsole::processCommand(const char *cmd) {
       showCurrentConfiguration();
       return;
     case 'r':
-      randomToggle();
+      fController->fAudio.randomToggle();
       return;
     case 'x':
       showXBEE();
@@ -1661,12 +1552,12 @@ void AmidalaConsole::processCommand(const char *cmd) {
     if (isdigit(cmd + 3, 2) && cmd[5] == '\0') {
       // Play Sound mm from Sound Bank nn
       snd = atoi(cmd + 3, 2);
-      playSound(sndbank, snd);
+      fController->fAudio.playSound(sndbank, snd);
       return;
     } else if (cmd[3] == '\0') {
       print("SB #");
       println(sndbank);
-      playSound(sndbank);
+      fController->fAudio.playSound(sndbank);
       return;
     }
   }

@@ -27,9 +27,6 @@ void AmidalaConsole::processLongButton(unsigned) {}
 size_t AmidalaConsole::write(uint8_t) { return 1; }
 size_t AmidalaConsole::write(const uint8_t *, size_t n) { return n; }
 void AmidalaConsole::printServoPos(uint16_t) {}
-void AmidalaConsole::randomToggle() {}
-void AmidalaConsole::setVolumeNoResponse(uint8_t) {}
-void AmidalaConsole::playSound(int, int) {}
 void AmidalaConsole::setServo() {}
 void AmidalaConsole::setDigitalOut() {}
 void AmidalaConsole::outputString() {}

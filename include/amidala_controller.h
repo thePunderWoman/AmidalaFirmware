@@ -42,6 +42,7 @@
 class AmidalaController;
 
 #include "button_actions.h"
+#include "amidala_audio.h"
 #include "console.h"
 #include "jevois_console.h"
 #include "rdh_serial.h"
@@ -65,10 +66,11 @@ public:
   }
 
   inline void setVolumeNoResponse(unsigned volume) {
-    fConsole.setVolumeNoResponse(volume);
+    fAudio.setVolumeNoResponse(volume);
   }
 
   AmidalaConsole fConsole;
+  AmidalaAudio fAudio;
 #ifdef VMUSIC_SERIAL
   VMusic fVMusic;
 #else
@@ -289,6 +291,7 @@ private:
 #endif
   }
 
+  friend class AmidalaAudio;
   friend class AmidalaConsole;
   friend class DriveController;
   friend class DomeController;
