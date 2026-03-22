@@ -41,6 +41,8 @@ public:
   virtual size_t write(uint8_t ch) override;
   virtual size_t write(const uint8_t *buffer, size_t size) override;
 
+  bool isMinimal() const { return fMinimal; }
+
   void printNum(unsigned num, unsigned width = 4) {
     char buf[16];
     snprintf(buf, sizeof(buf), "%d", num);
@@ -51,7 +53,8 @@ public:
     print(buf);
   }
 
-  // printServoPos() uses servoDispatch (a global), defined in AmidalaFirmware.ino.
+  // printServoPos() uses servoDispatch (a global),
+  // defined in AmidalaFirmware.ino. Body is in src/amidala_servo.cpp.
   void printServoPos(uint16_t num);
 
   void setServo();
@@ -60,9 +63,6 @@ public:
   void showXBEE();
   void printVersion();
   void printHelp();
-  void showLoadEEPROM(bool load = false);
-  void showCurrentConfiguration();
-  void writeCurrentConfiguration();
   void monitorToggle();
   void monitorOutput();
   void setMinimal(bool minimal) { fMinimal = minimal; }

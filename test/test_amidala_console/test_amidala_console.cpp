@@ -17,7 +17,6 @@
 
 void AmidalaConsole::init(AmidalaController *) {}
 void AmidalaConsole::process() {}
-bool AmidalaConsole::processConfig(const char *) { return false; }
 void AmidalaConsole::processCommand(const char *) {}
 bool AmidalaConsole::process(char, bool) { return false; }
 void AmidalaConsole::processGesture(const char *) {}
@@ -33,9 +32,6 @@ void AmidalaConsole::outputString() {}
 void AmidalaConsole::showXBEE() {}
 void AmidalaConsole::printVersion() {}
 void AmidalaConsole::printHelp() {}
-void AmidalaConsole::showLoadEEPROM(bool) {}
-void AmidalaConsole::showCurrentConfiguration() {}
-void AmidalaConsole::writeCurrentConfiguration() {}
 void AmidalaConsole::monitorToggle() {}
 void AmidalaConsole::monitorOutput() {}
 

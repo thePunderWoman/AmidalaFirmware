@@ -1,16 +1,54 @@
+// amidala_config.h
+// Configuration layer: AmidalaConfig class + readConfig() template functions.
+//
+// AmidalaConfig manages parsing, displaying, and persisting the robot's
+// configuration. Method bodies are in src/amidala_config.cpp, except for
+// applyServoConfig() which lives in src/amidala_servo.cpp so all servoDispatch
+// access stays in one file.
+//
+// readConfig() reads config.txt from either a VMusic2 USB board (when
+// VMUSIC_SERIAL is defined) or an SD card, feeding each character into any
+// object that provides process(char, bool).  It must remain header-only
+// because it is a template function.
+//
+// Depends on: AmidalaController (via forward declaration only)
+
 #pragma once
 
-// Config Reader
-// Provides readConfig() for loading settings from either:
-//   - VMusic2 USB board via serial (when VMUSIC_SERIAL is defined)
-//   - SD card (default)
-//
-// Usage in AmidalaController:
-//   #ifdef VMUSIC_SERIAL
-//     fConsole.setMinimal(!readConfig(fVMusic, fConsole));
-//   #else
-//     fConsole.setMinimal(!readConfig(fConsole));
-//   #endif
+#include <stdint.h>
+
+class AmidalaController;
+class Print;
+
+// ---- AmidalaConfig ----------------------------------------------------------
+
+class AmidalaConfig {
+public:
+  AmidalaConfig() {}
+  virtual ~AmidalaConfig() {}
+
+  // Called from AmidalaController::setup() to bind the controller and its
+  // console output.
+  void init(AmidalaController *controller);
+
+  // Parse a single *key=value config command.  Returns true on success.
+  bool processConfig(const char *cmd);
+
+  void showLoadEEPROM(bool load = false);
+  void showCurrentConfiguration();
+  void writeCurrentConfiguration();
+
+  // Implemented in src/amidala_servo.cpp — bridges into servoDispatch so that
+  // amidala_config.cpp has no direct dependency on the servo global.
+  void applyServoConfig(unsigned num, uint16_t minpulse, uint16_t maxpulse,
+                        float neutral);
+
+private:
+  AmidalaController *fController = nullptr;
+  Print *fOutput = nullptr;
+};
+
+// ---- readConfig() -----------------------------------------------------------
 
 #ifdef VMUSIC_SERIAL
 // ============================================================

@@ -1,5 +1,5 @@
 // test_config_reader.cpp
-// Unit tests for include/config_reader.h (SD card path, UNIT_TEST build).
+// Unit tests for readConfig() in include/amidala_config.h (SD card path, UNIT_TEST build).
 //
 // These tests exercise:
 //   - readConfig() returns true and forwards every character to the console
@@ -10,7 +10,7 @@
 //   - An empty file returns true (opened OK) but delivers no characters.
 
 #include "arduino_mock.h"  // must come first – defines SD, File, Serial, etc.
-#include "config_reader.h"
+#include "amidala_config.h"
 #include <unity.h>
 
 void setUp(void) {
