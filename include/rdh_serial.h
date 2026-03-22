@@ -1,6 +1,11 @@
 // rdh_serial.h
 // Serial interface for the Robbie the Robot / RDH dome position sensor.
 //
+// To enable autodome serial, uncomment the line below (or define it before
+// including this header):
+//
+//   #define RDH_SERIAL  Serial3
+//
 // RDHSerial wraps a Stream (typically a hardware UART) and provides:
 //   - Command methods to move the dome (setRelativePosition,
 //     setAbsolutePosition, setDomeDefaultMode, setDomeHomePosition,
