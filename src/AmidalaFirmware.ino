@@ -450,16 +450,6 @@ size_t AmidalaConsole::write(const uint8_t *buffer, size_t size) {
   return CONSOLE_SERIAL.write(buffer, size);
 }
 
-void AmidalaConsole::printServoPos(uint16_t num) {
-  if (servoDispatch.isActive(num)) {
-    printNum(servoDispatch.currentPos(num));
-  } else {
-    print("----");
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////
-
 void AmidalaConsole::init(AmidalaController *controller) {
   fController = controller;
   print(FIRMWARE_NAME);
@@ -471,11 +461,6 @@ void AmidalaConsole::init(AmidalaController *controller) {
   print(BUILD_DATE);
   print(F(") Serial: "));
   println(fController->params.serial);
-}
-
-void AmidalaConsole::setServo() {
-  // Not supported
-  println(F("Invalid"));
 }
 
 void AmidalaConsole::setDigitalOut() {
