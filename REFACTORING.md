@@ -271,7 +271,7 @@ src/amidala_servo.cpp          ← AmidalaConfig::applyServoConfig() added here
 
 ---
 
-#### PR 2g — `amidala-console-impl`: `src/amidala_console.cpp`
+#### ~~PR 2g — `amidala-console-impl`: `src/amidala_console.cpp`~~ ✅ PR #25
 
 Move from `.ino` to new file — all remaining `AmidalaConsole` methods:
 
@@ -331,7 +331,7 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 | `src/amidala_servo.cpp` | `AmidalaConsole::printServoPos`, `setServo`; `AmidalaConfig::applyServoConfig` ✅ |
 | `include/amidala_config.h` | `AmidalaConfig` class declaration ✅ |
 | `src/amidala_config.cpp` | `AmidalaConfig::processConfig`, `showLoadEEPROM`, `showCurrentConfiguration`, `writeCurrentConfiguration` ✅ |
-| `src/amidala_console.cpp` | Remaining `AmidalaConsole::*` — I/O, command parsing, monitor |
+| `src/amidala_console.cpp` | Remaining `AmidalaConsole::*` — I/O, command parsing, monitor ✅ |
 | `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
 | `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |
 
