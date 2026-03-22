@@ -72,7 +72,7 @@ static MockWire Wire;
 
 // ---- Arduino min / max / map() ----
 // Arduino.h defines min/max as macros (not templates) so they handle
-// mixed-type arguments.  Use macros here and set the amidala_core.h sentinel
+// mixed-type arguments.  Use macros here and set the core.h sentinel
 // so it does not try to add template versions on top.
 #ifndef _AMIDALA_MINMAX_DEFINED
 #define _AMIDALA_MINMAX_DEFINED

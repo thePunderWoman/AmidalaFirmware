@@ -1,5 +1,5 @@
 // test_helpers.cpp
-// Unit tests for the config-parsing helper functions in amidala_core.h:
+// Unit tests for the config-parsing helper functions in core.h:
 //   startswith, strtol, strtolu, boolparam, intparam (u8/u16/u32),
 //   charparam, sintparam, sintparam2, gestureparam, numberparams
 

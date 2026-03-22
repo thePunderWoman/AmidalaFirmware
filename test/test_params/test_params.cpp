@@ -1,5 +1,5 @@
-// test_amidala_params.cpp
-// Tests for include/amidala_params.h:
+// test_params.cpp
+// Tests for include/params.h:
 //   AmidalaParameters — default values, EEPROM load, capacity constants
 
 #include "arduino_mock.h"

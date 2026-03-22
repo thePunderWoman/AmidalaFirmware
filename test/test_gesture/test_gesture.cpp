@@ -1,5 +1,5 @@
 // test_gesture.cpp
-// Unit tests for the Gesture class in amidala_core.h.
+// Unit tests for the Gesture class in core.h.
 //
 // The Gesture class encodes gesture strings (sequences of digits 1-9 and A-D)
 // as a compact uint32_t using a base-14 scheme.  Tests here verify:

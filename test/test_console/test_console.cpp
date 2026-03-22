@@ -1,9 +1,9 @@
-// test_amidala_console.cpp
+// test_console.cpp
 // Tests for include/console.h:
 //   AmidalaConsole — construction, interface, CONSOLE_BUFFER_SIZE constant
 //
-// All method bodies call AmidalaController and are defined in
-// AmidalaFirmware.ino; they are not exercised here.  Stubs satisfy the linker.
+// All method bodies are defined in src/console.cpp and src/controller.cpp;
+// they are not exercised here.  Stubs satisfy the linker.
 
 #include "arduino_mock.h"
 #include "pin_config.h"
@@ -48,14 +48,14 @@ void test_console_buffer_size_is_64() {
 
 // ---- Construction -----------------------------------------------------------
 
-void test_amidala_console_constructs() {
+void test_console_constructs() {
     AmidalaConsole c;
     (void)c;
 }
 
 // ---- AmidalaConsole is a Print ----------------------------------------------
 
-void test_amidala_console_is_print() {
+void test_console_is_print() {
     AmidalaConsole c;
     Print *p = &c;
     TEST_ASSERT_NOT_NULL(p);
@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
     UNITY_BEGIN();
 
     RUN_TEST(test_console_buffer_size_is_64);
-    RUN_TEST(test_amidala_console_constructs);
-    RUN_TEST(test_amidala_console_is_print);
+    RUN_TEST(test_console_constructs);
+    RUN_TEST(test_console_is_print);
     RUN_TEST(test_set_minimal_does_not_crash);
     RUN_TEST(test_print_num_does_not_crash);
 
