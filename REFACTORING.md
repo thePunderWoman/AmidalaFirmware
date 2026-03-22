@@ -172,39 +172,31 @@ connection to the drive/dome controllers.  It stays `static` in the `.ino`.
 
 #### ~~PR 2c — `amidala-audio-impl`: `src/amidala_audio.cpp`~~ ✅ PR #21
 
-Move the cleanly separable audio methods out of the `.ino` and into a
-dedicated file.  Audio-related `case` branches inside `process(ButtonAction&)`,
-`processConfig()`, and `processCommand()` are too interleaved with other
-console logic to separate cleanly — those stay in `amidala_console.cpp`.
+Introduce a dedicated `AmidalaAudio` class (declared in `include/amidala_audio.h`)
+that owns the complete audio API.  All audio concerns — HCR hardware init,
+VMusic polling, volume, sound playback, emotes, muse, and ack — move out of
+`AmidalaConsole` and into `AmidalaAudio`.
 
-Methods to move:
+`AmidalaController` gains an `fAudio` member; `process(ButtonAction&)`,
+`processCommand()`, and `animate()` all delegate to `fController->fAudio.*`.
+`hcrDelayedInit` becomes file-static inside `amidala_audio.cpp`.
 
 ```
-static void hcrDelayedInit()           ← already in .ino, move here
-AmidalaConsole::randomToggle()
-AmidalaConsole::setVolumeNoResponse()
-AmidalaConsole::playSound()
+include/amidala_audio.h        ← new: AmidalaAudio class declaration
+src/amidala_audio.cpp          ← new: AmidalaAudio:: method bodies
+  AmidalaAudio::init()         ← replaces inline HCR begin/schedule in setup()
+  AmidalaAudio::process()      ← replaces inline HCR/VMusic block in animate()
+  AmidalaAudio::randomToggle()
+  AmidalaAudio::setVolumeNoResponse()
+  AmidalaAudio::playSound()
+  AmidalaAudio::playEmote()    ← extracted from process(ButtonAction&)
+  AmidalaAudio::toggleMuse()   ← extracted from process(ButtonAction&)
+  AmidalaAudio::playAck()      ← extracted from process(ButtonAction&)
 ```
-
-**`src/amidala_audio.cpp`** preamble:
-```cpp
-#include "amidala_controller.h"
-
-// amidala is the global AmidalaController instance defined in AmidalaFirmware.ino.
-extern AmidalaController amidala;
-```
-
-`hcrDelayedInit()` references `amidala` directly (the global instance), so
-it needs the `extern` declaration.  It can now be a plain `void` rather than
-`static` since it crosses TU boundaries.  Update the forward declaration in
-`AmidalaFirmware.ino` accordingly (remove `static`).
-
-The three `AmidalaConsole` methods access the controller only through
-`fController` (their stored pointer) and `params` — no extra `extern`s needed.
 
 ---
 
-#### PR 2d — `amidala-buttons-impl`: `src/amidala_buttons.cpp`
+#### ~~PR 2d — `amidala-buttons-impl`: `src/amidala_buttons.cpp`~~ ✅ PR #22
 
 Move the button/gesture dispatch pipeline out of the `.ino`.  These four
 methods are the "input → action" layer: they receive a button press or gesture
@@ -293,8 +285,9 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 |------|---------|
 | `src/AmidalaFirmware.ino` | Includes, globals, `AmidalaController` ctor/setup/animate, `hcrDelayedInit`, Arduino `setup()`/`loop()` |
 | `src/drive_controllers.cpp` | `DriveController::*`, `DomeController::*` ✅ |
-| `src/amidala_audio.cpp` | `hcrDelayedInit`, `AmidalaConsole::randomToggle/setVolumeNoResponse/playSound` |
-| `src/amidala_buttons.cpp` | `AmidalaConsole::process(ButtonAction&)`, `processGesture`, `processButton`, `processLongButton` |
+| `include/amidala_audio.h` | `AmidalaAudio` class declaration ✅ |
+| `src/amidala_audio.cpp` | `AmidalaAudio::*` — all audio hardware concerns ✅ |
+| `src/amidala_buttons.cpp` | `AmidalaConsole::process(ButtonAction&)`, `processGesture`, `processButton`, `processLongButton` ✅ |
 | `src/amidala_console.cpp` | All remaining `AmidalaConsole::*` methods (I/O, config, command parsing) |
 | `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
 | `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |
