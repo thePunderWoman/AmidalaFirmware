@@ -303,7 +303,7 @@ translation-unit-local and avoid shadowing `std::isdigit` in other TUs.
 
 ---
 
-#### PR 2h — `jevois-console-impl`: `src/jevois_console.cpp`
+#### ~~PR 2h — `jevois-console-impl`: `src/jevois_console.cpp`~~ ✅ PR #26
 
 Move `JevoisConsole::init/processCommand/process` (lines 2155–2249) to a new
 file.  Wrap in `#ifdef EXPERIMENTAL_JEVOIS_STEERING / #endif` as they are now.
@@ -332,7 +332,7 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 | `include/amidala_config.h` | `AmidalaConfig` class declaration ✅ |
 | `src/amidala_config.cpp` | `AmidalaConfig::processConfig`, `showLoadEEPROM`, `showCurrentConfiguration`, `writeCurrentConfiguration` ✅ |
 | `src/amidala_console.cpp` | Remaining `AmidalaConsole::*` — I/O, command parsing, monitor ✅ |
-| `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
+| `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) ✅ |
 | `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |
 
 ### Remaining `.ino` structure after all PRs
