@@ -240,23 +240,34 @@ extern ServoDispatchDirect<12> servoDispatch;  // defined in AmidalaFirmware.ino
 
 ---
 
-#### PR 2f — `amidala-config-impl`: `src/amidala_config.cpp`
+#### ~~PR 2f — `amidala-config-impl`: `src/amidala_config.cpp`~~ ✅ PR #24
 
-Move config display and persistence methods out of the `.ino`.
-`readConfig()` stays in `config_reader.h` — it is a template function and
-must remain header-only.
+Introduce a dedicated `AmidalaConfig` class (declared in
+`include/amidala_config.h`) that owns all config concerns.  Mirrors the
+`AmidalaAudio` pattern: stores `fController` and `Print* fOutput` (bound to
+`fController->fConsole` in `init()`), so all output goes through the console
+without `AmidalaConfig` inheriting from `Print`.
+
+`AmidalaController` gains an `fConfig` member; call sites in the `.ino` and
+`setup()` are updated to use `fConfig.*`.  `readConfig()` stays in
+`config_reader.h` — it is a template function and must remain header-only.
 
 ```
-AmidalaConsole::processConfig()              ← parses *key=value config commands
-AmidalaConsole::showLoadEEPROM()
-AmidalaConsole::showCurrentConfiguration()
-AmidalaConsole::writeCurrentConfiguration()
+include/amidala_config.h       ← new: AmidalaConfig class declaration
+src/amidala_config.cpp         ← new: AmidalaConfig:: method bodies
+  AmidalaConfig::init()
+  AmidalaConfig::processConfig()
+  AmidalaConfig::showLoadEEPROM()
+  AmidalaConfig::showCurrentConfiguration()
+  AmidalaConfig::writeCurrentConfiguration()
+src/amidala_servo.cpp          ← AmidalaConfig::applyServoConfig() added here
+                                  (servoDispatch stays in one file)
 ```
 
-**`src/amidala_config.cpp`** preamble:
-```cpp
-#include "amidala_controller.h"
-```
+`AmidalaConsole` loses `processConfig`, `showLoadEEPROM`,
+`showCurrentConfiguration`, `writeCurrentConfiguration`, and
+`applyServoConfig` declarations.  An `isMinimal()` getter is added so
+`AmidalaConfig` can read the minimal-mode flag without direct field access.
 
 ---
 
@@ -317,8 +328,9 @@ extern ServoPD tiltservo;   // defined in AmidalaFirmware.ino
 | `include/amidala_audio.h` | `AmidalaAudio` class declaration ✅ |
 | `src/amidala_audio.cpp` | `AmidalaAudio::*` — all audio hardware concerns ✅ |
 | `src/amidala_buttons.cpp` | `AmidalaConsole::process(ButtonAction&)`, `processGesture`, `processButton`, `processLongButton` ✅ |
-| `src/amidala_servo.cpp` | `AmidalaConsole::printServoPos`, `setServo` ✅ |
-| `src/amidala_config.cpp` | `AmidalaConsole::processConfig`, `showLoadEEPROM`, `showCurrentConfiguration`, `writeCurrentConfiguration` |
+| `src/amidala_servo.cpp` | `AmidalaConsole::printServoPos`, `setServo`; `AmidalaConfig::applyServoConfig` ✅ |
+| `include/amidala_config.h` | `AmidalaConfig` class declaration ✅ |
+| `src/amidala_config.cpp` | `AmidalaConfig::processConfig`, `showLoadEEPROM`, `showCurrentConfiguration`, `writeCurrentConfiguration` ✅ |
 | `src/amidala_console.cpp` | Remaining `AmidalaConsole::*` — I/O, command parsing, monitor |
 | `src/jevois_console.cpp` | `JevoisConsole::*` (under `#ifdef EXPERIMENTAL_JEVOIS_STEERING`) |
 | `include/amidala_controller.h` | `AmidalaController` class declaration ✅ |

@@ -31,7 +31,6 @@
 #include <hcr.h>
 #endif
 #include "amidala_core.h"
-#include "config_reader.h"
 #include "pin_config.h"
 #include <EEPROM.h>
 #include <XBee.h>
@@ -43,6 +42,7 @@ class AmidalaController;
 
 #include "button_actions.h"
 #include "amidala_audio.h"
+#include "amidala_config.h"
 #include "console.h"
 #include "jevois_console.h"
 #include "rdh_serial.h"
@@ -71,6 +71,7 @@ public:
 
   AmidalaConsole fConsole;
   AmidalaAudio fAudio;
+  AmidalaConfig fConfig;
 #ifdef VMUSIC_SERIAL
   VMusic fVMusic;
 #else
@@ -292,6 +293,7 @@ private:
   }
 
   friend class AmidalaAudio;
+  friend class AmidalaConfig;
   friend class AmidalaConsole;
   friend class DriveController;
   friend class DomeController;
