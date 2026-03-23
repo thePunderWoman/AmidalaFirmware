@@ -41,6 +41,14 @@ class AmidalaController;
 class XBeePocketRemote : public JoystickController {
 public:
   XBeePocketRemote() {
+    addr = 0;
+    y = 0;
+    x = 0;
+    w1 = 0;
+    w2 = 0;
+    memset(button, 0, sizeof(button));
+    type = kFailsafe;
+    lastPacket = 0;
     memset(&state, '\0', sizeof(state));
     memset(&event, '\0', sizeof(event));
     memset(&longpress, '\0', sizeof(longpress));

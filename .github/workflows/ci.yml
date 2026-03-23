@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Native unit tests ─────────────────────────────────────────────────────
+  # Runs on macOS so the -isysroot path in platformio.ini matches CI and local
+  # development without modification.
+  # Firmware build is verified locally before pushing (see CLAUDE.md).
+  test:
+    name: Native Unit Tests
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-native-${{ hashFiles('platformio.ini') }}
+          restore-keys: ${{ runner.os }}-pio-native-
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Run unit tests
+        run: pio test -e native
