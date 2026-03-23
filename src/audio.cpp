@@ -61,6 +61,9 @@ void AmidalaAudio::setVolumeNoResponse(uint8_t volume) {
   AmidalaParameters &params = fController->params;
 #ifndef VMUSIC_SERIAL
   if (params.audiohw == AUDIO_HW_HCR) {
+    uint32_t now = millis();
+    if (now - fLastVolumeUpdate < VOLUME_THROTTLE_MS) return;
+    fLastVolumeUpdate = now;
     fController->fHCR.SetVolume(CH_V, volume);
     fController->fHCR.SetVolume(CH_A, volume);
     fController->fHCR.SetVolume(CH_B, volume);

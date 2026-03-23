@@ -43,6 +43,11 @@ public:
   // Trigger the configured acknowledgement emote (if ackon is enabled).
   void playAck();
 
+  // Minimum milliseconds between HCR SetVolume commands. Exposed for tests.
+  static const uint32_t VOLUME_THROTTLE_MS = 80;
+
 private:
   AmidalaController *fController = nullptr;
+  // Initialized so the first call always passes the throttle check.
+  uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
 };
