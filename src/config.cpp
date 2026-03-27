@@ -172,17 +172,17 @@ void AmidalaConfig::showCurrentConfiguration() {
     if (params.autocorrect)
       fOutput->println(F("Auto Correct Gestures Enabled"));
 
-    fOutput->print(F("Aux Serial Baud: "));
-    fOutput->println(params.auxbaud);
-    fOutput->print(F("Aux Delimiter: "));
-    fOutput->println((char)params.auxdelim);
-    fOutput->print(F("Aux EOL: "));
-    fOutput->println(params.auxeol);
-    fOutput->print(F("Aux Init: "));
+    fOutput->print(F("Serial Baud: "));
+    fOutput->println(params.serialbaud);
+    fOutput->print(F("Serial Delimiter: "));
+    fOutput->println((char)params.serialdelim);
+    fOutput->print(F("Serial EOL: "));
+    fOutput->println(params.serialeol);
+    fOutput->print(F("Serial Init: "));
     fOutput->println();
-    fOutput->println(F("Aux Serial String Commands:"));
-    for (unsigned i = 0; i < params.getAuxStringCount(); i++) {
-      fOutput->println(params.A[i].str);
+    fOutput->println(F("Serial String Commands:"));
+    for (unsigned i = 0; i < params.getSerialStringCount(); i++) {
+      fOutput->println(params.Str[i].str);
     }
     fOutput->println();
     fOutput->print(F("domemode: "));
@@ -348,7 +348,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       b += args[0] - 1;
       memset(b, '\0', sizeof(*b));
       b->action = args[1];
-      b->sound.auxstring = 0;
+      b->sound.serialstr = 0;
       switch (args[1]) {
       case ButtonAction::kSound:
         b->sound.soundbank = max(1, min(args[2], params.sbcount));
@@ -374,10 +374,10 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->i2ccmd.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
-      case ButtonAction::kAuxStr:
-        b->aux.auxstring = min(args[2], MAX_AUX_STRINGS);
-        DEBUG_PRINT("BUTTON AUX #");
-        DEBUG_PRINTLN(b->aux.auxstring);
+      case ButtonAction::kSerialStr:
+        b->serial.serialstr = min(args[2], MAX_SERIAL_STRINGS);
+        DEBUG_PRINT("BUTTON SERIAL #");
+        DEBUG_PRINTLN(b->serial.serialstr);
         if (b->action == 0)
           b->action = args[1];
         break;
@@ -398,10 +398,10 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->action = 0;
         break;
       }
-      if (b->action != ButtonAction::kAuxStr &&
+      if (b->action != ButtonAction::kSerialStr &&
           b->action != ButtonAction::kHCREmote &&
           b->action != ButtonAction::kHCRMuse && argcount >= 4)
-        b->sound.auxstring = (argcount >= 5) ? args[4] : 0;
+        b->sound.serialstr = (argcount >= 5) ? args[4] : 0;
       return true;
     }
     return false;
@@ -415,7 +415,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       b += args[0] - 1;
       memset(b, '\0', sizeof(*b));
       b->action = args[1];
-      b->sound.auxstring = 0;
+      b->sound.serialstr = 0;
       switch (args[1]) {
       case ButtonAction::kSound:
         b->sound.soundbank = max(1, min(args[2], params.sbcount));
@@ -441,8 +441,8 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->i2ccmd.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
-      case ButtonAction::kAuxStr:
-        b->aux.auxstring = min(args[2], MAX_AUX_STRINGS);
+      case ButtonAction::kSerialStr:
+        b->serial.serialstr = min(args[2], MAX_SERIAL_STRINGS);
         if (b->action == 0)
           b->action = args[1];
         break;
@@ -463,20 +463,20 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->action = 0;
         break;
       }
-      if (b->action != ButtonAction::kAuxStr &&
+      if (b->action != ButtonAction::kSerialStr &&
           b->action != ButtonAction::kHCREmote &&
           b->action != ButtonAction::kHCRMuse && argcount >= 4)
-        b->sound.auxstring = args[3];
+        b->sound.serialstr = args[3];
       return true;
     }
     return false;
-  } else if (startswith(cmd, "a=")) {
-    AuxString *a =
-        &params.A[min(params.acount, params.getAuxStringCount() - 1)];
+  } else if (startswith(cmd, "sstr=")) {
+    SerialString *a =
+        &params.Str[min(params.serialcount, params.getSerialStringCount() - 1)];
     strncpy(a->str, cmd, sizeof(a->str) - 1);
     a->str[sizeof(a->str) - 1] = '\0';
-    if (params.acount < params.getAuxStringCount())
-      params.acount++;
+    if (params.serialcount < params.getSerialStringCount())
+      params.serialcount++;
   } else if (startswith(cmd, "g=")) {
     char gesture[MAX_GESTURE_LENGTH + 1];
     char *gesture_end = &gesture[sizeof(gesture) - 1];
@@ -501,7 +501,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       if (numberparams(cmd, argcount, args, sizeof(args)) && argcount >= 1) {
         memset(b, '\0', sizeof(*b));
         b->action = args[0];
-        b->sound.auxstring = 0;
+        b->sound.serialstr = 0;
         switch (b->action = args[0]) {
         case ButtonAction::kSound:
           b->sound.soundbank = max(1, min(args[1], params.sbcount));
@@ -523,10 +523,10 @@ bool AmidalaConfig::processConfig(const char *cmd) {
           b->i2ccmd.target = min(args[1], 100);
           b->i2ccmd.cmd = (argcount >= 3) ? args[2] : 0;
           break;
-        case ButtonAction::kAuxStr:
-          b->aux.auxstring = min(args[1], MAX_AUX_STRINGS);
-          DEBUG_PRINT("GESTURE AUX #");
-          DEBUG_PRINTLN(b->aux.auxstring);
+        case ButtonAction::kSerialStr:
+          b->serial.serialstr = min(args[1], MAX_SERIAL_STRINGS);
+          DEBUG_PRINT("GESTURE SERIAL #");
+          DEBUG_PRINTLN(b->serial.serialstr);
           break;
         case ButtonAction::kI2CStr:
           b->i2cstr.target = min(args[1], 100);
@@ -542,10 +542,10 @@ bool AmidalaConfig::processConfig(const char *cmd) {
           b->action = 0;
           break;
         }
-        if (b->action != ButtonAction::kAuxStr &&
+        if (b->action != ButtonAction::kSerialStr &&
             b->action != ButtonAction::kHCREmote &&
             b->action != ButtonAction::kHCRMuse && argcount >= 3)
-          b->sound.auxstring = args[2];
+          b->sound.serialstr = args[2];
         if (params.gcount < params.getGestureCount())
           params.gcount++;
         return true;
@@ -575,9 +575,9 @@ bool AmidalaConfig::processConfig(const char *cmd) {
              intparam(cmd, "rcd=", params.rcd, 1, 50) ||
              intparam(cmd, "rcj=", params.rcj, 1, 40) ||
              intparam(cmd, "myi2c=", params.myi2c, 0, 100) ||
-             intparam(cmd, "auxbaud=", params.auxbaud, 300, 115200) ||
-             intparam(cmd, "auxdelim=", params.auxdelim, 0, 255) ||
-             intparam(cmd, "auxeol=", params.auxeol, 0, 255) ||
+             intparam(cmd, "serialbaud=", params.serialbaud, 300, 115200) ||
+             intparam(cmd, "serialdelim=", params.serialdelim, 0, 255) ||
+             intparam(cmd, "serialeol=", params.serialeol, 0, 255) ||
              intparam(cmd, "fst=", params.fst, 1000, 3000) ||
              intparam(cmd, "j1adjv=", params.j1adjv, 0, 80) ||
              intparam(cmd, "j1adjh=", params.j1adjh, 0, 80) ||

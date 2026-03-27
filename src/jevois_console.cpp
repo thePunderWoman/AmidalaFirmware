@@ -78,8 +78,8 @@ void JevoisConsole::processCommand(char *cmd) {
 }
 
 void JevoisConsole::process() {
-  while (AUX_SERIAL.available()) {
-    int ch = AUX_SERIAL.read();
+  while (SERIAL.available()) {
+    int ch = SERIAL.read();
     if (ch == '\n') {
       fBuffer[fPos] = '\0';
       fPos = 0;

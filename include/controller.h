@@ -246,15 +246,15 @@ public:
 #endif
   }
 
-  void sendAuxString(const char *str) {
+  void sendSerialString(const char *str) {
     char ch;
     while ((ch = *str++) != '\0') {
-      if (ch == params.auxdelim)
-        ch = params.auxeol;
-      AUX_SERIAL.write(ch);
+      if (ch == params.serialdelim)
+        ch = params.serialeol;
+      SERIAL.write(ch);
     }
-    ch = params.auxeol;
-    AUX_SERIAL.write(ch);
+    ch = params.serialeol;
+    SERIAL.write(ch);
   }
 
   // Defined in src/controller.cpp — references servoDispatch, panservo,

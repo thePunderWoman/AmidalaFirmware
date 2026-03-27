@@ -25,7 +25,7 @@ void setup() {
 #elif defined(RDH_SERIAL)
   RDH_SERIAL.begin(RDH_BAUD_RATE);
 #else
-  AUX_SERIAL.begin(115200);
+  SERIAL.begin(115200);
 #endif
 
   SetupEvent::ready();

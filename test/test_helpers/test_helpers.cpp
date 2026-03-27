@@ -173,13 +173,13 @@ void test_intparam_u16_clamp() {
 
 void test_intparam_u32_basic() {
   uint32_t v = 0;
-  TEST_ASSERT_TRUE(intparam("auxbaud=9600", "auxbaud=", v, 300, 115200));
+  TEST_ASSERT_TRUE(intparam("serialbaud=9600", "serialbaud=", v, 300, 115200));
   TEST_ASSERT_EQUAL_UINT32(9600, v);
 }
 
 void test_intparam_u32_clamp_min() {
   uint32_t v = 0;
-  TEST_ASSERT_TRUE(intparam("auxbaud=100", "auxbaud=", v, 300, 115200));
+  TEST_ASSERT_TRUE(intparam("serialbaud=100", "serialbaud=", v, 300, 115200));
   TEST_ASSERT_EQUAL_UINT32(300, v);
 }
 

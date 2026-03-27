@@ -4,7 +4,7 @@
 // Only compiled when EXPERIMENTAL_JEVOIS_STEERING is defined.
 // Class declaration only — processCommand(), process(), and init() bodies are
 // defined in src/jevois_console.cpp (they reference globals tiltservo,
-// AUX_SERIAL, and AmidalaController).
+// SERIAL, and AmidalaController).
 //
 // Depends on: drive/TargetSteering.h (TargetSteering)
 

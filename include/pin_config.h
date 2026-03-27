@@ -3,7 +3,7 @@
 // All physical I/O pin numbers and serial port aliases are defined here so
 // that wiring changes require edits in exactly one place.
 //
-// Note: AUX_SERIAL is conditionally defined based on DOME_DRIVE_SERIAL and
+// Note: SERIAL is conditionally defined based on DOME_DRIVE_SERIAL and
 // RDH_SERIAL. Those symbols come from drive_config.h and rdh_serial.h,
 // which must be included (via controller.h) before this header is included.
 //
@@ -80,9 +80,9 @@
 // See note at the top of this file about include ordering when enabling this.
 // #define VMUSIC_SERIAL  Serial2
 
-// AUX_SERIAL is Serial3 when Serial3 is not already claimed by the drive or
+// SERIAL is Serial3 when Serial3 is not already claimed by the drive or
 // dome controller. DOME_DRIVE_SERIAL and RDH_SERIAL are resolved from the
 // drive-system configuration before this header is included.
 #if !defined(DOME_DRIVE_SERIAL) && !defined(RDH_SERIAL)
-#define AUX_SERIAL Serial3
+#define SERIAL Serial3
 #endif

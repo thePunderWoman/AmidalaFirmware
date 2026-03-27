@@ -13,8 +13,8 @@
 #define MAX_GESTURE_LENGTH 8
 #endif
 
-#ifndef MAX_AUX_STRINGS
-#define MAX_AUX_STRINGS 40
+#ifndef MAX_SERIAL_STRINGS
+#define MAX_SERIAL_STRINGS 40
 #endif
 
 // Portable min/max/constrain for non-Arduino builds (e.g. native unit tests).

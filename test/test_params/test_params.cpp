@@ -44,9 +44,9 @@ void test_gesture_count() {
     TEST_ASSERT_EQUAL(10, p.getGestureCount());
 }
 
-void test_aux_string_count() {
+void test_serial_string_count() {
     AmidalaParameters p;
-    TEST_ASSERT_EQUAL(MAX_AUX_STRINGS, (int)p.getAuxStringCount());
+    TEST_ASSERT_EQUAL(MAX_SERIAL_STRINGS, (int)p.getSerialStringCount());
 }
 
 // ---- Default values after init() (no EEPROM signature) ----------------------
@@ -85,19 +85,19 @@ void test_default_maxdelay() {
     TEST_ASSERT_EQUAL(120, gDefaultParams.maxdelay);
 }
 
-void test_default_auxbaud() {
+void test_default_serialbaud() {
     gDefaultParams.init();
-    TEST_ASSERT_EQUAL(9600UL, gDefaultParams.auxbaud);
+    TEST_ASSERT_EQUAL(9600UL, gDefaultParams.serialbaud);
 }
 
-void test_default_auxdelim() {
+void test_default_serialdelim() {
     gDefaultParams.init();
-    TEST_ASSERT_EQUAL(':', gDefaultParams.auxdelim);
+    TEST_ASSERT_EQUAL(':', gDefaultParams.serialdelim);
 }
 
-void test_default_auxeol() {
+void test_default_serialeol() {
     gDefaultParams.init();
-    TEST_ASSERT_EQUAL(13, gDefaultParams.auxeol);
+    TEST_ASSERT_EQUAL(13, gDefaultParams.serialeol);
 }
 
 void test_default_audiohw_is_hcr() {
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_servo_count);
     RUN_TEST(test_button_count);
     RUN_TEST(test_gesture_count);
-    RUN_TEST(test_aux_string_count);
+    RUN_TEST(test_serial_string_count);
 
     RUN_TEST(test_default_volume);
     RUN_TEST(test_default_startup_true);
@@ -209,9 +209,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_default_ackon_false);
     RUN_TEST(test_default_mindelay);
     RUN_TEST(test_default_maxdelay);
-    RUN_TEST(test_default_auxbaud);
-    RUN_TEST(test_default_auxdelim);
-    RUN_TEST(test_default_auxeol);
+    RUN_TEST(test_default_serialbaud);
+    RUN_TEST(test_default_serialdelim);
+    RUN_TEST(test_default_serialeol);
     RUN_TEST(test_default_audiohw_is_hcr);
     RUN_TEST(test_default_dome_home_position);
     RUN_TEST(test_default_dome_speed_home);

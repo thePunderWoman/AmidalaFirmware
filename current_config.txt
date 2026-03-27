@@ -61,15 +61,15 @@ auto=n
 mindelay=20
 maxdelay=45
 
-# --- Communication & I2C ---
-# This board's I2C address (0 = Master)
+# --- Aux I2C ---
+# This board's I2C address (0 = Master, used for auxiliary I2C output)
 myi2c=0
-# Aux Serial Port Baud Rate
-auxbaud=9600
+# Primary Serial Port (Serial3 / COM3) Baud Rate
+serialbaud=9600
 # ASCII code for delimiter (default 58 = ':', 124 = '|')
-auxdelim=124
+serialdelim=124
 # ASCII code for EOL (default 13 = Carriage Return)
-auxeol=13
+serialeol=13
 
 # --- Dome Motor Control ---
 # Default Dome Mode: 0=Manual, 1=Auto-Home, 2=Random, 3=Seek
@@ -130,53 +130,53 @@ sb=dance,2
 sb=cant,1
 sb=leial,1
 
-# --- Aux String Definitions ---
-# Format: a=string_here
+# --- Serial String Definitions ---
+# Format: sstr=string_here
 # One indexed and read in the order they appear
 
 # 1: Sad (Moderate)
-a=<SS0>
+sstr=<SS0>
 # 2: Scared (Moderate)
-a=<SC0>
+sstr=<SC0>
 # 3: Mad (Moderate)
-a=<SM0>
+sstr=<SM0>
 # 4: Very Mad (Strong)
-a=<SM1>
+sstr=<SM1>
 # 5: Very Happy (Strong)
-a=<SH1>
+sstr=<SH1>
 # 6: Overload
-a=<SE>
+sstr=<SE>
 # 7: Toggle Mute
-a=BD:VOL
+sstr=BD:VOL
 # 8: Vader
-a=BD:VADER
+sstr=BD:VADER
 # 9: Utility Arms
-a=BD:UARMS
+sstr=BD:UARMS
 # 10: Toggle Musing
-a=BD:MUSE
+sstr=BD:MUSE
 # 11: Reset All
-a=DM:RESET
+sstr=DM:RESET
 # 12: Pie Panels
-a=DM:PIES
+sstr=DM:PIES
 # 13: Low Panels
-a=DM:LOW
+sstr=DM:LOW
 # 14: All Panels
-a=DM:OPENALL
+sstr=DM:OPENALL
 # 15: Leia Sequence
-a=DM:LEIA
+sstr=DM:LEIA
 # 16: Heart Sequence
-a=DM:HEART
+sstr=DM:HEART
 # 17: Hello There
-a=DM:HELLO
+sstr=DM:HELLO
 # 18: Scream
-a=DM:SCREAM
+sstr=DM:SCREAM
 # 19: Panel flutter
-a=DM:FLUTTER
+sstr=DM:FLUTTER
 
 
 # --- Button Mappings ---
 # Format: b=ButtonNum,Action,TargetAddr,TargetCmd
-# Actions: 1=Sound, 2=Servo, 3=DigitalOut, 4=I2CCmd, 5=AuxStr, 6=I2CStr
+# Actions: 1=Sound, 2=Servo, 3=DigitalOut, 4=I2CCmd, 5=SerStr, 6=I2CStr
 #          7=HCREmote(emotion,level)  emotion: 0=Happy 1=Sad 2=Mad 3=Scared 4=Overload
 #                                     level:   0=Moderate 1=Strong
 #          8=HCRMuseToggle
@@ -199,7 +199,7 @@ b=8,7,4,0
 
 # --- Gesture Mappings (Stick Movments) ---
 # Format: g=GestureString,Action,TargetAddr,TargetCmd
-# Actions: 5=AuxStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle
+# Actions: 5=SerStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle
 
 # Utility Arms Open Close
 g=1,5,9
