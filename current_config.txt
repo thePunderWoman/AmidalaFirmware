@@ -180,10 +180,10 @@ a=DM:FLUTTER
 #          7=HCREmote(emotion,level)  emotion: 0=Happy 1=Sad 2=Mad 3=Scared 4=Overload
 #                                     level:   0=Moderate 1=Strong
 #          8=HCRMuseToggle
-# Sad Emote
-b=1,7,1,0
+# Hello There
+b=1,5,17
 # Scared Emote
-b=2,7,3,0
+b=2,5,19
 # Mad Emote
 b=3,7,2,0
 # Very Mad Emote
