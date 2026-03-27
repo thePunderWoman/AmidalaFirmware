@@ -23,8 +23,8 @@ void AmidalaConsole::process(ButtonAction &button) {
     break;
   case button.kI2CStr:
     if (button.i2cstr.cmd != 0 &&
-        button.i2cstr.cmd <= params.getAuxStringCount()) {
-      const char *str = params.A[button.i2cstr.cmd - 1].str;
+        button.i2cstr.cmd <= params.getSerialStringCount()) {
+      const char *str = params.Str[button.i2cstr.cmd - 1].str;
       DEBUG_PRINT("I2C STR addr=");
       DEBUG_PRINT(button.i2cstr.target);
       DEBUG_PRINT(" str=");
@@ -45,11 +45,11 @@ void AmidalaConsole::process(ButtonAction &button) {
       button.action != ButtonAction::kHCRMuse) {
     fController->fAudio.playAck();
   }
-  if (button.aux.auxstring != 0 &&
-      button.aux.auxstring <= params.getAuxStringCount()) {
-    DEBUG_PRINT("AUX #");
-    DEBUG_PRINTLN(params.A[button.aux.auxstring - 1].str);
-    fController->sendAuxString(params.A[button.aux.auxstring - 1].str);
+  if (button.serial.serialstr != 0 &&
+      button.serial.serialstr <= params.getSerialStringCount()) {
+    DEBUG_PRINT("SERIAL #");
+    DEBUG_PRINTLN(params.Str[button.serial.serialstr - 1].str);
+    fController->sendSerialString(params.Str[button.serial.serialstr - 1].str);
   }
 }
 

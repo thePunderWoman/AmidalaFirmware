@@ -86,9 +86,9 @@ void AmidalaController::setup() {
   if (params.autocorrect)
     fConsole.println(F("Auto Correct Gestures Enabled"));
 
-#ifdef AUX_SERIAL
-  AUX_SERIAL.begin(params.auxbaud);
-  sendAuxString(params.auxinit);
+#ifdef SERIAL
+  SERIAL.begin(params.serialbaud);
+  sendSerialString(params.serialinit);
   fAudio.init(this);
 #endif
 

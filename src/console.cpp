@@ -83,8 +83,8 @@ void AmidalaConsole::printHelp() {
   println(F("$ - Play sound, ${nn}[{mm}]. nn=bank, mm= file number"));
   println(F("s - Set Servo. s{nn},{mmm},{ooo}. nn=#, mmm=pos, ooo=spd"));
   println(F("o - Set DOUT. o{nn},{m}. nn=#, m=1 or 0, 2=toggle, 3=mom"));
-  println(F("a - Output string to Aux serial, a[string]"));
-  println(F("i - i2c Command, i{nnn},{mmm}. nnn=Dest Addr, mmm=Cmd"));
+  println(F("a - Send string to primary serial output, a[string]"));
+  println(F("i - Aux i2c Command, i{nnn},{mmm}. nnn=Dest Addr, mmm=Cmd"));
   println(F("x - Display/Set XBEE address,  x{[n]=[hhhhhhhh]}. n=1 or 2, "
             "hhhhhhhh=Hex address"));
   println(F("w - Write config to EEPROM"));

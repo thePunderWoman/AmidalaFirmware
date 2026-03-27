@@ -7,7 +7,7 @@
 // values persisted in EEPROM.
 //
 // Depends on: EEPROM (Arduino <EEPROM.h> / arduino_mock.h),
-//             button_actions.h (ButtonAction, GestureAction, AuxString),
+//             button_actions.h (ButtonAction, GestureAction, SerialString),
 //             core.h           (Gesture),
 //             drive_config.h   (DEFAULT_DOME_* / DOME_MAXIMUM_SPEED),
 //             button_actions.h (HAPPY, EMOTE_MODERATE fallback constants),
@@ -28,8 +28,8 @@
 
 // ---- Auxiliary string count -------------------------------------------------
 
-#ifndef MAX_AUX_STRINGS
-#define MAX_AUX_STRINGS 40
+#ifndef MAX_SERIAL_STRINGS
+#define MAX_SERIAL_STRINGS 40
 #endif
 
 // ---- AmidalaParameters ------------------------------------------------------
@@ -93,8 +93,8 @@ struct AmidalaParameters {
   ButtonAction LB[9];
   GestureAction G[10];
   DigitalOut D[8];
-  AuxString A[MAX_AUX_STRINGS];
-  uint8_t acount;
+  SerialString Str[MAX_SERIAL_STRINGS];
+  uint8_t serialcount;
   uint8_t gcount;
   uint8_t sbcount;
   uint8_t volume;
@@ -106,10 +106,10 @@ struct AmidalaParameters {
   unsigned maxdelay;
   bool mix12;
   uint8_t myi2c;
-  uint32_t auxbaud;
-  char auxinit[16];
-  uint8_t auxdelim;
-  uint8_t auxeol;
+  uint32_t serialbaud;
+  char serialinit[16];
+  uint8_t serialdelim;
+  uint8_t serialeol;
   bool autocorrect;
   char b9;
   bool goslow;
@@ -155,7 +155,7 @@ struct AmidalaParameters {
 
   constexpr unsigned getGestureCount() { return sizeof(G) / sizeof(G[0]); }
 
-  constexpr unsigned getAuxStringCount() { return sizeof(A) / sizeof(A[0]); }
+  constexpr unsigned getSerialStringCount() { return sizeof(Str) / sizeof(Str[0]); }
 
   void init(bool forceReload = false) {
     static bool sInited;
@@ -177,9 +177,9 @@ struct AmidalaParameters {
       rcd = 30;
       rcj = 5;
       myi2c = 0;
-      auxbaud = 9600;
-      auxdelim = ':';
-      auxeol = 13;
+      serialbaud = 9600;
+      serialdelim = ':';
+      serialeol = 13;
       autocorrect = false;
       b9 = 'n';
 #ifdef VMUSIC_SERIAL

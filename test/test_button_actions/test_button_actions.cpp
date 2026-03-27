@@ -2,7 +2,7 @@
 // Tests for include/button_actions.h:
 //   ButtonAction  — action type constants, union field access, printDescription
 //   GestureAction — gesture + action pairing, printDescription
-//   AuxString     — struct layout
+//   SerialString  — struct layout
 
 #include "arduino_mock.h"
 #include "button_actions.h"
@@ -20,7 +20,7 @@ void test_action_type_constants() {
     TEST_ASSERT_EQUAL(2, ButtonAction::kServo);
     TEST_ASSERT_EQUAL(3, ButtonAction::kDigitalOut);
     TEST_ASSERT_EQUAL(4, ButtonAction::kI2CCmd);
-    TEST_ASSERT_EQUAL(5, ButtonAction::kAuxStr);
+    TEST_ASSERT_EQUAL(5, ButtonAction::kSerialStr);
     TEST_ASSERT_EQUAL(6, ButtonAction::kI2CStr);
     TEST_ASSERT_EQUAL(7, ButtonAction::kHCREmote);
     TEST_ASSERT_EQUAL(8, ButtonAction::kHCRMuse);
@@ -52,10 +52,10 @@ void test_sound_fields_accessible() {
     b.action = ButtonAction::kSound;
     b.sound.soundbank = 3;
     b.sound.sound     = 7;
-    b.sound.auxstring = 2;
+    b.sound.serialstr = 2;
     TEST_ASSERT_EQUAL(3, b.sound.soundbank);
     TEST_ASSERT_EQUAL(7, b.sound.sound);
-    TEST_ASSERT_EQUAL(2, b.sound.auxstring);
+    TEST_ASSERT_EQUAL(2, b.sound.serialstr);
 }
 
 void test_servo_fields_accessible() {
@@ -94,7 +94,7 @@ void test_union_members_share_storage() {
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.servo));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.dout));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.i2ccmd));
-    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.aux));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.serial));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.i2cstr));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.emote));
     TEST_ASSERT_EQUAL(3, sizeof(b.sound));
@@ -196,14 +196,14 @@ void test_print_i2c_cmd() {
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "Cmd="));
 }
 
-void test_print_aux_str() {
+void test_print_ser_str() {
     ButtonAction b;
     memset(&b, 0, sizeof(b));
-    b.action         = ButtonAction::kAuxStr;
-    b.aux.auxstring  = 5;
+    b.action        = ButtonAction::kSerialStr;
+    b.serial.serialstr = 5;
     StringPrint out;
     b.printDescription(&out);
-    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Aux #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Serial #"));
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "5"));
 }
 
@@ -215,7 +215,7 @@ void test_print_i2c_str() {
     b.i2cstr.cmd     = 3;
     StringPrint out;
     b.printDescription(&out);
-    TEST_ASSERT_NOT_NULL(strstr(out.buf, "i2c Aux Output #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Aux I2C Str #"));
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dest "));
 }
 
@@ -266,33 +266,33 @@ void test_print_hcr_muse() {
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "HCR Muse Toggle"));
 }
 
-void test_print_appends_aux_string_for_non_aux_actions() {
-    // When aux.auxstring != 0 and action is not kAuxStr/kHCREmote/kHCRMuse,
-    // ", Aux #<n>" is appended.
+void test_print_appends_serial_string_for_non_serial_actions() {
+    // When serial.serialstr != 0 and action is not kSerialStr/kHCREmote/kHCRMuse,
+    // ", Serial #<n>" is appended.
     ButtonAction b;
     memset(&b, 0, sizeof(b));
     b.action          = ButtonAction::kSound;
     b.sound.soundbank = 1;
-    b.sound.auxstring = 3;
+    b.sound.serialstr = 3;
     StringPrint out;
     b.printDescription(&out);
-    TEST_ASSERT_NOT_NULL(strstr(out.buf, ", Aux #"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, ", Serial #"));
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "3"));
 }
 
-void test_print_does_not_append_aux_for_aux_action() {
-    // kAuxStr itself must not double-print ", Aux #".
+void test_print_does_not_append_serial_for_serial_action() {
+    // kSerialStr itself must not double-print ", Serial #".
     ButtonAction b;
     memset(&b, 0, sizeof(b));
-    b.action        = ButtonAction::kAuxStr;
-    b.aux.auxstring = 2;
+    b.action        = ButtonAction::kSerialStr;
+    b.serial.serialstr = 2;
     StringPrint out;
     b.printDescription(&out);
-    // Should have "Aux #2" but NOT ", Aux #2" appended again
-    const char *first = strstr(out.buf, "Aux #");
+    // Should have "Serial #2" but NOT ", Serial #2" appended again
+    const char *first = strstr(out.buf, "Serial #");
     TEST_ASSERT_NOT_NULL(first);
-    // There must be no second ", Aux #" occurrence
-    TEST_ASSERT_NULL(strstr(first + 1, ", Aux #"));
+    // There must be no second ", Serial #" occurrence
+    TEST_ASSERT_NULL(strstr(first + 1, ", Serial #"));
 }
 
 // ---- GestureAction ----------------------------------------------------------
@@ -320,10 +320,10 @@ void test_gesture_action_prints_gesture_then_action() {
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "Sound Bank #"));
 }
 
-// ---- AuxString --------------------------------------------------------------
+// ---- SerialString -----------------------------------------------------------
 
-void test_aux_string_capacity() {
-    TEST_ASSERT_EQUAL(32, sizeof(AuxString::str));
+void test_serial_string_capacity() {
+    TEST_ASSERT_EQUAL(32, sizeof(SerialString::str));
 }
 
 // ---- main -------------------------------------------------------------------
@@ -350,19 +350,19 @@ int main(int argc, char **argv) {
     RUN_TEST(test_print_dout_nc);
     RUN_TEST(test_print_dout_mon);
     RUN_TEST(test_print_i2c_cmd);
-    RUN_TEST(test_print_aux_str);
+    RUN_TEST(test_print_ser_str);
     RUN_TEST(test_print_i2c_str);
     RUN_TEST(test_print_hcr_emote_happy_moderate);
     RUN_TEST(test_print_hcr_emote_sad_strong);
     RUN_TEST(test_print_hcr_emote_overload_has_no_level);
     RUN_TEST(test_print_hcr_muse);
-    RUN_TEST(test_print_appends_aux_string_for_non_aux_actions);
-    RUN_TEST(test_print_does_not_append_aux_for_aux_action);
+    RUN_TEST(test_print_appends_serial_string_for_non_serial_actions);
+    RUN_TEST(test_print_does_not_append_serial_for_serial_action);
 
     RUN_TEST(test_gesture_action_empty_gesture_prints_nothing);
     RUN_TEST(test_gesture_action_prints_gesture_then_action);
 
-    RUN_TEST(test_aux_string_capacity);
+    RUN_TEST(test_serial_string_capacity);
 
     return UNITY_END();
 }

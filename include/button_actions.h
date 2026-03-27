@@ -3,7 +3,7 @@
 //
 // ButtonAction  — what happens when a button is pressed or a gesture fires.
 // GestureAction — a (Gesture, ButtonAction) pair stored in config.
-// AuxString     — a short string sent to the auxiliary serial port.
+// SerialString  — a short string sent to the primary serial port (Serial3).
 //
 // Depends on: Gesture (core.h), Print (Arduino / arduino_mock.h)
 // In embedded builds hcr.h is included before this header and supplies the
@@ -37,7 +37,7 @@ struct ButtonAction {
     kServo     = 2,
     kDigitalOut = 3,
     kI2CCmd    = 4,
-    kAuxStr    = 5,
+    kSerialStr = 5,
     kI2CStr    = 6,
     kHCREmote  = 7,  // Trigger an HCR emotion (emotion, level)
     kHCRMuse   = 8   // Toggle HCR musing on/off
@@ -47,37 +47,37 @@ struct ButtonAction {
     struct {
       uint8_t soundbank;
       uint8_t sound;
-      uint8_t auxstring;
+      uint8_t serialstr;
     } sound;
     struct {
       uint8_t num;
       uint8_t pos;
-      uint8_t auxstring;
+      uint8_t serialstr;
     } servo;
     struct {
       uint8_t num;
       uint8_t state;
-      uint8_t auxstring;
+      uint8_t serialstr;
     } dout;
     struct {
       uint8_t target;
       uint8_t cmd;
-      uint8_t auxstring;
+      uint8_t serialstr;
     } i2ccmd;
     struct {
       uint8_t unused1;
       uint8_t unused2;
-      uint8_t auxstring;
-    } aux;
+      uint8_t serialstr;
+    } serial;
     struct {
       uint8_t target;
       uint8_t cmd;
-      uint8_t auxstring;
+      uint8_t serialstr;
     } i2cstr;
     struct {
       uint8_t emotion;   // HAPPY=0, SAD=1, MAD=2, SCARED=3, OVERLOAD=4
       uint8_t level;     // EMOTE_MODERATE=0, EMOTE_STRONG=1
-      uint8_t auxstring;
+      uint8_t serialstr;
     } emote;
   };
 
@@ -121,12 +121,12 @@ struct ButtonAction {
       stream->print(F(", Cmd="));
       stream->print(i2ccmd.cmd);
       break;
-    case kAuxStr:
-      stream->print(F("Aux #"));
-      stream->print(aux.auxstring);
+    case kSerialStr:
+      stream->print(F("Serial #"));
+      stream->print(serial.serialstr);
       break;
     case kI2CStr:
-      stream->print(F("i2c Aux Output #"));
+      stream->print(F("Aux I2C Str #"));
       stream->print(i2cstr.cmd);
       stream->print(F(", Dest "));
       stream->print(i2cstr.target);
@@ -148,10 +148,10 @@ struct ButtonAction {
       stream->print(F("HCR Muse Toggle"));
       break;
     }
-    if (action != kAuxStr && action != kHCREmote && action != kHCRMuse &&
-        aux.auxstring != 0) {
-      stream->print(F(", Aux #"));
-      stream->print(aux.auxstring);
+    if (action != kSerialStr && action != kHCREmote && action != kHCRMuse &&
+        serial.serialstr != 0) {
+      stream->print(F(", Serial #"));
+      stream->print(serial.serialstr);
     }
     stream->println();
   }
@@ -173,8 +173,8 @@ struct GestureAction {
   }
 };
 
-// ---- AuxString --------------------------------------------------------------
+// ---- SerialString -----------------------------------------------------------
 
-struct AuxString {
+struct SerialString {
   char str[32];
 };

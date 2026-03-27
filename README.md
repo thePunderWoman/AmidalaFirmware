@@ -44,8 +44,8 @@ Up to nine buttons are configurable, each supporting a short-press and long-pres
 - Sound bank playback
 - Servo positioning
 - Digital output control
-- I2C command or string output
-- Auxiliary serial string output
+- Serial string output
+- Auxiliary I2C command or string output
 - HCR emote trigger
 - HCR Muse toggle
 
@@ -61,10 +61,10 @@ Autonomous dome rotation via an optional RDH serial position sensor. Supports ho
 
 PPM RC receiver input for drive and dome control, with configurable failsafe timeout.
 
-### Serial and Auxiliary I2C
+### Primary Serial and Auxiliary I2C
 
-- **Auxiliary serial** (Serial3): 40 configurable string templates sent to downstream devices on button/gesture actions
-- **I2C**: Send command bytes or strings to I2C devices by configured address
+- **Primary serial** (Serial3): 40 configurable string templates sent to downstream devices on button/gesture actions
+- **Auxiliary I2C**: Send command bytes or strings to I2C devices by configured address as a secondary output path
 
 ## Configuration
 
@@ -85,11 +85,11 @@ Install [PlatformIO](https://platformio.org/) — it handles all library depende
 
 Connect the XBee module to the **COM1** header on the DFRobot Mega Sensor Shield. This maps to Serial1 (Arduino Mega pins 18/19).
 
-### Auxiliary serial output (Serial3 / COM3)
+### Primary serial output (Serial3 / COM3)
 
-Downstream devices that accept serial commands (e.g. sound controllers, lighting controllers) connect to the **COM3** header on the shield. This maps to Serial3 (Arduino Mega pins 14/15), running at 115200 baud by default.
+Downstream devices that accept serial commands (e.g. sound controllers, lighting controllers) connect to the **COM3** header on the shield. This maps to Serial3 (Arduino Mega pins 14/15), running at 115200 baud by default. This is the primary output path; I2C is auxiliary/backup.
 
-> COM3 is only available as auxiliary serial when neither the Sabertooth drive system nor the RDH dome position sensor is in use (both also claim Serial3). See `drive_config.h` for details.
+> COM3 is only available as primary serial when neither the Sabertooth drive system nor the RDH dome position sensor is in use (both also claim Serial3). See `drive_config.h` for details.
 
 ### Motor PWM outputs
 

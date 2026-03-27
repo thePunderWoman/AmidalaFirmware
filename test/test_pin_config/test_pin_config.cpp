@@ -94,13 +94,13 @@ void test_i2c_pins() {
     TEST_ASSERT_EQUAL(21, I2C_SCL_PIN);
 }
 
-// ---- AUX_SERIAL conditional -------------------------------------------------
+// ---- SERIAL conditional -----------------------------------------------------
 
-void test_aux_serial_defined_when_drive_serials_absent() {
+void test_serial_defined_when_drive_serials_absent() {
     // In the native test environment neither DOME_DRIVE_SERIAL nor RDH_SERIAL
-    // is defined, so pin_config.h must define AUX_SERIAL.
-#ifndef AUX_SERIAL
-    TEST_FAIL_MESSAGE("AUX_SERIAL must be defined when drive serials are absent");
+    // is defined, so pin_config.h must define SERIAL.
+#ifndef SERIAL
+    TEST_FAIL_MESSAGE("SERIAL must be defined when drive serials are absent");
 #else
     TEST_PASS();
 #endif
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_status_pins_sequential_from_32);
     RUN_TEST(test_i2c_pins);
 
-    RUN_TEST(test_aux_serial_defined_when_drive_serials_absent);
+    RUN_TEST(test_serial_defined_when_drive_serials_absent);
     RUN_TEST(test_vmusic_serial_not_defined_by_default);
 
     return UNITY_END();
