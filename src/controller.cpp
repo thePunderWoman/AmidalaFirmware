@@ -34,8 +34,12 @@ AmidalaController::AmidalaController()
       fDomeDrive(129, DOME_DRIVE_SERIAL, fDomeStick),
 #elif DOME_DRIVE == DOME_DRIVE_PWM
       fDomeDrive(servoDispatch, 3, fDomeStick),
-#elif defined(DOME_DRIVE)
-#error Unsupported DOME_DRIVE
+#elif DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+      fDomeDrive(ROBOCLAW_SERIAL,
+                 DEFAULT_DOME_ROBOCLAW_ADDRESS,
+                 DEFAULT_DOME_ROBOCLAW_CHANNEL,
+                 DOME_HALL_PIN,
+                 fDomeStick),
 #endif
       fPPMDecoder(PPMIN_PIN, params.getRadioChannelCount()) {
 }
@@ -53,8 +57,10 @@ void AmidalaController::emergencyStop() {
 void AmidalaController::domeEmergencyStop() {
 #ifdef DOME_DRIVE
   fDomeDrive.stop();
-  // Force neutral PWM signal as a safety backup
+#if DOME_DRIVE != DOME_DRIVE_ROBOCLAW
+  // Force neutral PWM signal as a safety backup (PWM/Sabertooth only).
   servoDispatch.moveTo(3, 0.5); // Dome
+#endif
 #endif
 }
 
@@ -147,7 +153,23 @@ void AmidalaController::setup() {
   fDomeDrive.setScaling(false);
   fDomeDrive.setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
   fDomeDrive.setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);
-  // fDomeDrive.setDomePosition(&fAutoDome);
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  // Apply runtime-configurable RoboClaw parameters from the loaded config.
+  fDomeDrive.setFrontOffset(params.domefront);
+  fDomeDrive.setQPPS(params.domercqpps);
+  fDomeDrive.setStallTimeout(params.domestall);
+  fDomeDrive.setMaxSpeedPct(float(params.domespeed) / 100.0f);
+  fDomeDrive.applyDomePositionParams(
+      params.domehomemin, params.domehomemax,
+      params.domeseekmin, params.domeseekmax,
+      params.domeseekl,   params.domeseekr,
+      params.domefudge,
+      params.domespeedhome, DEFAULT_DOME_SPEED_TARGET,
+      params.domespeedseek, DEFAULT_DOME_SPEED_MIN);
+  // RoboClaw address/channel can be overridden at runtime via config.
+  // (Requires reinitialising fDomeDrive, which is not supported mid-run;
+  // change drive_config.h defaults or reflash for hardware changes.)
+#endif
 #endif
 
   for (unsigned i = 0; i < params.getServoCount(); i++) {
@@ -336,4 +358,78 @@ void AmidalaController::animate() {
       }
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// processDomeCommand()
+// Handles "dome=<cmd>" from the console. The <cmd> string is everything after
+// the "dome=" prefix and the trailing newline has already been stripped.
+//
+// Supported commands:
+//   home       — re-run the homing sweep
+//   calibrate  — run the 10-revolution calibration
+//   stop       — emergency stop
+//   front      — go to 0° (dome front)
+//   rand       — toggle random wander mode
+//   status     — print position and state
+//   <N>        — go to absolute angle N (degrees, relative to front)
+//   +<N>       — relative move +N degrees
+//   -<N>       — relative move -N degrees
+// ---------------------------------------------------------------------------
+
+void AmidalaController::processDomeCommand(const char* cmd) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  if (strcmp(cmd, "home") == 0) {
+    fConsole.println(F("Dome: homing"));
+    fDomeDrive.startHoming();
+
+  } else if (strcmp(cmd, "calibrate") == 0) {
+    fConsole.println(F("Dome: calibrating (10 revolutions)"));
+    fDomeDrive.startCalibration();
+
+  } else if (strcmp(cmd, "stop") == 0) {
+    fConsole.println(F("Dome: stop"));
+    fDomeDrive.stop();
+
+  } else if (strcmp(cmd, "front") == 0) {
+    fConsole.println(F("Dome: going to front"));
+    fDomeDrive.goToAngle(0);
+
+  } else if (strcmp(cmd, "rand") == 0) {
+    if (fDomeDrive.isHomed()) {
+      fDomeDrive.enableRandomMode();
+      fConsole.println(F("Dome: random mode on"));
+    } else {
+      fConsole.println(F("Dome: not homed — random mode unavailable"));
+    }
+
+  } else if (strcmp(cmd, "status") == 0) {
+    fDomeDrive.printStatus(fConsole);
+
+  } else if (cmd[0] == '+' && cmd[1] != '\0') {
+    int delta = atoi(cmd + 1);
+    fConsole.print(F("Dome: relative +"));
+    fConsole.println(delta);
+    fDomeDrive.goToRelative(delta);
+
+  } else if (cmd[0] == '-' && cmd[1] != '\0') {
+    int delta = atoi(cmd + 1);
+    fConsole.print(F("Dome: relative -"));
+    fConsole.println(-delta);
+    fDomeDrive.goToRelative(-delta);
+
+  } else if (cmd[0] >= '0' && cmd[0] <= '9') {
+    int angle = atoi(cmd);
+    fConsole.print(F("Dome: goto "));
+    fConsole.println(angle);
+    fDomeDrive.goToAngle(angle);
+
+  } else {
+    fConsole.println(F("Dome: unknown command"));
+    fConsole.println(F("  dome=home|calibrate|stop|front|rand|status|<N>|+<N>|-<N>"));
+  }
+#else
+  (void)cmd;
+  fConsole.println(F("Dome: RoboClaw drive not enabled in this build"));
+#endif
 }

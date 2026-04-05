@@ -683,6 +683,27 @@ bool AmidalaConfig::processConfig(const char *cmd) {
   } else if (intparam(cmd, "domespeedseek=", params.domespeedseek, 1, 100)) {
     // autoDome.setDomeSeekSpeed(params.domespeedhome);
     return true;
+  // ---- RoboClaw dome drive parameters (parsed regardless of active dome
+  //      drive so config.txt is portable between builds) ---------------------
+  } else if (intparam(cmd, "domercaddr=", params.domercaddr, 128, 135)) {
+    return true;
+  } else if (intparam(cmd, "domercchan=", params.domercchan, 1, 2)) {
+    return true;
+  } else if (intparam(cmd, "domercqpps=", params.domercqpps, 1, 65535)) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    static_cast<DomeDriveRoboClaw*>(domeDrive)->setQPPS(params.domercqpps);
+#endif
+    return true;
+  } else if (intparam(cmd, "domefront=", params.domefront, 0, 359)) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    static_cast<DomeDriveRoboClaw*>(domeDrive)->setFrontOffset(params.domefront);
+#endif
+    return true;
+  } else if (intparam(cmd, "domestall=", params.domestall, 100, 5000)) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    static_cast<DomeDriveRoboClaw*>(domeDrive)->setStallTimeout(params.domestall);
+#endif
+    return true;
   } else if (strcmp(cmd, "reboot") == 0) {
     void (*resetArduino)() = NULL;
     resetArduino();

@@ -66,6 +66,12 @@
 #define STATUS_S3_PIN 37
 #define STATUS_S4_PIN 38
 
+// ---- Dome hall-effect sensor (RoboClaw dome drive only) --------------------
+// Pin 18 = Arduino Mega INT5 (hardware interrupt 5), currently unassigned.
+// The sensor output is active-LOW; attach to INPUT_PULLUP and trigger on FALLING.
+// Only used when DOME_DRIVE == DOME_DRIVE_ROBOCLAW.
+#define DOME_HALL_PIN 18
+
 // ---- I2C bus pins (Arduino Mega: SDA = pin 20, SCL = pin 21) ---------------
 
 #define I2C_SDA_PIN 20

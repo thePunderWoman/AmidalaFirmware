@@ -112,6 +112,121 @@ void test_servo_clamp_fixed_clamps_above_180() {
     TEST_ASSERT_EQUAL(180, servo_clamp_fixed(255));
 }
 
+// ---- RoboClaw config key routing --------------------------------------------
+// Mirrors what processConfig() does: each intparam() call uses the exact same
+// field reference and range as config.cpp so a future field rename or range
+// change will break these tests before it reaches the embedded build.
+
+void test_domercaddr_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domercaddr=128", "domercaddr=", p.domercaddr, 128, 135);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(128, p.domercaddr);
+}
+
+void test_domercaddr_clamps_below_minimum() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // intparam clamps out-of-range values rather than rejecting them.
+    // 100 < 128 → clamped to 128.
+    bool matched = intparam("domercaddr=100", "domercaddr=", p.domercaddr, 128, 135);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(128, p.domercaddr);
+}
+
+void test_domercchan_intparam_channel_1() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domercchan=1", "domercchan=", p.domercchan, 1, 2);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(1, p.domercchan);
+}
+
+void test_domercchan_intparam_channel_2() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domercchan=2", "domercchan=", p.domercchan, 1, 2);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(2, p.domercchan);
+}
+
+void test_domercchan_clamps_channel_3_to_2() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 3 > 2 → clamped to 2.
+    bool matched = intparam("domercchan=3", "domercchan=", p.domercchan, 1, 2);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(2, p.domercchan);
+}
+
+void test_domercqpps_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domercqpps=800", "domercqpps=", p.domercqpps, 1, 65535);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(800, p.domercqpps);
+}
+
+void test_domefront_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domefront=88", "domefront=", p.domefront, 0, 359);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(88, p.domefront);
+}
+
+void test_domefront_accepts_zero() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domefront=0", "domefront=", p.domefront, 0, 359);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.domefront);
+}
+
+void test_domefront_accepts_359() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domefront=359", "domefront=", p.domefront, 0, 359);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(359, p.domefront);
+}
+
+void test_domefront_clamps_360_to_359() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 360 > 359 → clamped to 359.
+    bool matched = intparam("domefront=360", "domefront=", p.domefront, 0, 359);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(359, p.domefront);
+}
+
+void test_domestall_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("domestall=500", "domestall=", p.domestall, 100, 5000);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(500, p.domestall);
+}
+
+void test_domestall_clamps_below_minimum() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 50 < 100 → clamped to 100.
+    bool matched = intparam("domestall=50", "domestall=", p.domestall, 100, 5000);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(100, p.domestall);
+}
+
+void test_roboclaw_fields_are_distinct_from_each_other() {
+    // Structural guard: none of the new fields should alias an existing one.
+    AmidalaParameters p;
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercaddr, (void*)&p.domercqpps);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domefront,  (void*)&p.domestall);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domefront,  (void*)&p.domehome);  // most likely alias mistake
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domestall,  (void*)&p.domespeed);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -126,6 +241,20 @@ int main(int argc, char **argv) {
     RUN_TEST(test_servo_clamp_fixed_preserves_valid_positions);
     RUN_TEST(test_servo_clamp_fixed_clamps_below_zero);
     RUN_TEST(test_servo_clamp_fixed_clamps_above_180);
+
+    RUN_TEST(test_domercaddr_intparam_routes_to_correct_field);
+    RUN_TEST(test_domercaddr_clamps_below_minimum);
+    RUN_TEST(test_domercchan_intparam_channel_1);
+    RUN_TEST(test_domercchan_intparam_channel_2);
+    RUN_TEST(test_domercchan_clamps_channel_3_to_2);
+    RUN_TEST(test_domercqpps_intparam_routes_to_correct_field);
+    RUN_TEST(test_domefront_intparam_routes_to_correct_field);
+    RUN_TEST(test_domefront_accepts_zero);
+    RUN_TEST(test_domefront_accepts_359);
+    RUN_TEST(test_domefront_clamps_360_to_359);
+    RUN_TEST(test_domestall_intparam_routes_to_correct_field);
+    RUN_TEST(test_domestall_clamps_below_minimum);
+    RUN_TEST(test_roboclaw_fields_are_distinct_from_each_other);
 
     return UNITY_END();
 }

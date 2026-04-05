@@ -314,6 +314,11 @@ void AmidalaConsole::processCommand(const char *cmd) {
     int dp = atoi(cmd, 3);
     println("DP=" + String(dp));
     return;
+  } else if (startswith(cmd, "dome=")) {
+    // RoboClaw dome drive commands: home, calibrate, stop, front, rand,
+    // status, <N>, +<N>, -<N>
+    fController->processDomeCommand(cmd + 5);
+    return;
   } else if (cmd[0] == 'a') {
     print("Aux Out");
     return;
