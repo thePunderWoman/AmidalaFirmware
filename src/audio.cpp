@@ -24,6 +24,7 @@ void AmidalaAudio::init(AmidalaController *controller) {
 #ifndef VMUSIC_SERIAL
   AmidalaParameters &params = fController->params;
   if (params.audiohw == AUDIO_HW_HCR) {
+    fMusing = params.rndon;
     fController->fHCR.begin();
     DelayCall::schedule(hcrDelayedInit, 5000);
   }
@@ -52,7 +53,8 @@ void AmidalaAudio::randomToggle() {
   fController->fConsole.println((params.rndon) ? F("On") : F("Off"));
 #ifndef VMUSIC_SERIAL
   if (params.audiohw == AUDIO_HW_HCR) {
-    fController->fHCR.SetMuse(params.rndon ? 1 : 0);
+    fMusing = params.rndon;
+    fController->fHCR.SetMuse(fMusing ? 1 : 0);
   }
 #endif
 }
@@ -128,7 +130,8 @@ void AmidalaAudio::toggleMuse() {
 #ifndef VMUSIC_SERIAL
   AmidalaParameters &params = fController->params;
   if (params.audiohw == AUDIO_HW_HCR) {
-    fController->fHCR.SetMuse(1 - fController->fHCR.GetMuse());
+    fMusing = !fMusing;
+    fController->fHCR.SetMuse(fMusing ? 1 : 0);
   }
 #endif
 }
