@@ -50,4 +50,7 @@ private:
   AmidalaController *fController = nullptr;
   // Initialized so the first call always passes the throttle check.
   uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
+  // Local mirror of the HCR muse state — avoids needing fHCR.GetMuse() which
+  // requires update() to have run and received a QM response from the board.
+  bool fMusing = false;
 };
