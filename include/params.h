@@ -126,6 +126,18 @@ struct AmidalaParameters {
   Gesture slowgest;
   Gesture domegest;
 
+  // ---- RoboClaw dome drive parameters ---------------------------------------
+  // Only active when DOME_DRIVE == DOME_DRIVE_ROBOCLAW, but the fields are
+  // present unconditionally so config parsing and EEPROM layout are the same
+  // regardless of which dome drive is compiled in.
+  uint8_t  domercaddr;    // RoboClaw packet-serial address (default 128 = 0x80)
+  uint8_t  domercchan;    // Motor channel: 1 = M1, 2 = M2
+  uint16_t domercqpps;    // Encoder pulses per second at maximum commanded speed
+  uint16_t domefront;     // Degrees from hall sensor to dome "front" (0–359).
+                          // e.g. if the radar eye is 88° past the hall trigger,
+                          // set domefront=88 so dome=0 means "look forward".
+  uint16_t domestall;     // Stall timeout in ms before obstruction is declared
+
   uint16_t domepos; // current dome position (used only in RDH_SERIAL builds)
   uint16_t domehome;
   uint8_t domemode;
@@ -195,6 +207,11 @@ struct AmidalaParameters {
       goslow = false;
       j1adjv = 0;
       j1adjh = 0;
+      domercaddr = DEFAULT_DOME_ROBOCLAW_ADDRESS;
+      domercchan = DEFAULT_DOME_ROBOCLAW_CHANNEL;
+      domercqpps = DEFAULT_DOME_ROBOCLAW_QPPS;
+      domefront = 0;
+      domestall = DEFAULT_DOME_STALL_TIMEOUT_MS;
       domehome = DEFAULT_DOME_HOME_POSITION;
       domepos = domehome;
       domemode = 0; // Force manual mode to stop auto-spinning on startup

@@ -47,8 +47,27 @@ static inline void    delayMicroseconds(unsigned int /*us*/) {}
 struct MockEEPROM {
   uint8_t data[4096];
   MockEEPROM() { memset(data, 0, sizeof(data)); }
-  uint8_t read(int addr)           { return (addr >= 0 && addr < (int)sizeof(data)) ? data[addr] : 0; }
+  uint8_t read(int addr)             { return (addr >= 0 && addr < (int)sizeof(data)) ? data[addr] : 0; }
   void    write(int addr, uint8_t v) { if (addr >= 0 && addr < (int)sizeof(data)) data[addr] = v; }
+
+  // put<T>: write sizeof(T) bytes starting at addr, in memory order.
+  // Matches the Arduino EEPROM.put() template behaviour (byte-by-byte, LSB first on AVR).
+  template<typename T>
+  const T& put(int addr, const T& t) {
+    const uint8_t* ptr = (const uint8_t*)&t;
+    for (int i = 0; i < (int)sizeof(T); i++)
+      write(addr + i, ptr[i]);
+    return t;
+  }
+
+  // get<T>: read sizeof(T) bytes starting at addr into t, in memory order.
+  template<typename T>
+  T& get(int addr, T& t) {
+    uint8_t* ptr = (uint8_t*)&t;
+    for (int i = 0; i < (int)sizeof(T); i++)
+      ptr[i] = read(addr + i);
+    return t;
+  }
 };
 static MockEEPROM EEPROM;
 

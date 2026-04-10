@@ -34,6 +34,7 @@ void test_drive_system_default_selection() {
 void test_dome_drive_type_constants() {
     TEST_ASSERT_EQUAL(2, DOME_DRIVE_SABER);
     TEST_ASSERT_EQUAL(3, DOME_DRIVE_PWM);
+    TEST_ASSERT_EQUAL(4, DOME_DRIVE_ROBOCLAW);
 }
 
 void test_dome_drive_default_selection() {
@@ -105,6 +106,29 @@ void test_dome_inversion_and_pulse_defaults() {
     TEST_ASSERT_EQUAL(2000, DEFAULT_DOME_MAX_PULSE);
 }
 
+// ---- RoboClaw dome drive defaults -------------------------------------------
+
+void test_roboclaw_dome_constants() {
+    TEST_ASSERT_EQUAL(128, DEFAULT_DOME_ROBOCLAW_ADDRESS);
+    TEST_ASSERT_EQUAL(1,   DEFAULT_DOME_ROBOCLAW_CHANNEL);
+    TEST_ASSERT_EQUAL(800, DEFAULT_DOME_ROBOCLAW_QPPS);
+    TEST_ASSERT_EQUAL(1200, DOME_MOTOR_CPR);
+    TEST_ASSERT_EQUAL(500, DEFAULT_DOME_STALL_TIMEOUT_MS);
+    TEST_ASSERT_EQUAL(15000, DEFAULT_DOME_HOMING_TIMEOUT_MS);
+    TEST_ASSERT_EQUAL(10,  DOME_CALIBRATION_ROTATIONS);
+    TEST_ASSERT_EQUAL(50,  DEFAULT_DOME_HALL_DEBOUNCE_MS);
+    TEST_ASSERT_EQUAL(0x200, DOME_ROBOCLAW_EEPROM_ADDR);
+    TEST_ASSERT_EQUAL_FLOAT(0.20f, DEFAULT_DOME_HOMING_SPEED);
+    TEST_ASSERT_EQUAL_FLOAT(0.30f, DEFAULT_DOME_CALIBRATE_SPEED);
+}
+
+void test_roboclaw_eeprom_signature_bytes() {
+    TEST_ASSERT_EQUAL('R', DOME_ROBOCLAW_EEPROM_SIG0);
+    TEST_ASSERT_EQUAL('C', DOME_ROBOCLAW_EEPROM_SIG1);
+    TEST_ASSERT_EQUAL('0', DOME_ROBOCLAW_EEPROM_SIG2);
+    TEST_ASSERT_EQUAL('1', DOME_ROBOCLAW_EEPROM_SIG3);
+}
+
 // ---- Derived serial defines absent for default config -----------------------
 
 void test_drive_serial_not_defined_for_roboteq_pwm() {
@@ -149,6 +173,9 @@ int main(int argc, char **argv) {
     RUN_TEST(test_dome_seek_range_defaults);
     RUN_TEST(test_dome_speed_defaults);
     RUN_TEST(test_dome_inversion_and_pulse_defaults);
+
+    RUN_TEST(test_roboclaw_dome_constants);
+    RUN_TEST(test_roboclaw_eeprom_signature_bytes);
 
     RUN_TEST(test_drive_serial_not_defined_for_roboteq_pwm);
     RUN_TEST(test_dome_drive_serial_not_defined_for_pwm_dome);

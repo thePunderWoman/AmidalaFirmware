@@ -125,6 +125,45 @@ void test_default_max_pulse() {
     TEST_ASSERT_EQUAL(DEFAULT_DOME_MAX_PULSE, gDefaultParams.maxpulse);
 }
 
+// ---- RoboClaw dome drive defaults -------------------------------------------
+// These all hang off gDefaultParams so init() is only called once (sInited).
+
+void test_default_domercaddr() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_ROBOCLAW_ADDRESS, gDefaultParams.domercaddr);
+}
+
+void test_default_domercchan() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_ROBOCLAW_CHANNEL, gDefaultParams.domercchan);
+}
+
+void test_default_domercqpps() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_ROBOCLAW_QPPS, gDefaultParams.domercqpps);
+}
+
+void test_default_domefront() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(0, gDefaultParams.domefront);
+}
+
+void test_default_domestall() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_STALL_TIMEOUT_MS, gDefaultParams.domestall);
+}
+
+void test_roboclaw_params_are_distinct_addresses() {
+    // Guard against any future copy-paste that aliases one field to another.
+    AmidalaParameters p;
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercaddr, (void*)&p.domercchan);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercaddr, (void*)&p.domercqpps);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercaddr, (void*)&p.domefront);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercaddr, (void*)&p.domestall);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domercqpps, (void*)&p.domefront);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.domefront,  (void*)&p.domestall);
+}
+
 // ---- EEPROM serial number load (DB01 signature) -----------------------------
 
 void test_eeprom_serial_loaded_when_db01_signature_present() {
@@ -217,6 +256,13 @@ int main(int argc, char **argv) {
     RUN_TEST(test_default_dome_speed_home);
     RUN_TEST(test_default_min_pulse);
     RUN_TEST(test_default_max_pulse);
+
+    RUN_TEST(test_default_domercaddr);
+    RUN_TEST(test_default_domercchan);
+    RUN_TEST(test_default_domercqpps);
+    RUN_TEST(test_default_domefront);
+    RUN_TEST(test_default_domestall);
+    RUN_TEST(test_roboclaw_params_are_distinct_addresses);
 
     RUN_TEST(test_eeprom_serial_loaded_when_db01_signature_present);
     RUN_TEST(test_eeprom_serial_not_loaded_when_no_signature);

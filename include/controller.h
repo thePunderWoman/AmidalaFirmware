@@ -24,6 +24,8 @@
 #include "drive/DomeDrivePWM.h"
 #elif DOME_DRIVE == DOME_DRIVE_SABER
 #include "drive/DomeDriveSabertooth.h"
+#elif DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+#include "dome_drive_roboclaw.h"
 #endif
 #include "core/MedianSampleBuffer.h"
 #include "core/DelayCall.h"
@@ -108,8 +110,8 @@ public:
   DomeDriveSabertooth fDomeDrive;
 #elif DOME_DRIVE == DOME_DRIVE_PWM
   DomeDrivePWM fDomeDrive;
-#elif defined(DOME_DRIVE)
-#error Unsupported DOME_DRIVE
+#elif DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  DomeDriveRoboClaw fDomeDrive;
 #endif
 
   bool checkRCMode() {
@@ -163,18 +165,32 @@ public:
   }
 
   unsigned getDomePosition() {
-#ifdef RDH_SERIAL
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    return fDomeDrive.getCurrentDegrees();
+#elif defined(RDH_SERIAL)
     return fAutoDome.getAngle();
 #else
     return 0;
 #endif
   }
 
+  /**
+   * Process a "dome=<cmd>" console command for the RoboClaw dome drive.
+   * Commands: home, calibrate, stop, front, rand, status, <N>, +<N>, -<N>
+   * Defined in src/controller.cpp.
+   */
+  void processDomeCommand(const char* cmd);
+
   bool getDomeIMU() { return params.domeimu; }
 
   void setDomeHome(unsigned pos) {
-#ifdef RDH_SERIAL
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    // No-op: the RoboClaw drive derives home from the hall sensor trigger.
+    (void)pos;
+#elif defined(RDH_SERIAL)
     fAutoDome.setDomeHomePosition(pos);
+#else
+    (void)pos;
 #endif
   }
 
@@ -288,13 +304,20 @@ private:
   inline void setDriveThrottle(float throttle) { fDriveThrottle = throttle; }
 
   void setDomeHomePosition() {
-#ifdef RDH_SERIAL
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    fDomeDrive.startHoming();
+#elif defined(RDH_SERIAL)
     fAutoDome.setDomeHomePosition();
 #endif
   }
 
   void toggleRandomDome() {
-#ifdef RDH_SERIAL
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    if (fDomeDrive.isHomed())
+        fDomeDrive.enableRandomMode();
+    else
+        fDomeDrive.disableAutoMode();
+#elif defined(RDH_SERIAL)
     fAutoDome.toggleRandomDome();
 #endif
   }
