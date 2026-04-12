@@ -468,10 +468,12 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
     // kHomingContinue: keep sweeping.
     // Drive the motor directly — autonomousDriveDome() is only consumed by
     // DomeDrive::animate() when a joystick is connected, so homing would
-    // silently stall without a controller.  Call sendMotorCommand() directly
-    // and still call DomeDrive::animate() to service any connected joystick.
+    // silently stall without a controller.
+    // Do NOT call DomeDrive::animate() here: when a controller is connected,
+    // domeStick() sees idle input (m=0) and immediately calls motor(0),
+    // cancelling the homing command every cycle.  Joystick is intentionally
+    // ignored during homing — it resumes normally once kStateHomed is reached.
     sendMotorCommand(kHomingSpeed);
-    DomeDrive::animate();
 }
 
 void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
@@ -513,10 +515,10 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
     }
 
     if (fState == kStateCalibrating) {
-        // Same reason as handleHoming: drive directly so calibration works
-        // even without a connected joystick controller.
+        // Same reason as handleHoming: drive directly, and do NOT call
+        // DomeDrive::animate() — a connected joystick at idle would call
+        // motor(0) and cancel the calibration sweep every cycle.
         sendMotorCommand(kCalibrationSpeed);
-        DomeDrive::animate();
     }
 }
 
