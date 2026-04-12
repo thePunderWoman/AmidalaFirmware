@@ -518,7 +518,9 @@ void DomeDriveRoboClaw::handleAbsoluteStick() {
                                 : fDomeStick.state.analog.stick.rx;
         int ly = useLeftStick() ? fDomeStick.state.analog.stick.ly
                                 : fDomeStick.state.analog.stick.ry;
-        int newTarget = dome_stick_to_angle(lx, ly);
+        // JoystickController ly is positive = pushed toward user (down/back).
+        // dome_stick_to_angle expects positive = forward, so negate ly.
+        int newTarget = dome_stick_to_angle(lx, -ly);
         if (newTarget >= 0)
             fAbsStickTargetDegrees = newTarget;
     }

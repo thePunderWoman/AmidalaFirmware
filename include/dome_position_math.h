@@ -59,7 +59,8 @@ static inline int dome_angular_error(int target, int current) {
  *
  * Axis convention (matches JoystickController):
  *   lx: negative = full left (-128), positive = full right (+127)
- *   ly: negative = full back (-128), positive = full forward (+127)
+ *   ly: positive = pushed toward user (down/back); negate before passing if
+ *       you want physical "push forward" to map to 0°.
  *
  * The returned angle maps intuitively to dome front:
  *   0° = forward, 90° = right, 180° = back, 270° = left
