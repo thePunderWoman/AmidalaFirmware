@@ -360,6 +360,8 @@ void AmidalaController::animate() {
   }
 }
 
+// TODO: Refactor processDomeCommand and processDomeCmd to use a shared helper that takes an enum class for the command type, to avoid code duplication and ensure consistent handling between console commands and button/gesture mappings.
+
 // ---------------------------------------------------------------------------
 // processDomeCommand()
 // Handles "dome=<cmd>" from the console. The <cmd> string is everything after
@@ -396,23 +398,11 @@ void AmidalaController::processDomeCommand(const char* cmd) {
     fDomeDrive.goToAngle(0);
 
   } else if (strcmp(cmd, "rand") == 0) {
-    if (fDomeDrive.isHomed()) {
-      fDomeDrive.enableRandomMode();
-      fConsole.println(F("Dome: random mode on"));
-    } else {
-      fConsole.println(F("Dome: not homed — random mode unavailable"));
-    }
-
+    fConsole.println(F("Dome: toggle random mode"));
+    fDomeDrive.toggleRandomMode();
   } else if (strcmp(cmd, "abstick") == 0) {
-    if (!fDomeDrive.isHomed() || !fDomeDrive.isCalibrated()) {
-      fConsole.println(F("Dome: not homed/calibrated — abs-stick mode unavailable"));
-    } else if (fDomeDrive.isAbsoluteStickMode()) {
-      fDomeDrive.disableAbsoluteStickMode();
-      fConsole.println(F("Dome: abs-stick mode off"));
-    } else {
-      fDomeDrive.enableAbsoluteStickMode();
-      fConsole.println(F("Dome: abs-stick mode on"));
-    }
+    fConsole.println(F("Dome: toggle absolute-stick mode"));
+    fDomeDrive.toggleAbsoluteStickMode();
 
   } else if (strcmp(cmd, "status") == 0) {
     fDomeDrive.printStatus(fConsole);
@@ -457,11 +447,7 @@ void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
   switch (subcmd) {
   case ButtonAction::kDomeRand:
-    if (fDomeDrive.isHomed()) {
-      fDomeDrive.enableRandomMode();
-    } else {
-      fConsole.println(F("Dome: not homed — random mode unavailable"));
-    }
+    fDomeDrive.toggleRandomMode();
     break;
   case ButtonAction::kDomeStop:
     fDomeDrive.stop();
@@ -485,14 +471,7 @@ void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
     fDomeDrive.goToRelative(-(int)arg);
     break;
   case ButtonAction::kDomeAbsStick:
-    if (fDomeDrive.isHomed() && fDomeDrive.isCalibrated()) {
-      if (fDomeDrive.isAbsoluteStickMode())
-        fDomeDrive.disableAbsoluteStickMode();
-      else
-        fDomeDrive.enableAbsoluteStickMode();
-    } else {
-      fConsole.println(F("Dome: not homed/calibrated — abs-stick mode unavailable"));
-    }
+    fDomeDrive.toggleAbsoluteStickMode();
     break;
   default:
     break;

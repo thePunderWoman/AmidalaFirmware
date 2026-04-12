@@ -241,6 +241,22 @@ void DomeDriveRoboClaw::enableRandomMode() {
         return;
     }
     fDomePos.setDomeDefaultMode(DomePosition::kRandom);
+    fState = kStateRandom;
+}
+
+void DomeDriveRoboClaw::disableRandomMode() {
+    if (fState == kStateRandom) {
+        fState = kStateHomed;
+        disableAutoMode();
+    }
+}
+
+void DomeDriveRoboClaw::toggleRandomMode() {
+    if (isRandomMode()) {
+        disableRandomMode();
+    } else {
+        enableRandomMode();
+    }
 }
 
 void DomeDriveRoboClaw::disableAutoMode() {
@@ -258,6 +274,14 @@ void DomeDriveRoboClaw::disableAbsoluteStickMode() {
     if (fState == kStateAbsoluteStick) {
         fState = kStateHomed;
         disableAutoMode();
+    }
+}
+
+void DomeDriveRoboClaw::toggleAbsoluteStickMode() {
+    if (fState == kStateAbsoluteStick) {
+        disableAbsoluteStickMode();
+    } else {
+        enableAbsoluteStickMode();
     }
 }
 
@@ -512,6 +536,9 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
 }
 
 void DomeDriveRoboClaw::handleAbsoluteStick() {
+    // TODO: Fix the deceleration curve. Currently the dome slows down too much as it approaches the target.
+    // this result in it feeling a bit sluggish and unresponsive, especially for small stick inputs. The dome should maintain a more consistent speed until it gets very close to the target angle, at which point it can slow down more aggressively to prevent overshooting.
+
     // Update target from stick if connected and outside the deadband.
     if (fDomeStick.isConnected()) {
         int lx = useLeftStick() ? fDomeStick.state.analog.stick.lx
@@ -535,6 +562,19 @@ void DomeDriveRoboClaw::handleAbsoluteStick() {
                                        (int)fAbsStickSpeedTarget);
     sendMotorCommand(speed);
     checkObstruction();
+}
+
+void DomeDriveRoboClaw::handleRandomMode() {
+    // TODO: random mode is using the ReelTwo version, but it's not working well.
+    // Let's write our own, much simpler version. Here's the requirements:
+    // 1. Generate a random angle between our min and max random angle position.
+    //   - If the random angle is within our fudge factor of our current position, generate a new angle until it's outside the fudge factor.
+    //   - This will ensure that we don't generate a random angle that's too close to our current position which is causing us to not move and timeout.
+    // 2. Call fDomeDrive.goToAngle(angle);
+    // 3. Set a timer for the next random movement to be between our min and max random delay.
+    // 4. When the timer expires, repeat the process.
+    // 5. Done.
+    // Update tests accordingly. We'll want to update the code to make sure this code is run instead of the ReelTwo version, and then update the tests to verify that we're generating random angles within the correct bounds, and that we're not generating angles that are too close to our current position.
 }
 
 // ---------------------------------------------------------------------------

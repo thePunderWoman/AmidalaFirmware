@@ -66,6 +66,7 @@ public:
         kStateCalibrating,    ///< Counting dome revolutions for ratio
         kStateObstructed,     ///< Stall detected; awaiting manual clearance
         kStateAbsoluteStick,  ///< Joystick angle maps directly to dome heading
+        kStateRandom,         ///< Random wander mode
     };
 
     // ---- Constructor --------------------------------------------------------
@@ -142,6 +143,15 @@ public:
     /** Switch to random wander mode (bounded by domeseekl/domeseekr). */
     void enableRandomMode();
 
+    /** Leave absolute-stick mode and return to normal joystick control. */
+    void disableRandomMode();
+
+    /** True while the drive is in random mode. */
+    bool isRandomMode() const { return fState == kStateRandom; }
+
+    /** Toggle random mode on/off. */
+    void toggleRandomMode();
+
     /** Return to manual / idle mode (cancels all autonomous movement). */
     void disableAutoMode();
 
@@ -154,6 +164,9 @@ public:
 
     /** Leave absolute-stick mode and return to normal joystick control. */
     void disableAbsoluteStickMode();
+
+    /** Toggle absolute-stick mode on/off. */
+    void toggleAbsoluteStickMode();
 
     /** True while the drive is in absolute-stick mode. */
     bool isAbsoluteStickMode() const { return fState == kStateAbsoluteStick; }
@@ -342,6 +355,7 @@ private:
     void    handleHoming(bool hallFired);
     void    handleCalibrating(bool hallFired);
     void    handleAbsoluteStick();
+    void    handleRandomMode();
 
 #ifdef UNIT_TEST
 public:
