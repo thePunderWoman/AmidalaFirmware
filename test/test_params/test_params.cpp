@@ -115,6 +115,16 @@ void test_default_dome_speed_home() {
     TEST_ASSERT_EQUAL(DEFAULT_DOME_SPEED_HOME, gDefaultParams.domespeedhome);
 }
 
+void test_default_dome_speed_min() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_SPEED_MIN, gDefaultParams.domespeedmin);
+}
+
+void test_default_dome_fudge() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(DEFAULT_DOME_FUDGE, gDefaultParams.domefudge);
+}
+
 void test_default_min_pulse() {
     gDefaultParams.init();
     TEST_ASSERT_EQUAL(DEFAULT_DOME_MIN_PULSE, gDefaultParams.minpulse);
@@ -254,6 +264,8 @@ int main(int argc, char **argv) {
     RUN_TEST(test_default_audiohw_is_hcr);
     RUN_TEST(test_default_dome_home_position);
     RUN_TEST(test_default_dome_speed_home);
+    RUN_TEST(test_default_dome_speed_min);
+    RUN_TEST(test_default_dome_fudge);
     RUN_TEST(test_default_min_pulse);
     RUN_TEST(test_default_max_pulse);
 

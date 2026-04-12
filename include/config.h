@@ -43,6 +43,11 @@ public:
   void applyServoConfig(unsigned num, uint16_t minpulse, uint16_t maxpulse,
                         float neutral);
 
+  // Re-applies all DomePosition tuning params (fudge, speeds, seek range)
+  // to the active dome drive.  Called whenever any of those config values
+  // change so live updates via `*domefudge=...` take effect immediately.
+  void applyDomePositionParams();
+
 private:
   AmidalaController *fController = nullptr;
   Print *fOutput = nullptr;
