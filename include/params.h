@@ -151,6 +151,7 @@ struct AmidalaParameters {
   uint8_t domespeed;
   uint8_t domespeedhome;
   uint8_t domespeedseek;
+  uint8_t domespeedmin;
   uint16_t domespmin; // only for analog
   uint16_t domespmax; // only for analog
   bool domech6;  // dome channel-6 mode flag (configurable but effect unimplemented)
@@ -225,6 +226,7 @@ struct AmidalaParameters {
       domespeed = DOME_MAXIMUM_SPEED;
       domespeedhome = DEFAULT_DOME_SPEED_HOME;
       domespeedseek = DEFAULT_DOME_SPEED_SEEK;
+      domespeedmin  = DEFAULT_DOME_SPEED_MIN;
       domespmin = 42;
       domespmax = 935;
       domech6 = false;

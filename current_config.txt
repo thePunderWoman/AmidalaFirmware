@@ -80,11 +80,15 @@ domespeed=100
 domehome=50
 # Dome rotation inversion (y/n)
 domeflip=n
-# Dome Fudge Factor: Accuracy tolerance for sensors (1-20)
-domefudge=2
+# Dome Fudge Factor: Dead zone around target position in degrees (1-45).
+# Larger values prevent wobble at the cost of positional precision.
+domefudge=10
 # Speed during homing and seeking (1-100)
 domespeedhome=40
 domespeedseek=60
+# Minimum motor speed % when approaching a target (0-30).
+# Lower values allow gentler final approach and reduce overshoot.
+domespeedmin=5
 # Delays between movements (Seconds)
 domehomemin=6
 domehomemax=8

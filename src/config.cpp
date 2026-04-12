@@ -5,6 +5,21 @@ void AmidalaConfig::init(AmidalaController *controller) {
   fOutput = &controller->fConsole;
 }
 
+void AmidalaConfig::applyDomePositionParams() {
+#ifdef DOME_DRIVE
+  AmidalaParameters &params = fController->params;
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  fController->fDomeDrive.applyDomePositionParams(
+      params.domehomemin, params.domehomemax,
+      params.domeseekmin, params.domeseekmax,
+      params.domeseekl,   params.domeseekr,
+      params.domefudge,
+      params.domespeedhome, DEFAULT_DOME_SPEED_TARGET,
+      params.domespeedseek, params.domespeedmin);
+#endif
+#endif
+}
+
 void AmidalaConfig::showLoadEEPROM(bool load) {
   AmidalaParameters &params = fController->params;
   if (load) {
@@ -213,6 +228,8 @@ void AmidalaConfig::showCurrentConfiguration() {
     fOutput->println(params.domespeedhome);
     fOutput->print(F("domespeedseek: "));
     fOutput->println(params.domespeedseek);
+    fOutput->print(F("domespeedmin: "));
+    fOutput->println(params.domespeedmin);
     fOutput->print(F("domech6: "));
     fOutput->println(params.domech6 ? F("true") : F("false"));
     fOutput->println();
@@ -684,19 +701,22 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     // autoDome.setDomeSeekMaxDelay(params.domehomemax);
     return true;
   } else if (intparam(cmd, "domeseekr=", params.domeseekr, 1, 180)) {
-    // autoDome.setDomeSeekRightDegrees(params.domeseekr);
+    applyDomePositionParams();
     return true;
   } else if (intparam(cmd, "domeseekl=", params.domeseekl, 1, 180)) {
-    // autoDome.setDomeSeekLeftDegrees(params.domeseekl);
+    applyDomePositionParams();
     return true;
-  } else if (intparam(cmd, "domefudge=", params.domefudge, 1, 20)) {
-    // autoDome.setDomeFudgeFactor(params.domefudge);
+  } else if (intparam(cmd, "domefudge=", params.domefudge, 1, 45)) {
+    applyDomePositionParams();
     return true;
   } else if (intparam(cmd, "domespeedhome=", params.domespeedhome, 1, 100)) {
-    // autoDome.setDomeHomeSpeed(params.domespeedhome);
+    applyDomePositionParams();
     return true;
   } else if (intparam(cmd, "domespeedseek=", params.domespeedseek, 1, 100)) {
-    // autoDome.setDomeSeekSpeed(params.domespeedhome);
+    applyDomePositionParams();
+    return true;
+  } else if (intparam(cmd, "domespeedmin=", params.domespeedmin, 0, 30)) {
+    applyDomePositionParams();
     return true;
   // ---- RoboClaw dome drive parameters (parsed regardless of active dome
   //      drive so config.txt is portable between builds) ---------------------

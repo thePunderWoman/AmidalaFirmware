@@ -59,11 +59,11 @@
 #define DEFAULT_DOME_TARGET_MAX_DELAY   1
 #define DEFAULT_DOME_SEEK_LEFT          80
 #define DEFAULT_DOME_SEEK_RIGHT         80
-#define DEFAULT_DOME_FUDGE              2
+#define DEFAULT_DOME_FUDGE              10
 #define DEFAULT_DOME_SPEED_HOME         40
 #define DEFAULT_DOME_SPEED_SEEK         60
 #define DEFAULT_DOME_SPEED_TARGET       100
-#define DEFAULT_DOME_SPEED_MIN          15
+#define DEFAULT_DOME_SPEED_MIN          5
 #define DEFAULT_DOME_TIMEOUT            5
 #define DEFAULT_DOME_INVERTED           false
 #define DEFAULT_DOME_MIN_PULSE          1000

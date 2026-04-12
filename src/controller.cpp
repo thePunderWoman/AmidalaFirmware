@@ -165,7 +165,7 @@ void AmidalaController::setup() {
       params.domeseekl,   params.domeseekr,
       params.domefudge,
       params.domespeedhome, DEFAULT_DOME_SPEED_TARGET,
-      params.domespeedseek, DEFAULT_DOME_SPEED_MIN);
+      params.domespeedseek, params.domespeedmin);
   // RoboClaw address/channel can be overridden at runtime via config.
   // (Requires reinitialising fDomeDrive, which is not supported mid-run;
   // change drive_config.h defaults or reflash for hardware changes.)
