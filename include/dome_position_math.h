@@ -121,6 +121,34 @@ static inline int32_t dome_compute_ticks_per_rev(int32_t totalEncoderTicks,
     return totalEncoderTicks / (int32_t)nRotations;
 }
 
+/**
+ * Compute the proportional motor speed fraction for absolute-stick mode.
+ *
+ * Maps |error| from the range (fudge, 180] to a speed percentage
+ * [speedMin, speedTarget], then normalises to [-1.0, +1.0].
+ *
+ * @param error        Signed angular error in degrees [-180, +180].
+ *                     Positive = CW rotation needed → positive (forward) speed.
+ * @param fudge        Dead-zone half-width in degrees (>= 0).
+ *                     Returns 0.0f when |error| <= fudge.
+ * @param speedMin     Minimum speed percentage [0, 100] applied outside the dead zone.
+ * @param speedTarget  Maximum speed percentage [0, 100] applied at max error (180°).
+ * @return             Motor speed fraction in [-1.0, +1.0]; sign matches error.
+ */
+static inline float dome_abs_stick_speed(int error, int fudge,
+                                         int speedMin, int speedTarget) {
+    int absErr = error < 0 ? -error : error;
+    if (absErr <= fudge) return 0.0f;
+
+    int range = 180 - fudge;
+    int span  = speedTarget - speedMin;
+    int pct   = speedMin + (absErr - fudge) * span / range;
+    if (pct > speedTarget) pct = speedTarget;
+
+    float speed = (float)pct / 100.0f;
+    return error < 0 ? -speed : speed;
+}
+
 // ===========================================================================
 // State-machine decision functions
 //

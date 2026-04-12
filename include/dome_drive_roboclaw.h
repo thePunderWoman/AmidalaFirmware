@@ -295,6 +295,13 @@ private:
     static constexpr int   kCalibrationRotations = DOME_CALIBRATION_ROTATIONS;
     static constexpr float kCalibrationSpeed     = DEFAULT_DOME_CALIBRATE_SPEED;
 
+    // ---- Absolute-stick mode ------------------------------------------------
+
+    int     fAbsStickTargetDegrees = 0;   ///< Last heading commanded by the stick
+    uint8_t fAbsStickFudge         = DEFAULT_DOME_FUDGE;
+    uint8_t fAbsStickSpeedMin      = DEFAULT_DOME_SPEED_MIN;
+    uint8_t fAbsStickSpeedTarget   = DEFAULT_DOME_SPEED_TARGET;
+
     // ---- Obstruction detection ----------------------------------------------
 
     uint32_t fStallStartMs      = 0;
@@ -334,6 +341,7 @@ private:
     void    checkObstruction();
     void    handleHoming(bool hallFired);
     void    handleCalibrating(bool hallFired);
+    void    handleAbsoluteStick();
 
 #ifdef UNIT_TEST
 public:

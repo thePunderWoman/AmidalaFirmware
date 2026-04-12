@@ -317,6 +317,49 @@ void test_stick_to_angle_diagonal_forward_right() {
     TEST_ASSERT_INT_WITHIN(3, 45, angle);
 }
 
+// ---- dome_abs_stick_speed() --------------------------------------------------
+// Fudge=10, speedMin=5, speedTarget=100 for all sub-tests unless noted.
+
+void test_abs_stick_speed_within_fudge_returns_zero() {
+    // |error| <= fudge → dead zone, motor should stop.
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, dome_abs_stick_speed(0,  10, 5, 100));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, dome_abs_stick_speed(10, 10, 5, 100));
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, dome_abs_stick_speed(-10, 10, 5, 100));
+}
+
+void test_abs_stick_speed_just_outside_fudge_gives_min_speed() {
+    // |error| = fudge+1 → minimum speed fraction.
+    float s = dome_abs_stick_speed(11, 10, 5, 100);
+    // pct = 5 + 1 * 95 / 170 = 5 + 0 (integer) = 5 → 0.05f
+    TEST_ASSERT_EQUAL_FLOAT(0.05f, s);
+}
+
+void test_abs_stick_speed_at_180_gives_target_speed() {
+    // Max error → target speed.
+    float s = dome_abs_stick_speed(180, 10, 5, 100);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, s);
+}
+
+void test_abs_stick_speed_negative_error_gives_negative_speed() {
+    // Negative error → negative (CCW) motor command.
+    float pos = dome_abs_stick_speed( 90, 10, 5, 100);
+    float neg = dome_abs_stick_speed(-90, 10, 5, 100);
+    TEST_ASSERT_FLOAT_WITHIN(0.001f, -pos, neg);
+}
+
+void test_abs_stick_speed_capped_at_target() {
+    // Error beyond 180° should still be capped at target speed.
+    float s = dome_abs_stick_speed(200, 0, 5, 100);
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, s);
+}
+
+void test_abs_stick_speed_zero_fudge_min_error_gives_min_speed() {
+    // No dead zone: error=1 → near-minimum speed.
+    float s = dome_abs_stick_speed(1, 0, 5, 100);
+    // pct = 5 + 1*95/180 = 5 (integer) → 0.05f
+    TEST_ASSERT_EQUAL_FLOAT(0.05f, s);
+}
+
 // ---- dome_homing_step() -------------------------------------------------------
 
 void test_homing_hall_fires_returns_complete() {
@@ -584,6 +627,13 @@ int main(int argc, char **argv) {
     RUN_TEST(test_stick_to_angle_deadband_returns_minus1);
     RUN_TEST(test_stick_to_angle_deadband_boundary);
     RUN_TEST(test_stick_to_angle_diagonal_forward_right);
+
+    RUN_TEST(test_abs_stick_speed_within_fudge_returns_zero);
+    RUN_TEST(test_abs_stick_speed_just_outside_fudge_gives_min_speed);
+    RUN_TEST(test_abs_stick_speed_at_180_gives_target_speed);
+    RUN_TEST(test_abs_stick_speed_negative_error_gives_negative_speed);
+    RUN_TEST(test_abs_stick_speed_capped_at_target);
+    RUN_TEST(test_abs_stick_speed_zero_fudge_min_error_gives_min_speed);
 
     RUN_TEST(test_homing_hall_fires_returns_complete);
     RUN_TEST(test_homing_no_hall_not_timed_out_returns_continue);

@@ -154,34 +154,20 @@ void DomeDriveRoboClaw::animate() {
         }
 
         case kStateAbsoluteStick:
-            if (fDomeStick.isConnected()) {
-                // Compute dome heading from the 2-D stick position.
-                int lx = useLeftStick() ? fDomeStick.state.analog.stick.lx
-                                        : fDomeStick.state.analog.stick.rx;
-                int ly = useLeftStick() ? fDomeStick.state.analog.stick.ly
-                                        : fDomeStick.state.analog.stick.ry;
-                int target = dome_stick_to_angle(lx, ly);
-                if (target >= 0)
-                    goToAngle(target);
-                // Zero the rotation (X) axis before calling DomeDrive::animate()
-                // so its domeStick() handler treats the stick as neutral and
-                // defers to the DomePosition target-following path rather than
-                // interpreting the stick as a direct motor throttle.
-                // The value is refreshed from the next XBee packet so this only
-                // affects this one animate() cycle.
-                if (useLeftStick())
-                    fDomeStick.state.analog.stick.lx = 0;
-                else
-                    fDomeStick.state.analog.stick.rx = 0;
-            }
-            break;
+            // Direct closed-loop control — same pattern as homing/calibration.
+            // DomeDrive::animate() → domeStick() requires abs(m) != 0 or
+            // fAutoDrive != 0 to enter the motor block.  With the stick zeroed
+            // both are 0, so the entire motor path (including DomePosition kTarget)
+            // is skipped.  Drive the motor directly instead and return early.
+            handleAbsoluteStick();
+            return;
 
         default:
             break;
     }
 
     // 4. Obstruction detection (only while the motor is being commanded).
-    if (fState == kStateHomed || fState == kStateAbsoluteStick) {
+    if (fState == kStateHomed) {
         checkObstruction();
     }
 
@@ -263,10 +249,9 @@ void DomeDriveRoboClaw::disableAutoMode() {
 
 void DomeDriveRoboClaw::enableAbsoluteStickMode() {
     if (!isHomed() || !isCalibrated()) return;
+    // Hold current position until the stick gives a new target.
+    fAbsStickTargetDegrees = fCurrentDegrees;
     fState = kStateAbsoluteStick;
-    // Start in target mode so DomePosition immediately begins tracking.
-    fDomePos.setDomeTargetPosition(fCurrentDegrees);
-    fDomePos.setDomeMode(DomePosition::kTarget);
 }
 
 void DomeDriveRoboClaw::disableAbsoluteStickMode() {
@@ -299,6 +284,10 @@ void DomeDriveRoboClaw::applyDomePositionParams(
     fDomePos.setDomeTargetSpeed(speedTarget);
     fDomePos.setDomeAutoSpeed(speedSeek);
     fDomePos.setDomeMinSpeed(speedMin);
+    // Cache params used by handleAbsoluteStick() direct closed-loop control.
+    fAbsStickFudge       = fudge;
+    fAbsStickSpeedMin    = speedMin;
+    fAbsStickSpeedTarget = speedTarget;
 }
 
 // ---------------------------------------------------------------------------
@@ -520,6 +509,30 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
         // motor(0) and cancel the calibration sweep every cycle.
         sendMotorCommand(kCalibrationSpeed);
     }
+}
+
+void DomeDriveRoboClaw::handleAbsoluteStick() {
+    // Update target from stick if connected and outside the deadband.
+    if (fDomeStick.isConnected()) {
+        int lx = useLeftStick() ? fDomeStick.state.analog.stick.lx
+                                : fDomeStick.state.analog.stick.rx;
+        int ly = useLeftStick() ? fDomeStick.state.analog.stick.ly
+                                : fDomeStick.state.analog.stick.ry;
+        int newTarget = dome_stick_to_angle(lx, ly);
+        if (newTarget >= 0)
+            fAbsStickTargetDegrees = newTarget;
+    }
+
+    // Proportional closed-loop: drive toward fAbsStickTargetDegrees.
+    // Do NOT call DomeDrive::animate() — domeStick() gates all motor commands
+    // on abs(m) != 0 or fAutoDrive != 0; with neither set the motor would stall.
+    int   error = dome_angular_error(fAbsStickTargetDegrees, fCurrentDegrees);
+    float speed = dome_abs_stick_speed(error,
+                                       (int)fAbsStickFudge,
+                                       (int)fAbsStickSpeedMin,
+                                       (int)fAbsStickSpeedTarget);
+    sendMotorCommand(speed);
+    checkObstruction();
 }
 
 // ---------------------------------------------------------------------------
