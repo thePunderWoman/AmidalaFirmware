@@ -9,6 +9,7 @@
 // src/globals.cpp (accessed via extern declarations in controller.cpp).
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "drive_config.h"
 #include "ReelTwo.h"
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
 #include "drive/TankDrivePWM.h"
@@ -180,6 +181,14 @@ public:
    * Defined in src/controller.cpp.
    */
   void processDomeCommand(const char* cmd);
+
+  /**
+   * Execute a dome command from a button or gesture action.
+   * subcmd is a ButtonAction::DomeCmdType value; arg is the angle or delta
+   * in degrees (only used for kDomeGotoAbs, kDomeRelPos, kDomeRelNeg).
+   * Defined in src/controller.cpp.
+   */
+  void processDomeCmd(uint8_t subcmd, uint8_t arg);
 
   bool getDomeIMU() { return params.domeimu; }
 

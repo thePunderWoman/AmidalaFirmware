@@ -40,8 +40,22 @@ struct ButtonAction {
     kSerialStr = 5,
     kI2CStr    = 6,
     kHCREmote  = 7,  // Trigger an HCR emotion (emotion, level)
-    kHCRMuse   = 8   // Toggle HCR musing on/off
+    kHCRMuse   = 8,  // Toggle HCR musing on/off
+    kDomeCmd   = 9   // Dome drive command (subcmd, arg)
   };
+
+  // Sub-commands for kDomeCmd.  Stored in dome.subcmd.
+  enum DomeCmdType {
+    kDomeRand      = 0,  // Toggle random wander mode
+    kDomeStop      = 1,  // Emergency stop
+    kDomeFront     = 2,  // Go to front (0°)
+    kDomeHome      = 3,  // Re-run homing sweep
+    kDomeCalibrate = 4,  // Run 10-revolution calibration
+    kDomeGotoAbs   = 5,  // Go to absolute angle (arg = degrees, 0–255)
+    kDomeRelPos    = 6,  // Relative move +N degrees (arg = N)
+    kDomeRelNeg    = 7   // Relative move -N degrees (arg = N)
+  };
+
   uint8_t action;
   union {
     struct {
@@ -79,6 +93,11 @@ struct ButtonAction {
       uint8_t level;     // EMOTE_MODERATE=0, EMOTE_STRONG=1
       uint8_t serialstr;
     } emote;
+    struct {
+      uint8_t subcmd;    // DomeCmdType
+      uint8_t arg;       // Angle (0–255°) for kDomeGotoAbs; delta for kDomeRelPos/kDomeRelNeg
+      uint8_t serialstr;
+    } dome;
   };
 
   void printDescription(Print *stream) {
@@ -146,6 +165,26 @@ struct ButtonAction {
       break;
     case kHCRMuse:
       stream->print(F("HCR Muse Toggle"));
+      break;
+    case kDomeCmd:
+      stream->print(F("Dome: "));
+      switch (dome.subcmd) {
+        case kDomeRand:      stream->print(F("Random Mode"));            break;
+        case kDomeStop:      stream->print(F("Stop"));                   break;
+        case kDomeFront:     stream->print(F("Front"));                  break;
+        case kDomeHome:      stream->print(F("Home"));                   break;
+        case kDomeCalibrate: stream->print(F("Calibrate"));              break;
+        case kDomeGotoAbs:   stream->print(F("Goto "));
+                             stream->print(dome.arg);
+                             stream->print(F("\xb0")); break;
+        case kDomeRelPos:    stream->print(F("Relative +"));
+                             stream->print(dome.arg);
+                             stream->print(F("\xb0")); break;
+        case kDomeRelNeg:    stream->print(F("Relative -"));
+                             stream->print(dome.arg);
+                             stream->print(F("\xb0")); break;
+        default:             stream->print(dome.subcmd);                 break;
+      }
       break;
     }
     if (action != kSerialStr && action != kHCREmote && action != kHCRMuse &&

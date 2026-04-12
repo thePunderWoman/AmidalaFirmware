@@ -394,6 +394,11 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       case ButtonAction::kHCRMuse:
         b->action = args[1];
         break;
+      case ButtonAction::kDomeCmd:
+        b->dome.subcmd = args[2];
+        b->dome.arg    = (argcount >= 4) ? args[3] : 0;
+        b->action = args[1];
+        break;
       default:
         b->action = 0;
         break;
@@ -457,6 +462,11 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->action = args[1];
         break;
       case ButtonAction::kHCRMuse:
+        b->action = args[1];
+        break;
+      case ButtonAction::kDomeCmd:
+        b->dome.subcmd = args[2];
+        b->dome.arg    = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
       default:
@@ -538,13 +548,18 @@ bool AmidalaConfig::processConfig(const char *cmd) {
           break;
         case ButtonAction::kHCRMuse:
           break;
+        case ButtonAction::kDomeCmd:
+          b->dome.subcmd = args[1];
+          b->dome.arg    = (argcount >= 3) ? args[2] : 0;
+          break;
         default:
           b->action = 0;
           break;
         }
         if (b->action != ButtonAction::kSerialStr &&
             b->action != ButtonAction::kHCREmote &&
-            b->action != ButtonAction::kHCRMuse && argcount >= 3)
+            b->action != ButtonAction::kHCRMuse &&
+            b->action != ButtonAction::kDomeCmd && argcount >= 3)
           b->sound.serialstr = args[2];
         if (params.gcount < params.getGestureCount())
           params.gcount++;

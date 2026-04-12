@@ -38,8 +38,8 @@ void test_dome_drive_type_constants() {
 }
 
 void test_dome_drive_default_selection() {
-    TEST_ASSERT_EQUAL(DOME_DRIVE_PWM, DOME_DRIVE);
-    TEST_ASSERT_EQUAL(3, DOME_DRIVE);
+    TEST_ASSERT_EQUAL(DOME_DRIVE_ROBOCLAW, DOME_DRIVE);
+    TEST_ASSERT_EQUAL(4, DOME_DRIVE);
 }
 
 // ---- Speed and acceleration -------------------------------------------------
