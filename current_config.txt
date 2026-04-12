@@ -175,11 +175,44 @@ sstr=DM:FLUTTER
 
 
 # --- Button Mappings ---
-# Format: b=ButtonNum,Action,TargetAddr,TargetCmd
-# Actions: 1=Sound, 2=Servo, 3=DigitalOut, 4=I2CCmd, 5=SerStr, 6=I2CStr
-#          7=HCREmote(emotion,level)  emotion: 0=Happy 1=Sad 2=Mad 3=Scared 4=Overload
-#                                     level:   0=Moderate 1=Strong
-#          8=HCRMuseToggle
+# Format: b=ButtonNum,Action,Arg1,Arg2,SerialStr
+#   SerialStr (optional 5th field) sends a serial string side-effect alongside any action.
+#
+# Actions:
+#   1=Sound(bank,file)          file is optional; omit to play random from bank
+#   2=Servo(num,pos)
+#   3=DigitalOut(num,state)     state: 0=NO, 1=NC, 2=Momentary
+#   4=I2CCmd(addr,cmd)
+#   5=SerStr(index)             send serial string by 1-based index
+#   6=I2CStr(addr,index)
+#   7=HCREmote(emotion,level)   emotion: 0=Happy 1=Sad 2=Mad 3=Scared 4=Overload
+#                               level:   0=Moderate 1=Strong
+#   8=HCRMuseToggle
+#   9=DomeCmd(subcmd,angle)     RoboClaw dome drive only (DOME_DRIVE_ROBOCLAW)
+#
+# DomeCmd subcmds (Action=9):
+#   0=RandomToggle   b=N,9,0          toggle random wander mode on/off
+#   1=Stop           b=N,9,1          emergency stop
+#   2=Front          b=N,9,2          go to front (0°)
+#   3=Home           b=N,9,3          re-run homing sweep
+#   4=Calibrate      b=N,9,4          run 10-revolution encoder calibration
+#   5=GotoAbs        b=N,9,5,<deg>    go to absolute angle (0–255°)
+#   6=RelativePos    b=N,9,6,<deg>    rotate +N degrees from current position
+#   7=RelativeNeg    b=N,9,7,<deg>    rotate -N degrees from current position
+#
+# DomeCmd examples:
+#   b=1,9,0          Button 1: toggle random wander mode
+#   b=2,9,1          Button 2: stop dome
+#   b=3,9,2          Button 3: go to front
+#   b=4,9,5,90       Button 4: go to absolute 90°
+#   b=5,9,6,45       Button 5: relative +45°
+#   b=6,9,7,45       Button 6: relative -45°
+#   lb=1,9,3         Long-press button 1: re-home
+#   lb=2,9,4         Long-press button 2: run calibration
+#
+# Gestures use the same action/subcmd numbers but drop the button number:
+#   g=GestureStr,9,0          gesture triggers random toggle
+#   g=GestureStr,9,5,90       gesture goes to absolute 90°
 # Hello There
 b=1,5,17
 # Scared Emote
@@ -197,9 +230,10 @@ b=7,7,3,1
 # Overload
 b=8,7,4,0
 
-# --- Gesture Mappings (Stick Movments) ---
-# Format: g=GestureString,Action,TargetAddr,TargetCmd
-# Actions: 5=SerStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle
+# --- Gesture Mappings (Stick Movements) ---
+# Format: g=GestureString,Action,Arg1,Arg2
+# Actions: 5=SerStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle, 9=DomeCmd(subcmd,angle)
+# (See DomeCmd subcmd reference in Button Mappings section above)
 
 # Utility Arms Open Close
 g=1,5,9

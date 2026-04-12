@@ -26,9 +26,9 @@
 #define DOME_DRIVE_ROBOCLAW 4
 
 // Active selection (uncomment the one in use):
-#define DOME_DRIVE DOME_DRIVE_PWM
+// #define DOME_DRIVE DOME_DRIVE_PWM
 // #define DOME_DRIVE DOME_DRIVE_SABER
-// #define DOME_DRIVE DOME_DRIVE_ROBOCLAW
+#define DOME_DRIVE DOME_DRIVE_ROBOCLAW
 
 // ---- Speed and acceleration parameters --------------------------------------
 

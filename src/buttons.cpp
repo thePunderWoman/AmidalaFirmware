@@ -38,6 +38,9 @@ void AmidalaConsole::process(ButtonAction &button) {
   case button.kHCRMuse:
     fController->fAudio.toggleMuse();
     break;
+  case button.kDomeCmd:
+    fController->processDomeCmd(button.dome.subcmd, button.dome.arg);
+    break;
   }
   // Play ack emote for non-audio actions when ackon is enabled
   if (button.action != ButtonAction::kNone &&

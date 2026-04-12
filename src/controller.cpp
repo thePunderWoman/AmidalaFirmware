@@ -433,3 +433,51 @@ void AmidalaController::processDomeCommand(const char* cmd) {
   fConsole.println(F("Dome: RoboClaw drive not enabled in this build"));
 #endif
 }
+
+// ---------------------------------------------------------------------------
+// processDomeCmd()
+// Executes a dome action from a button or gesture mapping.  subcmd is a
+// ButtonAction::DomeCmdType value; arg carries the angle or delta in degrees
+// for the three positional sub-commands (kDomeGotoAbs, kDomeRelPos,
+// kDomeRelNeg) and is unused for the rest.
+// ---------------------------------------------------------------------------
+
+void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  switch (subcmd) {
+  case ButtonAction::kDomeRand:
+    if (fDomeDrive.isHomed()) {
+      fDomeDrive.enableRandomMode();
+    } else {
+      fConsole.println(F("Dome: not homed — random mode unavailable"));
+    }
+    break;
+  case ButtonAction::kDomeStop:
+    fDomeDrive.stop();
+    break;
+  case ButtonAction::kDomeFront:
+    fDomeDrive.goToAngle(0);
+    break;
+  case ButtonAction::kDomeHome:
+    fDomeDrive.startHoming();
+    break;
+  case ButtonAction::kDomeCalibrate:
+    fDomeDrive.startCalibration();
+    break;
+  case ButtonAction::kDomeGotoAbs:
+    fDomeDrive.goToAngle(arg);
+    break;
+  case ButtonAction::kDomeRelPos:
+    fDomeDrive.goToRelative((int)arg);
+    break;
+  case ButtonAction::kDomeRelNeg:
+    fDomeDrive.goToRelative(-(int)arg);
+    break;
+  default:
+    break;
+  }
+#else
+  (void)subcmd;
+  (void)arg;
+#endif
+}

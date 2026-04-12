@@ -24,6 +24,20 @@ void test_action_type_constants() {
     TEST_ASSERT_EQUAL(6, ButtonAction::kI2CStr);
     TEST_ASSERT_EQUAL(7, ButtonAction::kHCREmote);
     TEST_ASSERT_EQUAL(8, ButtonAction::kHCRMuse);
+    TEST_ASSERT_EQUAL(9, ButtonAction::kDomeCmd);
+}
+
+// ---- DomeCmdType sub-command constants --------------------------------------
+
+void test_dome_cmd_type_constants() {
+    TEST_ASSERT_EQUAL(0, ButtonAction::kDomeRand);
+    TEST_ASSERT_EQUAL(1, ButtonAction::kDomeStop);
+    TEST_ASSERT_EQUAL(2, ButtonAction::kDomeFront);
+    TEST_ASSERT_EQUAL(3, ButtonAction::kDomeHome);
+    TEST_ASSERT_EQUAL(4, ButtonAction::kDomeCalibrate);
+    TEST_ASSERT_EQUAL(5, ButtonAction::kDomeGotoAbs);
+    TEST_ASSERT_EQUAL(6, ButtonAction::kDomeRelPos);
+    TEST_ASSERT_EQUAL(7, ButtonAction::kDomeRelNeg);
 }
 
 // ---- HCR emotion constants (provided by header in native builds) ------------
@@ -88,6 +102,17 @@ void test_emote_fields_accessible() {
     TEST_ASSERT_EQUAL(EMOTE_STRONG, b.emote.level);
 }
 
+void test_dome_fields_accessible() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action        = ButtonAction::kDomeCmd;
+    b.dome.subcmd   = ButtonAction::kDomeGotoAbs;
+    b.dome.arg      = 90;
+    b.dome.serialstr = 0;
+    TEST_ASSERT_EQUAL(ButtonAction::kDomeGotoAbs, b.dome.subcmd);
+    TEST_ASSERT_EQUAL(90, b.dome.arg);
+}
+
 void test_union_members_share_storage() {
     // All union members must be 3 bytes so they overlay the same memory.
     ButtonAction b;
@@ -97,6 +122,7 @@ void test_union_members_share_storage() {
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.serial));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.i2cstr));
     TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.emote));
+    TEST_ASSERT_EQUAL(sizeof(b.sound), sizeof(b.dome));
     TEST_ASSERT_EQUAL(3, sizeof(b.sound));
 }
 
@@ -280,6 +306,65 @@ void test_print_appends_serial_string_for_non_serial_actions() {
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "3"));
 }
 
+void test_print_dome_rand() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeRand;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dome: "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Random Mode"));
+}
+
+void test_print_dome_stop() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeStop;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dome: "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Stop"));
+}
+
+void test_print_dome_goto_abs() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeGotoAbs;
+    b.dome.arg    = 90;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dome: "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Goto "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "90"));
+}
+
+void test_print_dome_rel_pos() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeRelPos;
+    b.dome.arg    = 45;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Relative +"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "45"));
+}
+
+void test_print_dome_rel_neg() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeRelNeg;
+    b.dome.arg    = 45;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Relative -"));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "45"));
+}
+
 void test_print_does_not_append_serial_for_serial_action() {
     // kSerialStr itself must not double-print ", Serial #".
     ButtonAction b;
@@ -334,12 +419,14 @@ int main(int argc, char **argv) {
 
     RUN_TEST(test_action_type_constants);
     RUN_TEST(test_hcr_emotion_constants);
+    RUN_TEST(test_dome_cmd_type_constants);
 
     RUN_TEST(test_zeroed_button_action_is_none);
     RUN_TEST(test_sound_fields_accessible);
     RUN_TEST(test_servo_fields_accessible);
     RUN_TEST(test_dout_fields_accessible);
     RUN_TEST(test_emote_fields_accessible);
+    RUN_TEST(test_dome_fields_accessible);
     RUN_TEST(test_union_members_share_storage);
 
     RUN_TEST(test_print_none_produces_only_newline);
@@ -356,6 +443,11 @@ int main(int argc, char **argv) {
     RUN_TEST(test_print_hcr_emote_sad_strong);
     RUN_TEST(test_print_hcr_emote_overload_has_no_level);
     RUN_TEST(test_print_hcr_muse);
+    RUN_TEST(test_print_dome_rand);
+    RUN_TEST(test_print_dome_stop);
+    RUN_TEST(test_print_dome_goto_abs);
+    RUN_TEST(test_print_dome_rel_pos);
+    RUN_TEST(test_print_dome_rel_neg);
     RUN_TEST(test_print_appends_serial_string_for_non_serial_actions);
     RUN_TEST(test_print_does_not_append_serial_for_serial_action);
 

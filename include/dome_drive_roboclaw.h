@@ -95,6 +95,7 @@ public:
     virtual void setup() override;
     virtual void animate() override;
     virtual void stop() override;
+    virtual void motor(float m) override;
 
     // ---- DomePositionProvider interface -------------------------------------
     // Called by DomeDrive's DomePosition every animate() cycle.

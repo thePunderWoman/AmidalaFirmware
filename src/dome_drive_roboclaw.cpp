@@ -95,9 +95,9 @@ void DomeDriveRoboClaw::setup() {
     fDomePos.setDomeHomeMaxDelay(DEFAULT_DOME_HOME_MAX_DELAY);
     fDomePos.setDomeAutoMinDelay(DEFAULT_DOME_SEEK_MIN_DELAY);
     fDomePos.setDomeAutoMaxDelay(DEFAULT_DOME_SEEK_MAX_DELAY);
-    fDomePos.setDomeAutoLeft(DEFAULT_DOME_SEEK_LEFT);
-    fDomePos.setDomeAutoRight(DEFAULT_DOME_SEEK_RIGHT);
-    fDomePos.setDomeFudge(DEFAULT_DOME_FUDGE);
+    fDomePos.setDomeAutoLeftDegrees(DEFAULT_DOME_SEEK_LEFT);
+    fDomePos.setDomeAutoRightDegrees(DEFAULT_DOME_SEEK_RIGHT);
+    fDomePos.setDomeFudgeFactor(DEFAULT_DOME_FUDGE);
     fDomePos.setDomeHomeSpeed(DEFAULT_DOME_SPEED_HOME);
     fDomePos.setDomeTargetSpeed(DEFAULT_DOME_SPEED_TARGET);
     fDomePos.setDomeAutoSpeed(DEFAULT_DOME_SPEED_SEEK);
@@ -251,9 +251,9 @@ void DomeDriveRoboClaw::applyDomePositionParams(
     fDomePos.setDomeHomeMaxDelay(homeMaxDelay);
     fDomePos.setDomeAutoMinDelay(seekMinDelay);
     fDomePos.setDomeAutoMaxDelay(seekMaxDelay);
-    fDomePos.setDomeAutoLeft(seekLeft);
-    fDomePos.setDomeAutoRight(seekRight);
-    fDomePos.setDomeFudge(fudge);
+    fDomePos.setDomeAutoLeftDegrees(seekLeft);
+    fDomePos.setDomeAutoRightDegrees(seekRight);
+    fDomePos.setDomeFudgeFactor(fudge);
     fDomePos.setDomeHomeSpeed(speedHome);
     fDomePos.setDomeTargetSpeed(speedTarget);
     fDomePos.setDomeAutoSpeed(speedSeek);
