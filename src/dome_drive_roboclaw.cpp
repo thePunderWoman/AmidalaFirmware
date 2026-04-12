@@ -9,6 +9,10 @@
 #include "dome_position_math.h"
 #include "ReelTwo.h"   // DEBUG_PRINT / DEBUG_PRINTLN macros
 
+// Uncomment to enable high-frequency per-cycle logging (sendMotorCommand,
+// readEncoder).  These fire every 25 ms so leave this off in normal use.
+// #define DOME_DEBUG
+
 // ---------------------------------------------------------------------------
 // Static singleton for ISR glue
 // ---------------------------------------------------------------------------
@@ -125,8 +129,7 @@ void DomeDriveRoboClaw::animate() {
     switch (fState) {
         case kStateHoming:
             handleHoming(hallFired);
-            return; // handleHoming calls DomeDrive::animate() when done, or
-                    // keeps using autonomousDriveDome(); skip it here.
+            return;
 
         case kStateCalibrating:
             handleCalibrating(hallFired);
@@ -342,6 +345,12 @@ int32_t DomeDriveRoboClaw::readEncoder() {
     uint32_t raw = (fChannel == 1)
                        ? fRoboClaw.ReadEncM1(fAddress, &status, &valid)
                        : fRoboClaw.ReadEncM2(fAddress, &status, &valid);
+#ifdef DOME_DEBUG
+    DEBUG_PRINT(F("DOME: readEncoder valid="));
+    DEBUG_PRINT(valid);
+    DEBUG_PRINT(F(" raw="));
+    DEBUG_PRINTLN((int32_t)raw);
+#endif
     if (!valid) return fLastCommandedSpeed == 0.0f ? fHomeEncoderTick : fHomeEncoderTick;
     return (int32_t)raw;
 #else
@@ -354,6 +363,12 @@ void DomeDriveRoboClaw::sendMotorCommand(float m) {
     // Clamp to -1..1 and apply max-speed modifier from DomeDrive base.
     m = max(-1.0f, min(m, 1.0f));
     int32_t speed = (int32_t)(m * (float)fQPPS);
+#ifdef DOME_DEBUG
+    DEBUG_PRINT(F("DOME: sendMotorCommand m="));
+    DEBUG_PRINT(m);
+    DEBUG_PRINT(F(" speed="));
+    DEBUG_PRINTLN(speed);
+#endif
     if (fChannel == 1)
         fRoboClaw.SpeedM1(fAddress, speed);
     else
@@ -451,7 +466,11 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
     }
 
     // kHomingContinue: keep sweeping.
-    autonomousDriveDome(kHomingSpeed);
+    // Drive the motor directly — autonomousDriveDome() is only consumed by
+    // DomeDrive::animate() when a joystick is connected, so homing would
+    // silently stall without a controller.  Call sendMotorCommand() directly
+    // and still call DomeDrive::animate() to service any connected joystick.
+    sendMotorCommand(kHomingSpeed);
     DomeDrive::animate();
 }
 
@@ -494,7 +513,9 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
     }
 
     if (fState == kStateCalibrating) {
-        autonomousDriveDome(kCalibrationSpeed);
+        // Same reason as handleHoming: drive directly so calibration works
+        // even without a connected joystick controller.
+        sendMotorCommand(kCalibrationSpeed);
         DomeDrive::animate();
     }
 }

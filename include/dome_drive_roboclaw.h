@@ -201,7 +201,8 @@ public:
             case kStateHoming:      out.print(F("Homing"));      break;
             case kStateHomed:       out.print(F("Homed"));       break;
             case kStateCalibrating: out.print(F("Calibrating")); break;
-            case kStateObstructed:  out.print(F("OBSTRUCTED"));  break;
+            case kStateObstructed:    out.print(F("OBSTRUCTED"));    break;
+            case kStateAbsoluteStick: out.print(F("AbsoluteStick")); break;
         }
         out.print(F(" cal="));
         out.print(isCalibrated() ? F("yes tpr=") : F("no"));

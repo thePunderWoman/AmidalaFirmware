@@ -42,6 +42,32 @@ void test_startswith_partial_no_match() {
   TEST_ASSERT_FALSE(startswith(s, "volume="));
 }
 
+// Regression: startswith() advances the pointer past the prefix, so adding
+// prefix_len to the result gives the wrong offset.  Console routing that
+// needs to pass the suffix to a sub-handler must use strncmp() (which does
+// NOT advance the pointer) and offset from the original pointer.
+//
+// Before the fix, console.cpp did:
+//   } else if (startswith(cmd, "dome=")) {
+//       processDomeCommand(cmd + 5);   // BUG: cmd already past "dome="
+//
+// With startswith, cmd points at "status" after the match, so cmd+5 = "s".
+// With strncmp,   cmd still points at "dome=status", so cmd+5 = "status". ✓
+void test_startswith_pointer_advance_makes_offset_wrong() {
+  // After startswith advances past "dome=", adding 5 more skips into suffix.
+  const char *cmd = "dome=status";
+  bool matched = startswith(cmd, "dome=");
+  TEST_ASSERT_TRUE(matched);
+  TEST_ASSERT_EQUAL_STRING("status", cmd);              // advanced to suffix
+  TEST_ASSERT_NOT_EQUAL(0, strcmp("status", cmd + 5)); // cmd+5 is NOT "status"
+
+  // strncmp does not advance — original + 5 gives the correct suffix.
+  const char *cmd2 = "dome=status";
+  TEST_ASSERT_TRUE(strncmp(cmd2, "dome=", 5) == 0);
+  TEST_ASSERT_EQUAL_STRING("dome=status", cmd2); // pointer unchanged
+  TEST_ASSERT_EQUAL_STRING("status", cmd2 + 5);  // correct suffix
+}
+
 // ---- strtolu ----------------------------------------------------------------
 
 void test_strtolu_simple() {
@@ -363,6 +389,7 @@ int main(int argc, char **argv) {
   RUN_TEST(test_startswith_empty_needle_always_matches);
   RUN_TEST(test_startswith_exact_match);
   RUN_TEST(test_startswith_partial_no_match);
+  RUN_TEST(test_startswith_pointer_advance_makes_offset_wrong);
 
   RUN_TEST(test_strtolu_simple);
   RUN_TEST(test_strtolu_zero);

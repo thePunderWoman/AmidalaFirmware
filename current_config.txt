@@ -96,6 +96,18 @@ domeseekr=80
 # Enable Dome Control on RC Channel 6 (y/n)
 domech6=n
 
+# --- RoboClaw Dome Drive Settings (DOME_DRIVE_ROBOCLAW only) ---
+# RoboClaw packet-serial address (128-135, default 128)
+domercaddr=128
+# Motor channel: 1=M1, 2=M2
+domercchan=1
+# Encoder pulses per second at full speed (tune via Motion Studio auto-tune)
+domercqpps=5280
+# Degrees from hall sensor trigger to dome front (0-359)
+domefront=0
+# Milliseconds of stall before obstruction is declared (100-5000)
+domestall=500
+
 # --- Gestures for Special Toggles ---
 # These set which stick gesture string toggles which mode (default values)
 rnd=3
@@ -172,7 +184,10 @@ sstr=DM:HELLO
 sstr=DM:SCREAM
 # 19: Panel flutter
 sstr=DM:FLUTTER
-
+# 20: Overload
+sstr=DM:OVERLOAD
+# 21: Body Panels
+sstr=BD:CBIDATADOOR
 
 # --- Button Mappings ---
 # Format: b=ButtonNum,Action,Arg1,Arg2,SerialStr
