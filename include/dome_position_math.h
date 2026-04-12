@@ -41,6 +41,48 @@ static inline int dome_normalize_degrees(int degrees) {
 }
 
 /**
+ * Signed shortest-path angular error from 'current' to 'target'.
+ *
+ * Returns a value in [-180, +180] degrees:
+ *   positive = clockwise rotation needed
+ *   negative = counterclockwise rotation needed
+ */
+static inline int dome_angular_error(int target, int current) {
+    int err = dome_normalize_degrees(target) - dome_normalize_degrees(current);
+    if (err > 180)  err -= 360;
+    if (err < -180) err += 360;
+    return err;
+}
+
+/**
+ * Convert a joystick (lx, ly) position to a dome heading in degrees.
+ *
+ * Axis convention (matches JoystickController):
+ *   lx: negative = full left (-128), positive = full right (+127)
+ *   ly: negative = full back (-128), positive = full forward (+127)
+ *
+ * The returned angle maps intuitively to dome front:
+ *   0° = forward, 90° = right, 180° = back, 270° = left
+ *
+ * @param lx        Horizontal stick axis (-128 to +127).
+ * @param ly        Vertical stick axis   (-128 to +127).
+ * @param deadband  Minimum stick magnitude (0.0–1.0) before an angle is
+ *                  returned.  Defaults to 0.2 (matches DomeDrive deadband).
+ * @return          Dome heading 0–359, or -1 if the stick is within the
+ *                  deadband (no meaningful direction).
+ */
+static inline int dome_stick_to_angle(int lx, int ly,
+                                      float deadband = 0.2f) {
+    float x = (float)lx / 128.0f;
+    float y = (float)ly / 128.0f;
+    float mag = sqrtf(x * x + y * y);
+    if (mag < deadband) return -1;
+    // atan2f(x, y): x-right/y-forward convention gives 0° = forward.
+    float angle = atan2f(x, y) * (180.0f / (float)M_PI);
+    return dome_normalize_degrees((int)angle);
+}
+
+/**
  * Convert a signed encoder-tick offset (enc - homeEncoderTick) to a
  * dome angle in degrees.
  *

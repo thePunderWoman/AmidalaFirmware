@@ -38,6 +38,7 @@ void test_dome_cmd_type_constants() {
     TEST_ASSERT_EQUAL(5, ButtonAction::kDomeGotoAbs);
     TEST_ASSERT_EQUAL(6, ButtonAction::kDomeRelPos);
     TEST_ASSERT_EQUAL(7, ButtonAction::kDomeRelNeg);
+    TEST_ASSERT_EQUAL(8, ButtonAction::kDomeAbsStick);
 }
 
 // ---- HCR emotion constants (provided by header in native builds) ------------
@@ -365,6 +366,17 @@ void test_print_dome_rel_neg() {
     TEST_ASSERT_NOT_NULL(strstr(out.buf, "45"));
 }
 
+void test_print_dome_abstick() {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action      = ButtonAction::kDomeCmd;
+    b.dome.subcmd = ButtonAction::kDomeAbsStick;
+    StringPrint out;
+    b.printDescription(&out);
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Dome: "));
+    TEST_ASSERT_NOT_NULL(strstr(out.buf, "Absolute-Stick Toggle"));
+}
+
 void test_print_does_not_append_serial_for_serial_action() {
     // kSerialStr itself must not double-print ", Serial #".
     ButtonAction b;
@@ -448,6 +460,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_print_dome_goto_abs);
     RUN_TEST(test_print_dome_rel_pos);
     RUN_TEST(test_print_dome_rel_neg);
+    RUN_TEST(test_print_dome_abstick);
     RUN_TEST(test_print_appends_serial_string_for_non_serial_actions);
     RUN_TEST(test_print_does_not_append_serial_for_serial_action);
 

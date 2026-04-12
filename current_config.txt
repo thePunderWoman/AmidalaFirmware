@@ -199,6 +199,7 @@ sstr=DM:FLUTTER
 #   5=GotoAbs        b=N,9,5,<deg>    go to absolute angle (0–255°)
 #   6=RelativePos    b=N,9,6,<deg>    rotate +N degrees from current position
 #   7=RelativeNeg    b=N,9,7,<deg>    rotate -N degrees from current position
+#   8=AbsStickToggle b=N,9,8          toggle absolute-stick mode (joystick angle = dome heading)
 #
 # DomeCmd examples:
 #   b=1,9,0          Button 1: toggle random wander mode

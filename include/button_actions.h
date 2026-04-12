@@ -53,7 +53,8 @@ struct ButtonAction {
     kDomeCalibrate = 4,  // Run 10-revolution calibration
     kDomeGotoAbs   = 5,  // Go to absolute angle (arg = degrees, 0–255)
     kDomeRelPos    = 6,  // Relative move +N degrees (arg = N)
-    kDomeRelNeg    = 7   // Relative move -N degrees (arg = N)
+    kDomeRelNeg    = 7,  // Relative move -N degrees (arg = N)
+    kDomeAbsStick  = 8   // Toggle absolute-stick mode (joystick angle = dome heading)
   };
 
   uint8_t action;
@@ -183,6 +184,7 @@ struct ButtonAction {
         case kDomeRelNeg:    stream->print(F("Relative -"));
                              stream->print(dome.arg);
                              stream->print(F("\xb0")); break;
+        case kDomeAbsStick:  stream->print(F("Absolute-Stick Toggle"));   break;
         default:             stream->print(dome.subcmd);                 break;
       }
       break;
