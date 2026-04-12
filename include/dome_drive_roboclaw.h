@@ -60,11 +60,12 @@ public:
     // ---- Operational states -------------------------------------------------
 
     enum State {
-        kStateManual,       ///< No home reference yet; joystick only
-        kStateHoming,       ///< Sweeping for hall sensor
-        kStateHomed,        ///< Homed; auto modes available
-        kStateCalibrating,  ///< Counting dome revolutions for ratio
-        kStateObstructed,   ///< Stall detected; awaiting manual clearance
+        kStateManual,         ///< No home reference yet; joystick only
+        kStateHoming,         ///< Sweeping for hall sensor
+        kStateHomed,          ///< Homed; auto modes available
+        kStateCalibrating,    ///< Counting dome revolutions for ratio
+        kStateObstructed,     ///< Stall detected; awaiting manual clearance
+        kStateAbsoluteStick,  ///< Joystick angle maps directly to dome heading
     };
 
     // ---- Constructor --------------------------------------------------------
@@ -101,7 +102,9 @@ public:
     // Called by DomeDrive's DomePosition every animate() cycle.
 
     /** Returns true once the hall sensor has been found (homing complete). */
-    virtual bool ready() override { return fState == kStateHomed; }
+    virtual bool ready() override {
+        return fState == kStateHomed || fState == kStateAbsoluteStick;
+    }
 
     /** Current dome angle in degrees (0 = front, increases clockwise). */
     virtual int getAngle() override { return fCurrentDegrees; }
@@ -141,6 +144,19 @@ public:
 
     /** Return to manual / idle mode (cancels all autonomous movement). */
     void disableAutoMode();
+
+    /**
+     * Enter absolute-stick mode: joystick angle maps directly to a dome
+     * heading (forward = 0°, right = 90°, etc.).  Releasing the stick holds
+     * the last commanded heading.  Requires homed + calibrated.
+     */
+    void enableAbsoluteStickMode();
+
+    /** Leave absolute-stick mode and return to normal joystick control. */
+    void disableAbsoluteStickMode();
+
+    /** True while the drive is in absolute-stick mode. */
+    bool isAbsoluteStickMode() const { return fState == kStateAbsoluteStick; }
 
     /** Set the hall-sensor-to-front offset (degrees). Applied immediately. */
     void setFrontOffset(uint16_t degrees) { fFrontOffset = degrees; }

@@ -403,6 +403,17 @@ void AmidalaController::processDomeCommand(const char* cmd) {
       fConsole.println(F("Dome: not homed — random mode unavailable"));
     }
 
+  } else if (strcmp(cmd, "abstick") == 0) {
+    if (!fDomeDrive.isHomed() || !fDomeDrive.isCalibrated()) {
+      fConsole.println(F("Dome: not homed/calibrated — abs-stick mode unavailable"));
+    } else if (fDomeDrive.isAbsoluteStickMode()) {
+      fDomeDrive.disableAbsoluteStickMode();
+      fConsole.println(F("Dome: abs-stick mode off"));
+    } else {
+      fDomeDrive.enableAbsoluteStickMode();
+      fConsole.println(F("Dome: abs-stick mode on"));
+    }
+
   } else if (strcmp(cmd, "status") == 0) {
     fDomeDrive.printStatus(fConsole);
 
@@ -472,6 +483,16 @@ void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
     break;
   case ButtonAction::kDomeRelNeg:
     fDomeDrive.goToRelative(-(int)arg);
+    break;
+  case ButtonAction::kDomeAbsStick:
+    if (fDomeDrive.isHomed() && fDomeDrive.isCalibrated()) {
+      if (fDomeDrive.isAbsoluteStickMode())
+        fDomeDrive.disableAbsoluteStickMode();
+      else
+        fDomeDrive.enableAbsoluteStickMode();
+    } else {
+      fConsole.println(F("Dome: not homed/calibrated — abs-stick mode unavailable"));
+    }
     break;
   default:
     break;

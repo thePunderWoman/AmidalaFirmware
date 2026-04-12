@@ -150,12 +150,35 @@ void DomeDriveRoboClaw::animate() {
             break;
         }
 
+        case kStateAbsoluteStick:
+            if (fDomeStick.isConnected()) {
+                // Compute dome heading from the 2-D stick position.
+                int lx = useLeftStick() ? fDomeStick.state.analog.stick.lx
+                                        : fDomeStick.state.analog.stick.rx;
+                int ly = useLeftStick() ? fDomeStick.state.analog.stick.ly
+                                        : fDomeStick.state.analog.stick.ry;
+                int target = dome_stick_to_angle(lx, ly);
+                if (target >= 0)
+                    goToAngle(target);
+                // Zero the rotation (X) axis before calling DomeDrive::animate()
+                // so its domeStick() handler treats the stick as neutral and
+                // defers to the DomePosition target-following path rather than
+                // interpreting the stick as a direct motor throttle.
+                // The value is refreshed from the next XBee packet so this only
+                // affects this one animate() cycle.
+                if (useLeftStick())
+                    fDomeStick.state.analog.stick.lx = 0;
+                else
+                    fDomeStick.state.analog.stick.rx = 0;
+            }
+            break;
+
         default:
             break;
     }
 
     // 4. Obstruction detection (only while the motor is being commanded).
-    if (fState == kStateHomed) {
+    if (fState == kStateHomed || fState == kStateAbsoluteStick) {
         checkObstruction();
     }
 
@@ -233,6 +256,21 @@ void DomeDriveRoboClaw::enableRandomMode() {
 
 void DomeDriveRoboClaw::disableAutoMode() {
     fDomePos.setDomeDefaultMode(DomePosition::kOff);
+}
+
+void DomeDriveRoboClaw::enableAbsoluteStickMode() {
+    if (!isHomed() || !isCalibrated()) return;
+    fState = kStateAbsoluteStick;
+    // Start in target mode so DomePosition immediately begins tracking.
+    fDomePos.setDomeTargetPosition(fCurrentDegrees);
+    fDomePos.setDomeMode(DomePosition::kTarget);
+}
+
+void DomeDriveRoboClaw::disableAbsoluteStickMode() {
+    if (fState == kStateAbsoluteStick) {
+        fState = kStateHomed;
+        disableAutoMode();
+    }
 }
 
 void DomeDriveRoboClaw::setMaxSpeedPct(float pct) {

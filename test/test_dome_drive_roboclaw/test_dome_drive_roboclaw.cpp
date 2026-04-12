@@ -234,6 +234,89 @@ void test_calibration_minimum_one_rotation() {
     TEST_ASSERT_EQUAL(180, dome_encoder_to_degrees(600, tpr, 0));
 }
 
+// ---- dome_angular_error() ----------------------------------------------------
+
+void test_angular_error_same_angle() {
+    // No rotation needed when target == current.
+    TEST_ASSERT_EQUAL(0, dome_angular_error(90, 90));
+}
+
+void test_angular_error_clockwise_short() {
+    // 10° clockwise from 80 → 90.
+    TEST_ASSERT_EQUAL(10, dome_angular_error(90, 80));
+}
+
+void test_angular_error_counterclockwise_short() {
+    // 10° CCW from 90 → 80.
+    TEST_ASSERT_EQUAL(-10, dome_angular_error(80, 90));
+}
+
+void test_angular_error_at_180_boundary() {
+    // Exactly 180° — could be either direction; result is +180 per the formula.
+    TEST_ASSERT_EQUAL(180, dome_angular_error(180, 0));
+}
+
+void test_angular_error_chooses_short_path_over_180() {
+    // From 350° to 10° = +20° CW (not −340° CCW).
+    TEST_ASSERT_EQUAL(20, dome_angular_error(10, 350));
+}
+
+void test_angular_error_chooses_ccw_short_path() {
+    // From 10° to 350° = −20° CCW (not +340° CW).
+    TEST_ASSERT_EQUAL(-20, dome_angular_error(350, 10));
+}
+
+void test_angular_error_full_circle_is_zero() {
+    // 360° apart → same position → 0 error.
+    TEST_ASSERT_EQUAL(0, dome_angular_error(360, 0));
+}
+
+// ---- dome_stick_to_angle() ---------------------------------------------------
+
+void test_stick_to_angle_forward() {
+    // Full forward (lx=0, ly=+127) → 0°.
+    TEST_ASSERT_EQUAL(0, dome_stick_to_angle(0, 127));
+}
+
+void test_stick_to_angle_right() {
+    // Full right (lx=+127, ly=0) → 90°.
+    int angle = dome_stick_to_angle(127, 0);
+    // Allow ±2° for floating-point rounding.
+    TEST_ASSERT_INT_WITHIN(2, 90, angle);
+}
+
+void test_stick_to_angle_back() {
+    // Full back (lx=0, ly=-128) → 180°.
+    int angle = dome_stick_to_angle(0, -128);
+    TEST_ASSERT_INT_WITHIN(2, 180, angle);
+}
+
+void test_stick_to_angle_left() {
+    // Full left (lx=-128, ly=0) → 270°.
+    int angle = dome_stick_to_angle(-128, 0);
+    TEST_ASSERT_INT_WITHIN(2, 270, angle);
+}
+
+void test_stick_to_angle_deadband_returns_minus1() {
+    // Stick near center — within default 0.2 deadband → -1.
+    TEST_ASSERT_EQUAL(-1, dome_stick_to_angle(0, 0));
+    TEST_ASSERT_EQUAL(-1, dome_stick_to_angle(10, 5));
+}
+
+void test_stick_to_angle_deadband_boundary() {
+    // At exactly the boundary magnitude for deadband=0.2:
+    // Need |v| >= 0.2 where v = sqrt(x^2+y^2), x=lx/128, y=ly/128.
+    // 0.2 * 128 ≈ 25.6 → magnitude of 26/128 ≈ 0.203 — should return a valid angle.
+    int angle = dome_stick_to_angle(26, 0);
+    TEST_ASSERT_NOT_EQUAL(-1, angle);
+}
+
+void test_stick_to_angle_diagonal_forward_right() {
+    // Roughly 45°: equal lx and ly.
+    int angle = dome_stick_to_angle(100, 100);
+    TEST_ASSERT_INT_WITHIN(3, 45, angle);
+}
+
 // ---- dome_homing_step() -------------------------------------------------------
 
 void test_homing_hall_fires_returns_complete() {
@@ -485,6 +568,22 @@ int main(int argc, char **argv) {
 
     RUN_TEST(test_calibration_requires_positive_ticks);
     RUN_TEST(test_calibration_minimum_one_rotation);
+
+    RUN_TEST(test_angular_error_same_angle);
+    RUN_TEST(test_angular_error_clockwise_short);
+    RUN_TEST(test_angular_error_counterclockwise_short);
+    RUN_TEST(test_angular_error_at_180_boundary);
+    RUN_TEST(test_angular_error_chooses_short_path_over_180);
+    RUN_TEST(test_angular_error_chooses_ccw_short_path);
+    RUN_TEST(test_angular_error_full_circle_is_zero);
+
+    RUN_TEST(test_stick_to_angle_forward);
+    RUN_TEST(test_stick_to_angle_right);
+    RUN_TEST(test_stick_to_angle_back);
+    RUN_TEST(test_stick_to_angle_left);
+    RUN_TEST(test_stick_to_angle_deadband_returns_minus1);
+    RUN_TEST(test_stick_to_angle_deadband_boundary);
+    RUN_TEST(test_stick_to_angle_diagonal_forward_right);
 
     RUN_TEST(test_homing_hall_fires_returns_complete);
     RUN_TEST(test_homing_no_hall_not_timed_out_returns_continue);
