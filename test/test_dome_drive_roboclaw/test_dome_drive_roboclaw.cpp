@@ -274,8 +274,9 @@ void test_angular_error_full_circle_is_zero() {
 // ---- dome_stick_to_angle() ---------------------------------------------------
 
 void test_stick_to_angle_forward() {
-    // Full forward (lx=0, ly=+127) → 0°.
-    TEST_ASSERT_EQUAL(0, dome_stick_to_angle(0, 127));
+    // JoystickController: ly positive = toward user (back). Pass -ly so that
+    // physical "push forward" (ly = -128 raw → -(-128) = +128 passed) → 0°.
+    TEST_ASSERT_EQUAL(0, dome_stick_to_angle(0, 128));
 }
 
 void test_stick_to_angle_right() {
@@ -286,8 +287,8 @@ void test_stick_to_angle_right() {
 }
 
 void test_stick_to_angle_back() {
-    // Full back (lx=0, ly=-128) → 180°.
-    int angle = dome_stick_to_angle(0, -128);
+    // Full back: raw ly=+127, after negation passed as -127 → 180°.
+    int angle = dome_stick_to_angle(0, -127);
     TEST_ASSERT_INT_WITHIN(2, 180, angle);
 }
 
