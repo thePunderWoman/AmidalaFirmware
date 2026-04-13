@@ -623,7 +623,6 @@ bool AmidalaConfig::processConfig(const char *cmd) {
              boolparam(cmd, "mix12=", params.mix12) ||
              boolparam(cmd, "auto=", params.autocorrect) ||
              boolparam(cmd, "goslow=", params.goslow) ||
-             boolparam(cmd, "domeflip=", params.domeflip) ||
              boolparam(cmd, "domech6=", params.domech6)) {
     return true;
   } else if (startswith(cmd, "xbr=")) {
@@ -634,6 +633,9 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     return true;
   } else if (boolparam(cmd, "domeimu=", boolarg)) {
     params.domeimu = boolarg;
+    return true;
+  } else if (boolparam(cmd, "domeflip=", params.domeflip)) {
+    domeDrive->setInverted(params.domeflip);
     return true;
   } else if (intparam(cmd, "domespeed=", params.domespeed, 0, 100)) {
     domeDrive->setMaxSpeed(params.domespeed);

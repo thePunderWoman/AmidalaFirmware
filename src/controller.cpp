@@ -149,7 +149,7 @@ void AmidalaController::setup() {
 
 #ifdef DOME_DRIVE
   fDomeDrive.setMaxSpeed(DOME_MAXIMUM_SPEED);
-  fDomeDrive.setInverted(DEFAULT_DOME_INVERTED);
+  fDomeDrive.setInverted(params.domeflip);
   fDomeDrive.setScaling(false);
   fDomeDrive.setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
   fDomeDrive.setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);

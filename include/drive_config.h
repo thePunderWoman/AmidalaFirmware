@@ -65,7 +65,7 @@
 #define DEFAULT_DOME_SPEED_TARGET       100
 #define DEFAULT_DOME_SPEED_MIN          5
 #define DEFAULT_DOME_TIMEOUT            5
-#define DEFAULT_DOME_INVERTED           false
+#define DEFAULT_DOME_INVERTED           true
 #define DEFAULT_DOME_MIN_PULSE          1000
 #define DEFAULT_DOME_MAX_PULSE          2000
 

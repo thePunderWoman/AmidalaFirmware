@@ -101,7 +101,7 @@ void test_dome_speed_defaults() {
 }
 
 void test_dome_inversion_and_pulse_defaults() {
-    TEST_ASSERT_FALSE(DEFAULT_DOME_INVERTED);
+    TEST_ASSERT_TRUE(DEFAULT_DOME_INVERTED);
     TEST_ASSERT_EQUAL(1000, DEFAULT_DOME_MIN_PULSE);
     TEST_ASSERT_EQUAL(2000, DEFAULT_DOME_MAX_PULSE);
 }
