@@ -196,6 +196,7 @@ public:
     bool  isCalibrated()  const { return fTicksPerDomeRev > 0; }
     int   getCurrentDegrees() const { return fCurrentDegrees; }
     int32_t getTicksPerDomeRev() const { return fTicksPerDomeRev; }
+    float getLastCommandedSpeed() const { return fLastCommandedSpeed; }
 
     /** Load calibration from EEPROM. Called during setup(). */
     void loadCalibrationFromEEPROM();
@@ -216,6 +217,7 @@ public:
             case kStateCalibrating: out.print(F("Calibrating")); break;
             case kStateObstructed:    out.print(F("OBSTRUCTED"));    break;
             case kStateAbsoluteStick: out.print(F("AbsoluteStick")); break;
+            case kStateRandom:        out.print(F("Random"));        break;
         }
         out.print(F(" cal="));
         out.print(isCalibrated() ? F("yes tpr=") : F("no"));
@@ -314,6 +316,16 @@ private:
     uint8_t fAbsStickFudge         = DEFAULT_DOME_FUDGE;
     uint8_t fAbsStickSpeedMin      = DEFAULT_DOME_SPEED_MIN;
     uint8_t fAbsStickSpeedTarget   = DEFAULT_DOME_SPEED_TARGET;
+
+    // ---- Random mode --------------------------------------------------------
+
+    int      fRandomTargetDegrees = 0;
+    uint32_t fRandomNextMoveMs    = 0;
+    bool     fRandomAtTarget      = true;   ///< true = waiting for next move
+    uint8_t  fRandomSeekMinDelay  = DEFAULT_DOME_SEEK_MIN_DELAY;
+    uint8_t  fRandomSeekMaxDelay  = DEFAULT_DOME_SEEK_MAX_DELAY;
+    uint8_t  fRandomSeekLeft      = DEFAULT_DOME_SEEK_LEFT;
+    uint8_t  fRandomSeekRight     = DEFAULT_DOME_SEEK_RIGHT;
 
     // ---- Obstruction detection ----------------------------------------------
 
