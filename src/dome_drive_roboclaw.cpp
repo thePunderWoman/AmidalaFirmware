@@ -300,7 +300,8 @@ void DomeDriveRoboClaw::applyDomePositionParams(
         uint8_t seekLeft,     uint8_t seekRight,
         uint8_t fudge,
         uint8_t speedHome,    uint8_t speedTarget,
-        uint8_t speedSeek,    uint8_t speedMin) {
+        uint8_t speedSeek,    uint8_t speedMin,
+        uint8_t decelZone) {
     fDomePos.setDomeHomeMinDelay(homeMinDelay);
     fDomePos.setDomeHomeMaxDelay(homeMaxDelay);
     fDomePos.setDomeAutoMinDelay(seekMinDelay);
@@ -320,6 +321,7 @@ void DomeDriveRoboClaw::applyDomePositionParams(
     fRandomSeekMaxDelay  = seekMaxDelay;
     fRandomSeekLeft      = seekLeft;
     fRandomSeekRight     = seekRight;
+    fAbsStickDecelZone   = decelZone;
 }
 
 // ---------------------------------------------------------------------------
@@ -549,7 +551,8 @@ bool DomeDriveRoboClaw::driveClosedLoop(int targetDegrees) {
     float speed = dome_abs_stick_speed(error,
                                        fAbsStickFudge,
                                        fAbsStickSpeedMin,
-                                       fAbsStickSpeedTarget);
+                                       fAbsStickSpeedTarget,
+                                       fAbsStickDecelZone);
     sendMotorCommand(speed);
     checkObstruction();
     return abs(error) <= fAbsStickFudge;
