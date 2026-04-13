@@ -143,7 +143,7 @@ public:
     /** Switch to random wander mode (bounded by domeseekl/domeseekr). */
     void enableRandomMode();
 
-    /** Leave absolute-stick mode and return to normal joystick control. */
+    /** Leave random wander mode and return to normal joystick control. */
     void disableRandomMode();
 
     /** True while the drive is in random mode. */
@@ -350,6 +350,13 @@ private:
     // ---- Private helpers ----------------------------------------------------
 
     int32_t readEncoder();
+    /**
+     * Compute the angular error to targetDegrees, issue the proportional speed
+     * command, and run the obstruction check.  Returns true when the dome is
+     * within the fudge zone (arrived at target).  Used by both
+     * handleAbsoluteStick() and handleRandomMode().
+     */
+    bool    driveClosedLoop(int targetDegrees);
     /**
      * Read the current encoder velocity from the RoboClaw.
      * @param[out] valid  Set to true if the read succeeded.
