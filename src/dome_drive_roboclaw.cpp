@@ -162,6 +162,10 @@ void DomeDriveRoboClaw::animate() {
             handleAbsoluteStick();
             return;
 
+        case kStateRandom:
+            handleRandomMode();
+            return;
+
         default:
             break;
     }
@@ -190,7 +194,6 @@ void DomeDriveRoboClaw::stop() {
 
 /*virtual*/
 void DomeDriveRoboClaw::motor(float m) {
-    fLastCommandedSpeed = m;
     sendMotorCommand(m);
 }
 
@@ -236,12 +239,13 @@ void DomeDriveRoboClaw::goToRelative(int delta) {
 }
 
 void DomeDriveRoboClaw::enableRandomMode() {
-    if (!isHomed()) {
-        DEBUG_PRINTLN("DOME: Cannot enable random — not homed");
+    if (!isHomed() || !isCalibrated()) {
+        DEBUG_PRINTLN("DOME: Cannot enable random — not homed/calibrated");
         return;
     }
-    fDomePos.setDomeDefaultMode(DomePosition::kRandom);
-    fState = kStateRandom;
+    fRandomAtTarget   = true;
+    fRandomNextMoveMs = millis();   // pick first target immediately
+    fState            = kStateRandom;
 }
 
 void DomeDriveRoboClaw::disableRandomMode() {
@@ -308,10 +312,14 @@ void DomeDriveRoboClaw::applyDomePositionParams(
     fDomePos.setDomeTargetSpeed(speedTarget);
     fDomePos.setDomeAutoSpeed(speedSeek);
     fDomePos.setDomeMinSpeed(speedMin);
-    // Cache params used by handleAbsoluteStick() direct closed-loop control.
+    // Cache params used by handleAbsoluteStick() and handleRandomMode().
     fAbsStickFudge       = fudge;
     fAbsStickSpeedMin    = speedMin;
     fAbsStickSpeedTarget = speedTarget;
+    fRandomSeekMinDelay  = seekMinDelay;
+    fRandomSeekMaxDelay  = seekMaxDelay;
+    fRandomSeekLeft      = seekLeft;
+    fRandomSeekRight     = seekRight;
 }
 
 // ---------------------------------------------------------------------------
@@ -372,6 +380,7 @@ int32_t DomeDriveRoboClaw::readEncoder() {
 }
 
 void DomeDriveRoboClaw::sendMotorCommand(float m) {
+    fLastCommandedSpeed = m;
 #ifndef UNIT_TEST
     // Clamp to -1..1 and apply max-speed modifier from DomeDrive base.
     m = max(-1.0f, min(m, 1.0f));
@@ -565,16 +574,52 @@ void DomeDriveRoboClaw::handleAbsoluteStick() {
 }
 
 void DomeDriveRoboClaw::handleRandomMode() {
-    // TODO: random mode is using the ReelTwo version, but it's not working well.
-    // Let's write our own, much simpler version. Here's the requirements:
-    // 1. Generate a random angle between our min and max random angle position.
-    //   - If the random angle is within our fudge factor of our current position, generate a new angle until it's outside the fudge factor.
-    //   - This will ensure that we don't generate a random angle that's too close to our current position which is causing us to not move and timeout.
-    // 2. Call fDomeDrive.goToAngle(angle);
-    // 3. Set a timer for the next random movement to be between our min and max random delay.
-    // 4. When the timer expires, repeat the process.
-    // 5. Done.
-    // Update tests accordingly. We'll want to update the code to make sure this code is run instead of the ReelTwo version, and then update the tests to verify that we're generating random angles within the correct bounds, and that we're not generating angles that are too close to our current position.
+    if (fRandomAtTarget) {
+        if (millis() < fRandomNextMoveMs) {
+            // Still in the inter-move pause — hold position.
+            sendMotorCommand(0.0f);
+            return;
+        }
+        // Pick a target angle outside the fudge zone.  Retry up to 10 times to
+        // avoid picking an angle we're already sitting at (which would cause an
+        // immediate "arrived" and a rapid series of zero-distance moves).
+        int target = fCurrentDegrees;
+        for (int i = 0; i < 10; i++) {
+            bool  goLeft   = (random(2) == 0);
+            int   maxRange = goLeft ? (int)fRandomSeekLeft : (int)fRandomSeekRight;
+            if (maxRange < DOME_RANDOM_MOVE_MIN_DEGREES)
+                maxRange = DOME_RANDOM_MOVE_MIN_DEGREES;
+            int dist = (int)random(DOME_RANDOM_MOVE_MIN_DEGREES, maxRange + 1);
+            target   = normalizeDegrees(goLeft ? -dist : dist);
+            if (abs(dome_angular_error(target, fCurrentDegrees)) > (int)fAbsStickFudge)
+                break;
+        }
+        fRandomTargetDegrees = target;
+        fRandomAtTarget      = false;
+        DEBUG_PRINT("DOME: Random target=");
+        DEBUG_PRINTLN(fRandomTargetDegrees);
+    }
+
+    // Drive toward the target using the same closed-loop path as abs-stick.
+    int   error = dome_angular_error(fRandomTargetDegrees, fCurrentDegrees);
+    float speed = dome_abs_stick_speed(error,
+                                       (int)fAbsStickFudge,
+                                       (int)fAbsStickSpeedMin,
+                                       (int)fAbsStickSpeedTarget);
+    sendMotorCommand(speed);
+    checkObstruction();
+
+    // Arrived — schedule the next move.
+    if (abs(error) <= (int)fAbsStickFudge) {
+        sendMotorCommand(0.0f);
+        fRandomAtTarget = true;
+        long minMs = (long)fRandomSeekMinDelay * 1000L;
+        long maxMs = (long)fRandomSeekMaxDelay * 1000L;
+        fRandomNextMoveMs = millis() + (uint32_t)random(minMs, maxMs + 1);
+        DEBUG_PRINT("DOME: Random arrived, next move in ");
+        DEBUG_PRINT((fRandomNextMoveMs - millis()) / 1000);
+        DEBUG_PRINTLN("s");
+    }
 }
 
 // ---------------------------------------------------------------------------

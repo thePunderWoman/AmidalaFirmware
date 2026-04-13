@@ -211,7 +211,7 @@ void AmidalaController::animate() {
 #endif
   fAudio.process();
 
-  // TODO THIS IS HARDCODED FOR PWM!!!
+#if DRIVE_SYSTEM == DRIVE_SYSTEM_PWM || DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
   if (servoDispatch.currentPos(0) != 1450 ||
       servoDispatch.currentPos(1) != 1500) {
     // digital out 7
@@ -219,28 +219,33 @@ void AmidalaController::animate() {
       setDigitalPin(7, true);
       fDriveStateMillis = millis();
     }
-  }
-  // TODO THIS IS HARDCODED FOR PWM!!!
-  else if (getDigitalPin(7) && fDriveStateMillis + 1000 < millis()) {
+  } else if (getDigitalPin(7) && fDriveStateMillis + 1000 < millis()) {
     setDigitalPin(7, false);
     fDriveStateMillis = millis();
   }
+#endif
 
-  // TODO THIS IS HARDCODED FOR PWM!!!
-  if (fDomeDrive.isMoving() && fDomeDrive.idle()) {
-    if (getDomeThrottle() < 0.1 && fDomeStateMillis + 1000 < millis()) {
-      // digital out 8
-      DEBUG_PRINTLN("DOME ACTIVE");
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  if (fabsf(fDomeDrive.getLastCommandedSpeed()) > 0.01f) {
+    if (fDomeStateMillis + 1000 < millis()) {
       setDigitalPin(8, true);
       fDomeStateMillis = millis();
     }
-  }
-  // TODO THIS IS HARDCODED FOR PWM!!!
-  else if (getDigitalPin(8)) {
-    DEBUG_PRINTLN("DOME INACTIVE");
+  } else if (getDigitalPin(8)) {
     setDigitalPin(8, false);
     fDomeStateMillis = millis();
   }
+#else
+  if (fDomeDrive.isMoving()) {
+    if (fDomeStateMillis + 1000 < millis()) {
+      setDigitalPin(8, true);
+      fDomeStateMillis = millis();
+    }
+  } else if (getDigitalPin(8)) {
+    setDigitalPin(8, false);
+    fDomeStateMillis = millis();
+  }
+#endif
 
   if (checkRCMode() && remote[0]->failsafe() && remote[0]->failsafeNotice &&
       remote[1]->failsafe() && remote[1]->failsafeNotice) {
@@ -360,90 +365,13 @@ void AmidalaController::animate() {
   }
 }
 
-// TODO: Refactor processDomeCommand and processDomeCmd to use a shared helper that takes an enum class for the command type, to avoid code duplication and ensure consistent handling between console commands and button/gesture mappings.
-
 // ---------------------------------------------------------------------------
-// processDomeCommand()
-// Handles "dome=<cmd>" from the console. The <cmd> string is everything after
-// the "dome=" prefix and the trailing newline has already been stripped.
-//
-// Supported commands:
-//   home       — re-run the homing sweep
-//   calibrate  — run the 10-revolution calibration
-//   stop       — emergency stop
-//   front      — go to 0° (dome front)
-//   rand       — toggle random wander mode
-//   status     — print position and state
-//   <N>        — go to absolute angle N (degrees, relative to front)
-//   +<N>       — relative move +N degrees
-//   -<N>       — relative move -N degrees
+// executeDomeAction()
+// Shared dispatcher for both processDomeCommand() and processDomeCmd().
+// subcmd must be a ButtonAction::DomeCmdType value.
 // ---------------------------------------------------------------------------
 
-void AmidalaController::processDomeCommand(const char* cmd) {
-#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
-  if (strcmp(cmd, "home") == 0) {
-    fConsole.println(F("Dome: homing"));
-    fDomeDrive.startHoming();
-
-  } else if (strcmp(cmd, "calibrate") == 0) {
-    fConsole.println(F("Dome: calibrating (10 revolutions)"));
-    fDomeDrive.startCalibration();
-
-  } else if (strcmp(cmd, "stop") == 0) {
-    fConsole.println(F("Dome: stop"));
-    fDomeDrive.stop();
-
-  } else if (strcmp(cmd, "front") == 0) {
-    fConsole.println(F("Dome: going to front"));
-    fDomeDrive.goToAngle(0);
-
-  } else if (strcmp(cmd, "rand") == 0) {
-    fConsole.println(F("Dome: toggle random mode"));
-    fDomeDrive.toggleRandomMode();
-  } else if (strcmp(cmd, "abstick") == 0) {
-    fConsole.println(F("Dome: toggle absolute-stick mode"));
-    fDomeDrive.toggleAbsoluteStickMode();
-
-  } else if (strcmp(cmd, "status") == 0) {
-    fDomeDrive.printStatus(fConsole);
-
-  } else if (cmd[0] == '+' && cmd[1] != '\0') {
-    int delta = atoi(cmd + 1);
-    fConsole.print(F("Dome: relative +"));
-    fConsole.println(delta);
-    fDomeDrive.goToRelative(delta);
-
-  } else if (cmd[0] == '-' && cmd[1] != '\0') {
-    int delta = atoi(cmd + 1);
-    fConsole.print(F("Dome: relative -"));
-    fConsole.println(-delta);
-    fDomeDrive.goToRelative(-delta);
-
-  } else if (cmd[0] >= '0' && cmd[0] <= '9') {
-    int angle = atoi(cmd);
-    fConsole.print(F("Dome: goto "));
-    fConsole.println(angle);
-    fDomeDrive.goToAngle(angle);
-
-  } else {
-    fConsole.println(F("Dome: unknown command"));
-    fConsole.println(F("  dome=home|calibrate|stop|front|rand|status|<N>|+<N>|-<N>"));
-  }
-#else
-  (void)cmd;
-  fConsole.println(F("Dome: RoboClaw drive not enabled in this build"));
-#endif
-}
-
-// ---------------------------------------------------------------------------
-// processDomeCmd()
-// Executes a dome action from a button or gesture mapping.  subcmd is a
-// ButtonAction::DomeCmdType value; arg carries the angle or delta in degrees
-// for the three positional sub-commands (kDomeGotoAbs, kDomeRelPos,
-// kDomeRelNeg) and is unused for the rest.
-// ---------------------------------------------------------------------------
-
-void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
+void AmidalaController::executeDomeAction(uint8_t subcmd, uint8_t arg) {
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
   switch (subcmd) {
   case ButtonAction::kDomeRand:
@@ -480,4 +408,66 @@ void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
   (void)subcmd;
   (void)arg;
 #endif
+}
+
+// ---------------------------------------------------------------------------
+// processDomeCommand()
+// Handles "dome=<cmd>" from the console. The <cmd> string is everything after
+// the "dome=" prefix and the trailing newline has already been stripped.
+//
+// Supported commands:
+//   home       — re-run the homing sweep
+//   calibrate  — run the 10-revolution calibration
+//   stop       — emergency stop
+//   front      — go to 0° (dome front)
+//   rand       — toggle random wander mode
+//   abstick    — toggle absolute-stick mode
+//   status     — print position and state
+//   <N>        — go to absolute angle N (degrees, relative to front)
+//   +<N>       — relative move +N degrees
+//   -<N>       — relative move -N degrees
+// ---------------------------------------------------------------------------
+
+void AmidalaController::processDomeCommand(const char* cmd) {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  if (strcmp(cmd, "home") == 0) {
+    executeDomeAction(ButtonAction::kDomeHome, 0);
+  } else if (strcmp(cmd, "calibrate") == 0) {
+    executeDomeAction(ButtonAction::kDomeCalibrate, 0);
+  } else if (strcmp(cmd, "stop") == 0) {
+    executeDomeAction(ButtonAction::kDomeStop, 0);
+  } else if (strcmp(cmd, "front") == 0) {
+    executeDomeAction(ButtonAction::kDomeFront, 0);
+  } else if (strcmp(cmd, "rand") == 0) {
+    executeDomeAction(ButtonAction::kDomeRand, 0);
+  } else if (strcmp(cmd, "abstick") == 0) {
+    executeDomeAction(ButtonAction::kDomeAbsStick, 0);
+  } else if (strcmp(cmd, "status") == 0) {
+    fDomeDrive.printStatus(fConsole);
+  } else if (cmd[0] == '+' && cmd[1] != '\0') {
+    executeDomeAction(ButtonAction::kDomeRelPos, (uint8_t)atoi(cmd + 1));
+  } else if (cmd[0] == '-' && cmd[1] != '\0') {
+    executeDomeAction(ButtonAction::kDomeRelNeg, (uint8_t)atoi(cmd + 1));
+  } else if (cmd[0] >= '0' && cmd[0] <= '9') {
+    executeDomeAction(ButtonAction::kDomeGotoAbs, (uint8_t)atoi(cmd));
+  } else {
+    fConsole.println(F("Dome: unknown command"));
+    fConsole.println(F("  dome=home|calibrate|stop|front|rand|abstick|status|<N>|+<N>|-<N>"));
+  }
+#else
+  (void)cmd;
+  fConsole.println(F("Dome: RoboClaw drive not enabled in this build"));
+#endif
+}
+
+// ---------------------------------------------------------------------------
+// processDomeCmd()
+// Executes a dome action from a button or gesture mapping.  subcmd is a
+// ButtonAction::DomeCmdType value; arg carries the angle or delta in degrees
+// for the three positional sub-commands (kDomeGotoAbs, kDomeRelPos,
+// kDomeRelNeg) and is unused for the rest.
+// ---------------------------------------------------------------------------
+
+void AmidalaController::processDomeCmd(uint8_t subcmd, uint8_t arg) {
+  executeDomeAction(subcmd, arg);
 }

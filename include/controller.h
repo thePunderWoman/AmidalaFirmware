@@ -292,6 +292,7 @@ public:
 private:
   // DriveController and DomeController call setDriveThrottle/setDomeThrottle,
   // which are intentionally private to all other callers.
+  void executeDomeAction(uint8_t subcmd, uint8_t arg);
   friend class DriveController;
   friend class DomeController;
 

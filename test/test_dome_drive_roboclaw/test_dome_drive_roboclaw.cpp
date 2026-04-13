@@ -319,7 +319,7 @@ void test_stick_to_angle_diagonal_forward_right() {
 }
 
 // ---- dome_abs_stick_speed() --------------------------------------------------
-// Fudge=10, speedMin=5, speedTarget=100 for all sub-tests unless noted.
+// Fudge=10, speedMin=5, speedTarget=100, decelZone=20 (default) unless noted.
 
 void test_abs_stick_speed_within_fudge_returns_zero() {
     // |error| <= fudge → dead zone, motor should stop.
@@ -329,36 +329,45 @@ void test_abs_stick_speed_within_fudge_returns_zero() {
 }
 
 void test_abs_stick_speed_just_outside_fudge_gives_min_speed() {
-    // |error| = fudge+1 → minimum speed fraction.
+    // |error| = fudge+1, inside decel zone → near speedMin.
+    // pct = 5 + 1 * (100-5) / 20 = 5 + 4 = 9 → 0.09f
     float s = dome_abs_stick_speed(11, 10, 5, 100);
-    // pct = 5 + 1 * 95 / 170 = 5 + 0 (integer) = 5 → 0.05f
-    TEST_ASSERT_EQUAL_FLOAT(0.05f, s);
+    TEST_ASSERT_EQUAL_FLOAT(0.09f, s);
 }
 
-void test_abs_stick_speed_at_180_gives_target_speed() {
-    // Max error → target speed.
-    float s = dome_abs_stick_speed(180, 10, 5, 100);
+void test_abs_stick_speed_cruise_zone_gives_target_speed() {
+    // |error| > fudge + decelZone (10+20=30) → full cruise speed.
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, dome_abs_stick_speed(31, 10, 5, 100));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, dome_abs_stick_speed(90, 10, 5, 100));
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, dome_abs_stick_speed(180, 10, 5, 100));
+}
+
+void test_abs_stick_speed_at_decel_zone_boundary_gives_target_speed() {
+    // |error| = fudge + decelZone exactly → just enters decel, pct = speedTarget.
+    // pct = 5 + 20 * 95 / 20 = 5 + 95 = 100 → 1.0f
+    float s = dome_abs_stick_speed(30, 10, 5, 100);
     TEST_ASSERT_EQUAL_FLOAT(1.0f, s);
 }
 
 void test_abs_stick_speed_negative_error_gives_negative_speed() {
-    // Negative error → negative (CCW) motor command.
+    // Negative error → negative (CCW) motor command, same magnitude.
     float pos = dome_abs_stick_speed( 90, 10, 5, 100);
     float neg = dome_abs_stick_speed(-90, 10, 5, 100);
     TEST_ASSERT_FLOAT_WITHIN(0.001f, -pos, neg);
 }
 
 void test_abs_stick_speed_capped_at_target() {
-    // Error beyond 180° should still be capped at target speed.
+    // Error beyond cruise zone still gives target speed, not more.
     float s = dome_abs_stick_speed(200, 0, 5, 100);
     TEST_ASSERT_EQUAL_FLOAT(1.0f, s);
 }
 
-void test_abs_stick_speed_zero_fudge_min_error_gives_min_speed() {
-    // No dead zone: error=1 → near-minimum speed.
-    float s = dome_abs_stick_speed(1, 0, 5, 100);
-    // pct = 5 + 1*95/180 = 5 (integer) → 0.05f
-    TEST_ASSERT_EQUAL_FLOAT(0.05f, s);
+void test_abs_stick_speed_custom_decel_zone() {
+    // decelZone=10: within 10° of fudge boundary → ramp; beyond → cruise.
+    TEST_ASSERT_EQUAL_FLOAT(1.0f, dome_abs_stick_speed(21, 10, 5, 100, 10)); // cruise
+    // |error|=15, pct = 5 + (15-10)*95/10 = 5+47 = 52 → 0.52f
+    float s = dome_abs_stick_speed(15, 10, 5, 100, 10);
+    TEST_ASSERT_EQUAL_FLOAT(0.52f, s);
 }
 
 // ---- dome_homing_step() -------------------------------------------------------
@@ -631,10 +640,11 @@ int main(int argc, char **argv) {
 
     RUN_TEST(test_abs_stick_speed_within_fudge_returns_zero);
     RUN_TEST(test_abs_stick_speed_just_outside_fudge_gives_min_speed);
-    RUN_TEST(test_abs_stick_speed_at_180_gives_target_speed);
+    RUN_TEST(test_abs_stick_speed_cruise_zone_gives_target_speed);
+    RUN_TEST(test_abs_stick_speed_at_decel_zone_boundary_gives_target_speed);
     RUN_TEST(test_abs_stick_speed_negative_error_gives_negative_speed);
     RUN_TEST(test_abs_stick_speed_capped_at_target);
-    RUN_TEST(test_abs_stick_speed_zero_fudge_min_error_gives_min_speed);
+    RUN_TEST(test_abs_stick_speed_custom_decel_zone);
 
     RUN_TEST(test_homing_hall_fires_returns_complete);
     RUN_TEST(test_homing_no_hall_not_timed_out_returns_continue);
