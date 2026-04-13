@@ -371,7 +371,7 @@ void AmidalaController::animate() {
 // subcmd must be a ButtonAction::DomeCmdType value.
 // ---------------------------------------------------------------------------
 
-void AmidalaController::executeDomeAction(uint8_t subcmd, uint8_t arg) {
+void AmidalaController::executeDomeAction(uint8_t subcmd, int arg) {
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
   switch (subcmd) {
   case ButtonAction::kDomeRand:
@@ -393,10 +393,10 @@ void AmidalaController::executeDomeAction(uint8_t subcmd, uint8_t arg) {
     fDomeDrive.goToAngle(arg);
     break;
   case ButtonAction::kDomeRelPos:
-    fDomeDrive.goToRelative((int)arg);
+    fDomeDrive.goToRelative(arg);
     break;
   case ButtonAction::kDomeRelNeg:
-    fDomeDrive.goToRelative(-(int)arg);
+    fDomeDrive.goToRelative(-arg);
     break;
   case ButtonAction::kDomeAbsStick:
     fDomeDrive.toggleAbsoluteStickMode();
@@ -445,11 +445,11 @@ void AmidalaController::processDomeCommand(const char* cmd) {
   } else if (strcmp(cmd, "status") == 0) {
     fDomeDrive.printStatus(fConsole);
   } else if (cmd[0] == '+' && cmd[1] != '\0') {
-    executeDomeAction(ButtonAction::kDomeRelPos, (uint8_t)atoi(cmd + 1));
+    executeDomeAction(ButtonAction::kDomeRelPos, atoi(cmd + 1));
   } else if (cmd[0] == '-' && cmd[1] != '\0') {
-    executeDomeAction(ButtonAction::kDomeRelNeg, (uint8_t)atoi(cmd + 1));
+    executeDomeAction(ButtonAction::kDomeRelNeg, atoi(cmd + 1));
   } else if (cmd[0] >= '0' && cmd[0] <= '9') {
-    executeDomeAction(ButtonAction::kDomeGotoAbs, (uint8_t)atoi(cmd));
+    executeDomeAction(ButtonAction::kDomeGotoAbs, atoi(cmd));
   } else {
     fConsole.println(F("Dome: unknown command"));
     fConsole.println(F("  dome=home|calibrate|stop|front|rand|abstick|status|<N>|+<N>|-<N>"));

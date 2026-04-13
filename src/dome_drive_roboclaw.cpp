@@ -372,7 +372,7 @@ int32_t DomeDriveRoboClaw::readEncoder() {
     DEBUG_PRINT(F(" raw="));
     DEBUG_PRINTLN((int32_t)raw);
 #endif
-    if (!valid) return fLastCommandedSpeed == 0.0f ? fHomeEncoderTick : fHomeEncoderTick;
+    if (!valid) return fHomeEncoderTick;
     return (int32_t)raw;
 #else
     return 0;
@@ -545,9 +545,6 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
 }
 
 void DomeDriveRoboClaw::handleAbsoluteStick() {
-    // TODO: Fix the deceleration curve. Currently the dome slows down too much as it approaches the target.
-    // this result in it feeling a bit sluggish and unresponsive, especially for small stick inputs. The dome should maintain a more consistent speed until it gets very close to the target angle, at which point it can slow down more aggressively to prevent overshooting.
-
     // Update target from stick if connected and outside the deadband.
     if (fDomeStick.isConnected()) {
         int lx = useLeftStick() ? fDomeStick.state.analog.stick.lx
