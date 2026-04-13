@@ -189,7 +189,8 @@ public:
                                  uint8_t seekLeft, uint8_t seekRight,
                                  uint8_t fudge,
                                  uint8_t speedHome, uint8_t speedTarget,
-                                 uint8_t speedSeek, uint8_t speedMin);
+                                 uint8_t speedSeek, uint8_t speedMin,
+                                 uint8_t decelZone = DEFAULT_DOME_DECEL_ZONE);
 
     State getState() const { return fState; }
     bool  isHomed()       const { return fState >= kStateHomed; }
@@ -316,6 +317,7 @@ private:
     uint8_t fAbsStickFudge         = DEFAULT_DOME_FUDGE;
     uint8_t fAbsStickSpeedMin      = DEFAULT_DOME_SPEED_MIN;
     uint8_t fAbsStickSpeedTarget   = DEFAULT_DOME_SPEED_TARGET;
+    uint8_t fAbsStickDecelZone     = DEFAULT_DOME_DECEL_ZONE;
 
     // ---- Random mode --------------------------------------------------------
 

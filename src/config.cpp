@@ -15,7 +15,8 @@ void AmidalaConfig::applyDomePositionParams() {
       params.domeseekl,   params.domeseekr,
       params.domefudge,
       params.domespeedhome, DEFAULT_DOME_SPEED_TARGET,
-      params.domespeedseek, params.domespeedmin);
+      params.domespeedseek, params.domespeedmin,
+      params.domedecelzone);
 #endif
 #endif
 }
@@ -230,6 +231,8 @@ void AmidalaConfig::showCurrentConfiguration() {
     fOutput->println(params.domespeedseek);
     fOutput->print(F("domespeedmin: "));
     fOutput->println(params.domespeedmin);
+    fOutput->print(F("domedecelzone: "));
+    fOutput->println(params.domedecelzone);
     fOutput->print(F("domech6: "));
     fOutput->println(params.domech6 ? F("true") : F("false"));
     fOutput->println();
@@ -718,6 +721,9 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     applyDomePositionParams();
     return true;
   } else if (intparam(cmd, "domespeedmin=", params.domespeedmin, 0, 30)) {
+    applyDomePositionParams();
+    return true;
+  } else if (intparam(cmd, "domedecelzone=", params.domedecelzone, 5, 90)) {
     applyDomePositionParams();
     return true;
   // ---- RoboClaw dome drive parameters (parsed regardless of active dome
