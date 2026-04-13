@@ -544,6 +544,17 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
     }
 }
 
+bool DomeDriveRoboClaw::driveClosedLoop(int targetDegrees) {
+    int   error = dome_angular_error(targetDegrees, fCurrentDegrees);
+    float speed = dome_abs_stick_speed(error,
+                                       fAbsStickFudge,
+                                       fAbsStickSpeedMin,
+                                       fAbsStickSpeedTarget);
+    sendMotorCommand(speed);
+    checkObstruction();
+    return abs(error) <= fAbsStickFudge;
+}
+
 void DomeDriveRoboClaw::handleAbsoluteStick() {
     // Update target from stick if connected and outside the deadband.
     if (fDomeStick.isConnected()) {
@@ -561,13 +572,7 @@ void DomeDriveRoboClaw::handleAbsoluteStick() {
     // Proportional closed-loop: drive toward fAbsStickTargetDegrees.
     // Do NOT call DomeDrive::animate() — domeStick() gates all motor commands
     // on abs(m) != 0 or fAutoDrive != 0; with neither set the motor would stall.
-    int   error = dome_angular_error(fAbsStickTargetDegrees, fCurrentDegrees);
-    float speed = dome_abs_stick_speed(error,
-                                       (int)fAbsStickFudge,
-                                       (int)fAbsStickSpeedMin,
-                                       (int)fAbsStickSpeedTarget);
-    sendMotorCommand(speed);
-    checkObstruction();
+    driveClosedLoop(fAbsStickTargetDegrees);
 }
 
 void DomeDriveRoboClaw::handleRandomMode() {
@@ -588,7 +593,7 @@ void DomeDriveRoboClaw::handleRandomMode() {
                 maxRange = DOME_RANDOM_MOVE_MIN_DEGREES;
             int dist = (int)random(DOME_RANDOM_MOVE_MIN_DEGREES, maxRange + 1);
             target   = normalizeDegrees(goLeft ? -dist : dist);
-            if (abs(dome_angular_error(target, fCurrentDegrees)) > (int)fAbsStickFudge)
+            if (abs(dome_angular_error(target, fCurrentDegrees)) > fAbsStickFudge)
                 break;
         }
         fRandomTargetDegrees = target;
@@ -597,18 +602,8 @@ void DomeDriveRoboClaw::handleRandomMode() {
         DEBUG_PRINTLN(fRandomTargetDegrees);
     }
 
-    // Drive toward the target using the same closed-loop path as abs-stick.
-    int   error = dome_angular_error(fRandomTargetDegrees, fCurrentDegrees);
-    float speed = dome_abs_stick_speed(error,
-                                       (int)fAbsStickFudge,
-                                       (int)fAbsStickSpeedMin,
-                                       (int)fAbsStickSpeedTarget);
-    sendMotorCommand(speed);
-    checkObstruction();
-
-    // Arrived — schedule the next move.
-    if (abs(error) <= (int)fAbsStickFudge) {
-        sendMotorCommand(0.0f);
+    // Drive toward the target; arrived = within fudge zone.
+    if (driveClosedLoop(fRandomTargetDegrees)) {
         fRandomAtTarget = true;
         long minMs = (long)fRandomSeekMinDelay * 1000L;
         long maxMs = (long)fRandomSeekMaxDelay * 1000L;
