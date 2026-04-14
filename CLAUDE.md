@@ -14,6 +14,18 @@ This firmware is intended to run on many different R2 builds with varying hardwa
 - Tests run on the native PlatformIO environment (no hardware required) — keep them that way. Do not introduce test dependencies that require Arduino or physical hardware.
 - When fixing a bug, add a test that would have caught it.
 
+## Git workflow
+
+**All changes must go through pull requests — never push directly to `main`.**
+
+1. Create a feature branch, make your changes, then open a PR.
+2. Always target **`github.com/thePunderWoman/AmidalaFirmware`** (the `thePunderWoman` remote), not the upstream fork.
+3. Push branches and create PRs with:
+   ```
+   git push thePunderWoman <branch>
+   gh pr create --repo thePunderWoman/AmidalaFirmware ...
+   ```
+
 ## Build verification
 
 CI only runs the native unit tests (`pio test -e native`).
