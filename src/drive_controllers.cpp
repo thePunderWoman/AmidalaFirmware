@@ -1,5 +1,32 @@
 #include "controller.h"
 
+// ---------------------------------------------------------------------------
+// Alt-button helpers
+//
+// Button numbering (1-based, matches B[]/LB[]/AB[] indices):
+//   Drive stick: triangle=1, circle=2, cross=3, square=4, l3=5
+//   Dome  stick: triangle=6, circle=7, cross=8, square=9
+//   (Dome l3 starts gesture mode and cannot be the alt button.)
+//
+// DISPATCH_BUTTON: on button_up, route to alt layer or normal layer.
+//   Suppresses the button entirely if it is the configured alt modifier.
+// DISPATCH_LONG: on long_button_up, only fires when alt is not held.
+//   Suppresses long-press for the alt button itself.
+// ---------------------------------------------------------------------------
+
+#define DISPATCH_BUTTON(btnfield, num, altbtn, altHeld)                        \
+  if (event.button_up.btnfield && (altbtn) != (num)) {                        \
+    (altHeld) ? fDriver->processAltButton(num) : fDriver->processButton(num); \
+  }
+
+#define DISPATCH_LONG(btnfield, num, altbtn, altHeld)                          \
+  if (event.long_button_up.btnfield && (altbtn) != (num) && !(altHeld))       \
+    fDriver->processLongButton(num);
+
+// ---------------------------------------------------------------------------
+// DriveController
+// ---------------------------------------------------------------------------
+
 void DriveController::notify() {
   uint32_t lagTime = millis() - lastPacket;
   if (event.analog_changed.button.l2) {
@@ -13,27 +40,33 @@ void DriveController::notify() {
     DEBUG_PRINTLN("It has been 500ms. Shutdown motors");
     fDriver->emergencyStop();
   } else {
-    if (event.button_up.l3)
-      fDriver->processButton(5);
-    if (event.button_up.cross)
-      fDriver->processButton(3);
-    if (event.button_up.circle)
-      fDriver->processButton(2);
-    if (event.button_up.triangle)
-      fDriver->processButton(1);
-    if (event.button_up.square)
-      fDriver->processButton(4);
+    // ---- Alt-button state (drive buttons 1–5) --------------------------------
+    int altbtn = fDriver->params.altbtn;
+    if (altbtn >= 1 && altbtn <= 5) {
+      bool held = false;
+      switch (altbtn) {
+        case 1: held = state.button.triangle; break;
+        case 2: held = state.button.circle;   break;
+        case 3: held = state.button.cross;    break;
+        case 4: held = state.button.square;   break;
+        case 5: held = state.button.l3;       break;
+      }
+      fDriver->setAltHeld(held);
+    }
+    bool altHeld = fDriver->isAltHeld();
 
-    if (event.long_button_up.l3)
-      fDriver->processLongButton(5);
-    if (event.long_button_up.cross)
-      fDriver->processLongButton(3);
-    if (event.long_button_up.circle)
-      fDriver->processLongButton(2);
-    if (event.long_button_up.triangle)
-      fDriver->processLongButton(1);
-    if (event.long_button_up.square)
-      fDriver->processLongButton(4);
+    // ---- Button dispatch -----------------------------------------------------
+    DISPATCH_BUTTON(triangle, 1, altbtn, altHeld)
+    DISPATCH_BUTTON(circle,   2, altbtn, altHeld)
+    DISPATCH_BUTTON(cross,    3, altbtn, altHeld)
+    DISPATCH_BUTTON(square,   4, altbtn, altHeld)
+    DISPATCH_BUTTON(l3,       5, altbtn, altHeld)
+
+    DISPATCH_LONG(triangle, 1, altbtn, altHeld)
+    DISPATCH_LONG(circle,   2, altbtn, altHeld)
+    DISPATCH_LONG(cross,    3, altbtn, altHeld)
+    DISPATCH_LONG(square,   4, altbtn, altHeld)
+    DISPATCH_LONG(l3,       5, altbtn, altHeld)
   }
 }
 
@@ -44,8 +77,16 @@ void DriveController::onConnect() {
 
 void DriveController::onDisconnect() {
   DEBUG_PRINTLN("Drive Stick Disconnected");
+  // Clear alt state if the alt button is on this controller.
+  int altbtn = fDriver->params.altbtn;
+  if (altbtn >= 1 && altbtn <= 5)
+    fDriver->setAltHeld(false);
   fDriver->disableController();
 }
+
+// ---------------------------------------------------------------------------
+// DomeController
+// ---------------------------------------------------------------------------
 
 void DomeController::notify() {
   uint32_t lagTime = millis() - lastPacket;
@@ -72,6 +113,38 @@ void DomeController::process() {
     fDriver->setDomeThrottle(float(state.analog.button.l2) / 255.0);
   }
 
+  // ---- Alt-button state (dome buttons 6–9) ----------------------------------
+  int altbtn = fDriver->params.altbtn;
+  if (altbtn >= 6 && altbtn <= 9) {
+    bool held = false;
+    switch (altbtn) {
+      case 6: held = state.button.triangle; break;
+      case 7: held = state.button.circle;   break;
+      case 8: held = state.button.cross;    break;
+      case 9: held = state.button.square;   break;
+    }
+    fDriver->setAltHeld(held);
+  }
+
+  // ---- Alt dome-stick mode --------------------------------------------------
+  // altdomestick=1: while alt is held, engage abs-stick mode on the dome.
+  // When alt is released the mode is restored (if we engaged it).
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  if (fDriver->params.altbtn != 0 && fDriver->params.altdomestick == 1) {
+    bool altHeld = fDriver->isAltHeld();
+    if (altHeld && !fAltEngagedAbsStick
+        && fDriver->fDomeDrive.isHomed()
+        && fDriver->fDomeDrive.isCalibrated()
+        && !fDriver->fDomeDrive.isAbsoluteStickMode()) {
+      fDriver->fDomeDrive.enableAbsoluteStickMode();
+      fAltEngagedAbsStick = true;
+    } else if (!altHeld && fAltEngagedAbsStick) {
+      fDriver->fDomeDrive.disableAbsoluteStickMode();
+      fAltEngagedAbsStick = false;
+    }
+  }
+#endif
+
   if (!fGestureCollect) {
     if (event.button_up.l3) {
       DEBUG_PRINTLN("GESTURE START COLLECTING");
@@ -80,23 +153,17 @@ void DomeController::process() {
       fGesturePtr = fGestureBuffer;
       fGestureTimeOut = millis() + GESTURE_TIMEOUT_MS;
     } else {
-      if (event.button_up.cross)
-        fDriver->processButton(8);
-      if (event.button_up.circle)
-        fDriver->processButton(7);
-      if (event.button_up.triangle)
-        fDriver->processButton(6);
-      if (event.button_up.square)
-        fDriver->processButton(9);
+      bool altHeld = fDriver->isAltHeld();
 
-      if (event.long_button_up.cross)
-        fDriver->processLongButton(8);
-      if (event.long_button_up.circle)
-        fDriver->processLongButton(7);
-      if (event.long_button_up.triangle)
-        fDriver->processLongButton(6);
-      if (event.long_button_up.square)
-        fDriver->processLongButton(9);
+      DISPATCH_BUTTON(triangle, 6, altbtn, altHeld)
+      DISPATCH_BUTTON(circle,   7, altbtn, altHeld)
+      DISPATCH_BUTTON(cross,    8, altbtn, altHeld)
+      DISPATCH_BUTTON(square,   9, altbtn, altHeld)
+
+      DISPATCH_LONG(triangle, 6, altbtn, altHeld)
+      DISPATCH_LONG(circle,   7, altbtn, altHeld)
+      DISPATCH_LONG(cross,    8, altbtn, altHeld)
+      DISPATCH_LONG(square,   9, altbtn, altHeld)
     }
     return;
   } else if (fGestureTimeOut < millis()) {
@@ -158,6 +225,15 @@ void DomeController::onConnect() {
 
 void DomeController::onDisconnect() {
   DEBUG_PRINTLN("Dome Stick Disconnected");
+  // Clear alt state if the alt button is on this controller.
+  int altbtn = fDriver->params.altbtn;
+  if (altbtn >= 6 && altbtn <= 9)
+    fDriver->setAltHeld(false);
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  if (fAltEngagedAbsStick) {
+    fDriver->fDomeDrive.disableAbsoluteStickMode();
+    fAltEngagedAbsStick = false;
+  }
+#endif
   fDriver->disableDomeController();
 }
-

@@ -227,6 +227,66 @@ void test_roboclaw_fields_are_distinct_from_each_other() {
     TEST_ASSERT_NOT_EQUAL((void*)&p.domestall,  (void*)&p.domespeed);
 }
 
+// ---- Alt-button config keys -------------------------------------------------
+
+void test_altbtn_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altbtn=5", "altbtn=", p.altbtn, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(5, p.altbtn);
+}
+
+void test_altbtn_accepts_zero_disabled() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altbtn=0", "altbtn=", p.altbtn, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.altbtn);
+}
+
+void test_altbtn_accepts_nine_max() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altbtn=9", "altbtn=", p.altbtn, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(9, p.altbtn);
+}
+
+void test_altbtn_clamps_above_nine() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 10 > 9 → clamped to 9
+    bool matched = intparam("altbtn=10", "altbtn=", p.altbtn, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(9, p.altbtn);
+}
+
+void test_altdomestick_intparam_zero() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altdomestick=0", "altdomestick=", p.altdomestick, 0, 1);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.altdomestick);
+}
+
+void test_altdomestick_intparam_one() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altdomestick=1", "altdomestick=", p.altdomestick, 0, 1);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(1, p.altdomestick);
+}
+
+void test_altdomestick_clamps_above_one() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 2 > 1 → clamped to 1
+    bool matched = intparam("altdomestick=2", "altdomestick=", p.altdomestick, 0, 1);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(1, p.altdomestick);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -255,6 +315,14 @@ int main(int argc, char **argv) {
     RUN_TEST(test_domestall_intparam_routes_to_correct_field);
     RUN_TEST(test_domestall_clamps_below_minimum);
     RUN_TEST(test_roboclaw_fields_are_distinct_from_each_other);
+
+    RUN_TEST(test_altbtn_intparam_routes_to_correct_field);
+    RUN_TEST(test_altbtn_accepts_zero_disabled);
+    RUN_TEST(test_altbtn_accepts_nine_max);
+    RUN_TEST(test_altbtn_clamps_above_nine);
+    RUN_TEST(test_altdomestick_intparam_zero);
+    RUN_TEST(test_altdomestick_intparam_one);
+    RUN_TEST(test_altdomestick_clamps_above_one);
 
     return UNITY_END();
 }

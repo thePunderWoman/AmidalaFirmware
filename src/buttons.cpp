@@ -86,3 +86,13 @@ void AmidalaConsole::processLongButton(unsigned num) {
     process(params.LB[num - 1]);
   }
 }
+
+void AmidalaConsole::processAltButton(unsigned num) {
+  print("Processing Alt Button ");
+  println(num);
+  AmidalaParameters &params = fController->params;
+
+  if (num >= 1 && num <= params.getButtonCount()) {
+    process(params.AB[num - 1]);
+  }
+}

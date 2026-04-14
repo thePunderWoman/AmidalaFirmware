@@ -91,6 +91,7 @@ struct AmidalaParameters {
   Channel S[12];
   ButtonAction B[9];
   ButtonAction LB[9];
+  ButtonAction AB[9];   // Alt-button layer (dispatched when altbtn is held)
   GestureAction G[10];
   DigitalOut D[8];
   SerialString Str[MAX_SERIAL_STRINGS];
@@ -158,6 +159,16 @@ struct AmidalaParameters {
   bool domech6;  // dome channel-6 mode flag (configurable but effect unimplemented)
   bool domeimu;  // dome IMU flag (configurable; read by getDomeIMU())
   bool domeflip;
+
+  // ---- Alt-button modifier ---------------------------------------------------
+  // altbtn: which button (1–9) acts as the modifier held to activate alt layer.
+  //   0 = disabled (default).  Button numbering: drive stick triangle=1,
+  //   circle=2, cross=3, square=4, l3=5; dome stick triangle=6, circle=7,
+  //   cross=8, square=9.  (Dome l3 is reserved for gesture input.)
+  // altdomestick: what happens to the dome stick while alt is held.
+  //   0 = no change (default), 1 = abs-stick mode (RoboClaw only).
+  uint8_t altbtn;
+  uint8_t altdomestick;
 
   constexpr unsigned getSoundBankCount() {
     return sizeof(SB) / sizeof(SB[0]);
@@ -234,6 +245,8 @@ struct AmidalaParameters {
       domech6 = false;
       domeflip = DEFAULT_DOME_INVERTED;
       domeimu = true;
+      altbtn = 0;
+      altdomestick = 0;
       minpulse = DEFAULT_DOME_MIN_PULSE;
       maxpulse = DEFAULT_DOME_MAX_PULSE;
       sRAMInited = true;

@@ -199,6 +199,7 @@ public:
 
 protected:
   bool fGestureCollect = false;
+  bool fAltEngagedAbsStick = false; ///< true if alt hold engaged abs-stick mode
   char fGestureBuffer[MAX_GESTURE_LENGTH + 1];
   char *fGesturePtr = fGestureBuffer;
   char fGestureAxis = 0;

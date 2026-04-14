@@ -242,6 +242,30 @@ sstr=BD:CBIDATADOOR
 #   lb=4,9,3         Long-press button 4: re-run dome homing sweep
 #   lb=5,9,4         Long-press button 5: run dome encoder calibration
 #
+# ---- Alt button (modifier layer) ----
+# altbtn=N  Designates button N as a hold-to-activate modifier (default 0 = disabled).
+#   While held, all other buttons dispatch their alt-layer action (ab=) instead of
+#   their normal action (b=).  Normal long-press actions (lb=) are suppressed while
+#   alt is held.  The alt button itself never fires its own b= or lb= action.
+#
+# Button numbering: drive-stick triangle=1, circle=2, cross=3, square=4, l3=5
+#                   dome-stick  triangle=6, circle=7, cross=8, square=9
+#   (Dome l3 is reserved for gesture input and cannot be the alt button.)
+#
+# altdomestick=N  What the dome stick does while alt is held (RoboClaw only).
+#   0 = no change (default)   dome stick behaves normally
+#   1 = abs-stick mode        stick angle maps directly to a dome heading
+#
+# ab=  Alt-button action — same format as b=.  Only fires when altbtn is held.
+#
+# Alt-button examples:
+#   altbtn=5         Drive l3 is the alt modifier
+#   altdomestick=1   Dome stick enters abs-stick mode while alt is held
+#   ab=1,5,17        Alt+button 1: send serial string #17
+#   ab=2,7,0,1       Alt+button 2: Very Happy emote
+#   ab=3,9,0         Alt+button 3: toggle random dome mode
+#   ab=4,9,3         Alt+button 4: re-run dome homing sweep
+#
 # Gestures use the same action/subcmd numbers but drop the button number:
 #   g=GestureStr,9,0          gesture triggers random toggle
 #   g=GestureStr,9,5,90       gesture goes to absolute 90°
