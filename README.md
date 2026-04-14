@@ -4,7 +4,7 @@ A firmware control system for an astromech or similar droid that uses dual XBee 
 
 This is a fork of [Skelmir's (rimim) original Amidala Firmware](https://github.com/reeltwo/AmidalaFirmware).
 
-> **Getting Started guide coming soon.** For now, see [current_config.txt](current_config.txt) for a complete, annotated example of every available configuration option.
+> **Getting Started guide coming soon.** For now, see [example_config.txt](example_config.txt) for a complete, annotated example of every available configuration option.
 
 ## Hardware
 
@@ -127,7 +127,7 @@ Format: `b=ButtonNum,9,subcmd[,angle]`
 | `7` | `b=8,9,7,45` | Rotate −N degrees from current position |
 | `8` | `b=9,9,8` | Toggle absolute-stick mode |
 
-**Key config keys** (full reference in [current_config.txt](current_config.txt)):
+**Key config keys** (full reference in [example_config.txt](example_config.txt)):
 
 | Key | Description |
 |-----|-------------|
@@ -163,7 +163,7 @@ PPM RC receiver input for drive and dome control, with configurable failsafe tim
 
 All runtime settings are loaded from `config.txt` on the micro SD card at startup. No recompilation is required for most changes.
 
-**[current_config.txt](current_config.txt) is the complete reference** — every supported configuration key is listed with its format, valid range, and an example. It is also a working config used on a real build.
+**[example_config.txt](example_config.txt) is the complete reference** — every supported configuration key is listed with its format, valid range, and an example. It is also a working config used on a real build.
 
 Legacy calibration data (XBee addresses, servo calibration, joystick calibration) is stored in EEPROM and is not part of `config.txt`.
 
