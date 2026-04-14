@@ -174,6 +174,28 @@ void test_roboclaw_params_are_distinct_addresses() {
     TEST_ASSERT_NOT_EQUAL((void*)&p.domefront,  (void*)&p.domestall);
 }
 
+// ---- Alt-button defaults -------------------------------------------------------
+
+void test_default_altbtn_is_zero() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(0, gDefaultParams.altbtn);
+}
+
+void test_default_altdomestick_is_zero() {
+    gDefaultParams.init();
+    TEST_ASSERT_EQUAL(0, gDefaultParams.altdomestick);
+}
+
+void test_altbtn_and_altdomestick_are_distinct_addresses() {
+    AmidalaParameters p;
+    TEST_ASSERT_NOT_EQUAL((void*)&p.altbtn,       (void*)&p.altdomestick);
+    // Must not alias any existing dome field.
+    TEST_ASSERT_NOT_EQUAL((void*)&p.altbtn,       (void*)&p.domefront);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.altbtn,       (void*)&p.domestall);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.altdomestick, (void*)&p.domefront);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.altdomestick, (void*)&p.domestall);
+}
+
 // ---- EEPROM serial number load (DB01 signature) -----------------------------
 
 void test_eeprom_serial_loaded_when_db01_signature_present() {
@@ -275,6 +297,10 @@ int main(int argc, char **argv) {
     RUN_TEST(test_default_domefront);
     RUN_TEST(test_default_domestall);
     RUN_TEST(test_roboclaw_params_are_distinct_addresses);
+
+    RUN_TEST(test_default_altbtn_is_zero);
+    RUN_TEST(test_default_altdomestick_is_zero);
+    RUN_TEST(test_altbtn_and_altdomestick_are_distinct_addresses);
 
     RUN_TEST(test_eeprom_serial_loaded_when_db01_signature_present);
     RUN_TEST(test_eeprom_serial_not_loaded_when_no_signature);

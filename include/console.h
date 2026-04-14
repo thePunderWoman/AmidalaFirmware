@@ -36,6 +36,7 @@ public:
   void process(ButtonAction &button);
   void processButton(unsigned num);
   void processLongButton(unsigned num);
+  void processAltButton(unsigned num);
 
   // write() uses CONSOLE_SERIAL, defined in pin_config.h.
   virtual size_t write(uint8_t ch) override;

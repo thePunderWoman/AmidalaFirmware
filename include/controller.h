@@ -70,6 +70,11 @@ public:
     fConsole.processLongButton(num);
   }
 
+  inline void processAltButton(unsigned num) { fConsole.processAltButton(num); }
+
+  inline bool isAltHeld() const { return fAltHeld; }
+  inline void setAltHeld(bool held) { fAltHeld = held; }
+
   inline void setVolumeNoResponse(unsigned volume) {
     fAudio.setVolumeNoResponse(volume);
   }
@@ -300,6 +305,7 @@ private:
   ZBRxIoSampleResponse fResponse;
   PPMDecoder fPPMDecoder;
   bool fMinimal = true;
+  bool fAltHeld = false;
   uint32_t fDriveStateMillis = 0;
   uint32_t fDomeStateMillis = 0;
   float fDomeThrottle = 0;

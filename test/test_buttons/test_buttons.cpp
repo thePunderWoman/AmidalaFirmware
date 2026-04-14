@@ -37,6 +37,7 @@ void test_button_array_size_matches_count() {
     // num-1 stays in bounds for num in [1, getButtonCount()].
     TEST_ASSERT_EQUAL(sizeof(p.B) / sizeof(p.B[0]), p.getButtonCount());
     TEST_ASSERT_EQUAL(sizeof(p.LB) / sizeof(p.LB[0]), p.getButtonCount());
+    TEST_ASSERT_EQUAL(sizeof(p.AB) / sizeof(p.AB[0]), p.getButtonCount());
 }
 
 // ---- Guard condition correctness (regression for the num==0 underflow bug) --
