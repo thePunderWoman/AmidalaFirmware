@@ -194,7 +194,14 @@ sstr=DM:OVERLOAD
 sstr=BD:CBIDATADOOR
 
 # --- Button Mappings ---
+# Two mappings are available per button:
+#   b=  Short press  — fires on button release (tap)
+#   lb= Long press   — fires after holding the button for 3 seconds (3000 ms);
+#                      the normal short-press release event is suppressed so only
+#                      the long-press action runs.  Both use the same format.
+#
 # Format: b=ButtonNum,Action,Arg1,Arg2,SerialStr
+#         lb=ButtonNum,Action,Arg1,Arg2,SerialStr
 #   SerialStr (optional 5th field) sends a serial string side-effect alongside any action.
 #
 # Actions:
@@ -227,8 +234,13 @@ sstr=BD:CBIDATADOOR
 #   b=4,9,5,90       Button 4: go to absolute 90°
 #   b=5,9,6,45       Button 5: relative +45°
 #   b=6,9,7,45       Button 6: relative -45°
-#   lb=1,9,3         Long-press button 1: re-home
-#   lb=2,9,4         Long-press button 2: run calibration
+#
+# Long-press examples (hold 3 seconds):
+#   lb=1,1,3         Long-press button 1: play random sound from bank 3
+#   lb=2,7,0,1       Long-press button 2: Very Happy emote
+#   lb=3,8           Long-press button 3: toggle HCR Muse
+#   lb=4,9,3         Long-press button 4: re-run dome homing sweep
+#   lb=5,9,4         Long-press button 5: run dome encoder calibration
 #
 # Gestures use the same action/subcmd numbers but drop the button number:
 #   g=GestureStr,9,0          gesture triggers random toggle

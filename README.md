@@ -39,7 +39,14 @@ Two audio systems are supported, selectable at runtime via configuration:
 
 ### Button Configuration
 
-Up to nine buttons are configurable, each supporting a short-press and long-press action. Button actions include:
+Up to nine buttons are configurable. Each button independently supports:
+
+- **Short press** (`b=`) — action fires on release (tap)
+- **Long press** (`lb=`) — action fires after holding the button for **3 seconds**; the normal short-press release is suppressed so only the long-press action runs
+
+Both use the same format: `b=ButtonNum,Action,Arg1,Arg2,SerialStr` / `lb=ButtonNum,Action,...`
+
+Available actions:
 
 - Sound bank playback
 - Servo positioning
@@ -48,6 +55,9 @@ Up to nine buttons are configurable, each supporting a short-press and long-pres
 - Auxiliary I2C command or string output
 - HCR emote trigger
 - HCR Muse toggle
+- Dome command (RoboClaw dome drive only)
+
+See [current_config.txt](current_config.txt) for the full action/argument reference and examples.
 
 ### Gestures
 
