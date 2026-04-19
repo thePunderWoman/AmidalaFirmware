@@ -519,6 +519,13 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
         fDomePos.setDomeHomePosition(0);
         DEBUG_PRINTLN("DOME: Homing complete");
         checkObstruction();
+        // The hall sensor rarely sits at the dome's front; after finding it,
+        // drive to 0° (configured front) so the dome rests facing forward at
+        // startup.  Requires calibration to translate degrees to ticks.
+        if (isCalibrated() && fFrontOffset != 0) {
+            DEBUG_PRINTLN("DOME: Parking at front (0 deg)");
+            goToAngle(0);
+        }
         DomeDrive::animate();
         return;
     }
