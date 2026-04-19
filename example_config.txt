@@ -45,7 +45,7 @@ volume=50
 # Startup Sound: Play a sound when the robot boots (y/n)
 startup=y
 # Random Sounds: Start in random sound mode on boot (y/n)
-rndon=n
+rndon=y
 # Acknowledge Sounds: Sound response to commands (y/n)
 ackon=n
 # Acknowledge Type: g=general, a=auto, d=dome, s=speed, r=radio
@@ -55,7 +55,7 @@ goslow=n
 # Channel Mixing: Mix channels 1 & 2 for tank drive (y/n)
 mix12=n
 # Autocorrect: Enable signal error correction (y/n)
-auto=n
+auto=y
 
 # --- Random Sound Timing (Seconds) ---
 mindelay=20
@@ -108,14 +108,14 @@ domercchan=1
 # Encoder pulses per second at full speed (tune via Motion Studio auto-tune)
 domercqpps=5280
 # Degrees from hall sensor trigger to dome front (0-359)
-domefront=0
+domefront=90
 # Milliseconds of stall before obstruction is declared (100-5000)
 domestall=500
 
 # --- Gestures for Special Toggles ---
 # These set which stick gesture string toggles which mode (default values)
 rnd=3
-ackgest=252
+# ackgest=252
 # slowgest=858
 domegest=
 
@@ -268,10 +268,9 @@ sstr=BD:CBIDATADOOR
 #
 # Gestures use the same action/subcmd numbers but drop the button number:
 #   g=GestureStr,9,0          gesture triggers random toggle
-#   g=GestureStr,9,5,90       gesture goes to absolute 90°
-# Hello There
+#   g=GestureStr,9,5,90       gesture goes to absolute 90°# Hello There
 b=1,5,17
-# Scared Emote
+# Panel Flutter
 b=2,5,19
 # Mad Emote
 b=3,7,2,0
@@ -282,9 +281,11 @@ b=5,8
 # Very Happy Emote
 b=6,7,0,1
 # Scream (Scared Strong)
-b=7,7,3,1
+b=7,5,18
 # Overload
-b=8,7,4,0
+b=8,5,20
+# CB Door Toggle
+b=9,5,21
 
 # --- Gesture Mappings (Stick Movements) ---
 # Format: g=GestureString,Action,Arg1,Arg2
@@ -292,11 +293,11 @@ b=8,7,4,0
 # (See DomeCmd subcmd reference in Button Mappings section above)
 
 # Utility Arms Open Close
-g=1,5,9
+g=9,5,9
 # Pies Open / Close
 g=252,5,12
 # Toggle Musing
-g=3,8
+# g=3,8
 # Leia
 g=4,5,15
 # Reset
@@ -310,11 +311,8 @@ g=8,5,13
 # All Panels Open / Close
 g=858,5,14
 # Heart
-g=9,5,16
+g=1,5,16
 # Flutter
 g=2,5,19
-
-# --- Final Control Settings ---
-ack=252
 
 #END
