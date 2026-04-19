@@ -44,6 +44,9 @@ If Pulse < PULSE_LOW
 ElseIf Pulse > PULSE_HIGH
   Pulse = PULSE_HIGH
 End If
+' Thumb wheel is physically inverted: up reports PULSE_LOW, down reports PULSE_HIGH.
+' Remap so up = high speed, down = low speed.
+Pulse = PULSE_HIGH + PULSE_LOW - Pulse
 
 status = getvalue(_FS, 1)
 ' Update the last seen mode for closed loop speed/position or open loop
