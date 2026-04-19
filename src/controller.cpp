@@ -1,4 +1,5 @@
 #include "controller.h"
+#include "dome_position_math.h"
 
 // Hardware globals defined in src/globals.cpp.
 // ServoDispatch& avoids including ServoDispatchDirect.h here, which would
@@ -416,16 +417,18 @@ void AmidalaController::executeDomeAction(uint8_t subcmd, int arg) {
 // the "dome=" prefix and the trailing newline has already been stripped.
 //
 // Supported commands:
-//   home       — re-run the homing sweep
-//   calibrate  — run the 10-revolution calibration
-//   stop       — emergency stop
-//   front      — go to 0° (dome front)
-//   rand       — toggle random wander mode
-//   abstick    — toggle absolute-stick mode
-//   status     — print position and state
-//   <N>        — go to absolute angle N (degrees, relative to front)
-//   +<N>       — relative move +N degrees
-//   -<N>       — relative move -N degrees
+//   home          — re-run the homing sweep
+//   calibrate     — run the 10-revolution calibration
+//   stop          — emergency stop
+//   front         — go to 0° (dome front)
+//   rand          — toggle random wander mode
+//   abstick       — toggle absolute-stick mode
+//   status        — print position and state
+//   <N>           — go to absolute angle N (degrees, relative to front)
+//   +<N>          — relative move +N degrees
+//   -<N>          — relative move -N degrees
+//   seqon[,<sec>] — suspend auto dome behaviors for <sec> seconds (watchdog)
+//   seqoff        — clear any active sequence pause immediately
 // ---------------------------------------------------------------------------
 
 void AmidalaController::processDomeCommand(const char* cmd) {
@@ -444,6 +447,16 @@ void AmidalaController::processDomeCommand(const char* cmd) {
     executeDomeAction(ButtonAction::kDomeAbsStick, 0);
   } else if (strcmp(cmd, "status") == 0) {
     fDomeDrive.printStatus(fConsole);
+  } else if (strcmp(cmd, "seqon") == 0 || strncmp(cmd, "seqon,", 6) == 0) {
+    // Suspend auto dome behaviors while an external controller runs a sequence.
+    // Optional comma-argument gives the pause duration in seconds; omitted or
+    // invalid = DEFAULT_DOME_SEQUENCE_PAUSE_MS.  Capped at DOME_SEQUENCE_PAUSE_MAX_MS.
+    int argSec = (cmd[5] == ',') ? atoi(cmd + 6) : 0;
+    uint32_t durationMs = dome_sequence_pause_duration_ms(
+        argSec, DEFAULT_DOME_SEQUENCE_PAUSE_MS, DOME_SEQUENCE_PAUSE_MAX_MS);
+    fDomeDrive.startSequencePause(durationMs);
+  } else if (strcmp(cmd, "seqoff") == 0) {
+    fDomeDrive.endSequencePause();
   } else if (cmd[0] == '+' && cmd[1] != '\0') {
     executeDomeAction(ButtonAction::kDomeRelPos, atoi(cmd + 1));
   } else if (cmd[0] == '-' && cmd[1] != '\0') {
@@ -453,6 +466,7 @@ void AmidalaController::processDomeCommand(const char* cmd) {
   } else {
     fConsole.println(F("Dome: unknown command"));
     fConsole.println(F("  dome=home|calibrate|stop|front|rand|abstick|status|<N>|+<N>|-<N>"));
+    fConsole.println(F("       |seqon[,<sec>]|seqoff"));
   }
 #else
   (void)cmd;

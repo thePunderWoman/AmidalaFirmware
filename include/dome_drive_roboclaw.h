@@ -171,6 +171,27 @@ public:
     /** True while the drive is in absolute-stick mode. */
     bool isAbsoluteStickMode() const { return fState == kStateAbsoluteStick; }
 
+    // ---- Sequence pause -----------------------------------------------------
+    // Allows an external controller (body/dome board) to suspend autonomous
+    // dome behaviors — random wander (kStateRandom) and DomePosition auto
+    // modes — while an animation sequence is playing.  A watchdog timeout
+    // auto-clears the pause so the dome recovers if the caller crashes.
+    // Homing, calibration, explicit positional commands, and joystick input
+    // are intentionally NOT suppressed.
+
+    /**
+     * Start (or extend) a sequence pause for durationMs milliseconds.
+     * While active, auto-wander is suppressed. Calling again while already
+     * active simply refreshes the expiry timestamp.
+     */
+    void startSequencePause(uint32_t durationMs);
+
+    /** Clear the sequence pause immediately and restore prior auto mode. */
+    void endSequencePause();
+
+    /** True while a sequence pause is in effect. */
+    bool isSequencePauseActive() const { return fSequenceActive; }
+
     /** Set the hall-sensor-to-front offset (degrees). Applied immediately. */
     void setFrontOffset(uint16_t degrees) { fFrontOffset = degrees; }
 
@@ -333,6 +354,12 @@ private:
 
     uint32_t fStallStartMs      = 0;
     bool     fStallTimerActive  = false;
+
+    // ---- Sequence pause -----------------------------------------------------
+
+    bool                  fSequenceActive         = false;
+    uint32_t              fSequencePauseExpiryMs  = 0;
+    DomePosition::Mode    fPreSequenceDefaultMode = DomePosition::kOff;
 
     // ---- DomePosition hook --------------------------------------------------
 

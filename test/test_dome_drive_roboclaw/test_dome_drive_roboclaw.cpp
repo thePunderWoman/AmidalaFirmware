@@ -575,6 +575,50 @@ void test_eeprom_overwrite_updates_value() {
     TEST_ASSERT_EQUAL(1500, dome_load_calibration());
 }
 
+// ---- dome_sequence_pause_duration_ms() --------------------------------------
+
+void test_seqpause_zero_arg_uses_default() {
+    // arg=0 means "no explicit arg provided" → use defaultMs.
+    TEST_ASSERT_EQUAL_UINT32(
+        30000u,
+        dome_sequence_pause_duration_ms(0, 30000u, 300000u));
+}
+
+void test_seqpause_negative_arg_uses_default() {
+    // Negative arg should be treated as "not provided".
+    TEST_ASSERT_EQUAL_UINT32(
+        30000u,
+        dome_sequence_pause_duration_ms(-5, 30000u, 300000u));
+}
+
+void test_seqpause_positive_arg_converted_to_ms() {
+    // 15 seconds → 15000 ms.
+    TEST_ASSERT_EQUAL_UINT32(
+        15000u,
+        dome_sequence_pause_duration_ms(15, 30000u, 300000u));
+}
+
+void test_seqpause_arg_exceeding_cap_is_clamped() {
+    // Huge arg clamps to maxMs.
+    TEST_ASSERT_EQUAL_UINT32(
+        300000u,
+        dome_sequence_pause_duration_ms(9999, 30000u, 300000u));
+}
+
+void test_seqpause_default_exceeding_cap_is_clamped() {
+    // Even the default is bounded by maxMs.
+    TEST_ASSERT_EQUAL_UINT32(
+        100u,
+        dome_sequence_pause_duration_ms(0, 5000u, 100u));
+}
+
+void test_seqpause_arg_at_cap_boundary_stays() {
+    // Exactly at the cap should not be altered.
+    TEST_ASSERT_EQUAL_UINT32(
+        300000u,
+        dome_sequence_pause_duration_ms(300, 30000u, 300000u));
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -680,6 +724,13 @@ int main(int argc, char **argv) {
     RUN_TEST(test_eeprom_save_writes_rc01_signature);
     RUN_TEST(test_eeprom_load_returns_zero_when_tpr_is_zero);
     RUN_TEST(test_eeprom_overwrite_updates_value);
+
+    RUN_TEST(test_seqpause_zero_arg_uses_default);
+    RUN_TEST(test_seqpause_negative_arg_uses_default);
+    RUN_TEST(test_seqpause_positive_arg_converted_to_ms);
+    RUN_TEST(test_seqpause_arg_exceeding_cap_is_clamped);
+    RUN_TEST(test_seqpause_default_exceeding_cap_is_clamped);
+    RUN_TEST(test_seqpause_arg_at_cap_boundary_stays);
 
     return UNITY_END();
 }
