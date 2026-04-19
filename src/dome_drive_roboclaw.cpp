@@ -125,7 +125,14 @@ void DomeDriveRoboClaw::animate() {
     // 2. Consume any pending hall-sensor trigger.
     bool hallFired = processHallTrigger();
 
-    // 3. Run per-state logic.
+    // 3. Sequence-pause watchdog: if the expiry has passed, auto-clear so the
+    //    dome resumes auto-behaviors even if dome=seqoff was never received.
+    if (fSequenceActive &&
+        (int32_t)(millis() - fSequencePauseExpiryMs) >= 0) {
+        endSequencePause();
+    }
+
+    // 4. Run per-state logic.
     switch (fState) {
         case kStateHoming:
             handleHoming(hallFired);
@@ -163,6 +170,13 @@ void DomeDriveRoboClaw::animate() {
             return;
 
         case kStateRandom:
+            if (fSequenceActive) {
+                // Auto-wander suppressed: skip handleRandomMode() so it can't
+                // move the dome.  Do NOT command motor=0 — the sequence may
+                // be issuing its own programmed moves, and we shouldn't fight
+                // them.
+                return;
+            }
             handleRandomMode();
             return;
 
@@ -170,12 +184,12 @@ void DomeDriveRoboClaw::animate() {
             break;
     }
 
-    // 4. Obstruction detection (only while the motor is being commanded).
+    // 5. Obstruction detection (only while the motor is being commanded).
     if (fState == kStateHomed) {
         checkObstruction();
     }
 
-    // 5. Let the DomeDrive base handle joystick + DomePosition auto modes.
+    // 6. Let the DomeDrive base handle joystick + DomePosition auto modes.
     DomeDrive::animate();
 }
 
@@ -287,6 +301,34 @@ void DomeDriveRoboClaw::toggleAbsoluteStickMode() {
     } else {
         enableAbsoluteStickMode();
     }
+}
+
+void DomeDriveRoboClaw::startSequencePause(uint32_t durationMs) {
+    if (!fSequenceActive) {
+        // Snapshot the user's current auto-mode so endSequencePause() can
+        // restore it.  setDomeDefaultMode() also resets the active mode, so
+        // random wander stops immediately on this cycle.
+        fPreSequenceDefaultMode = fDomePos.getDomeDefaultMode();
+        fDomePos.setDomeDefaultMode(DomePosition::kOff);
+        // One-shot stop so the motor doesn't coast on its last commanded speed
+        // until the sequence issues its own move (or the RoboClaw packet-serial
+        // timeout elapses).  Only done on the initial activation — subsequent
+        // refresh calls to extend the window must not interrupt in-flight moves.
+        sendMotorCommand(0.0f);
+        fSequenceActive = true;
+    }
+    fSequencePauseExpiryMs = millis() + durationMs;
+    DEBUG_PRINT("DOME: Sequence pause active for ");
+    DEBUG_PRINT(durationMs);
+    DEBUG_PRINTLN(" ms");
+}
+
+void DomeDriveRoboClaw::endSequencePause() {
+    if (!fSequenceActive) return;
+    fDomePos.setDomeDefaultMode(fPreSequenceDefaultMode);
+    fSequenceActive        = false;
+    fSequencePauseExpiryMs = 0;
+    DEBUG_PRINTLN("DOME: Sequence pause cleared");
 }
 
 void DomeDriveRoboClaw::setMaxSpeedPct(float pct) {

@@ -32,6 +32,23 @@
 #include "drive_config.h"
 
 /**
+ * Compute the pause duration (ms) for a dome sequence-pause command.
+ *
+ * @param argSeconds  seconds from the serial arg; <= 0 means "use default"
+ * @param defaultMs   value to use when argSeconds <= 0
+ * @param maxMs       upper cap applied to both the default and explicit arg
+ * @return            duration in milliseconds, clamped to [0, maxMs]
+ */
+static inline uint32_t dome_sequence_pause_duration_ms(int      argSeconds,
+                                                       uint32_t defaultMs,
+                                                       uint32_t maxMs) {
+    uint32_t ms = (argSeconds <= 0) ? defaultMs
+                                     : (uint32_t)argSeconds * 1000u;
+    if (ms > maxMs) ms = maxMs;
+    return ms;
+}
+
+/**
  * Normalize any integer to the 0–359 range (handles negative values).
  */
 static inline int dome_normalize_degrees(int degrees) {

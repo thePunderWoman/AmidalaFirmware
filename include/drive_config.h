@@ -116,6 +116,12 @@
 // Number of complete dome revolutions averaged during calibration.
 #define DOME_CALIBRATION_ROTATIONS 10
 
+// Sequence-pause watchdog (dome=seqon[,<seconds>]).  If no dome=seqoff arrives
+// within the pause window, the pause auto-clears so the dome resumes its
+// normal auto-behaviors even if the body/dome controller crashes mid-sequence.
+#define DEFAULT_DOME_SEQUENCE_PAUSE_MS 30000   // 30s default when no arg given
+#define DOME_SEQUENCE_PAUSE_MAX_MS     300000  // 5 min safety cap
+
 // EEPROM layout for RoboClaw calibration data.
 // Stored at a fixed offset well past the existing SC23 XBee block (0x64)
 // and servo block (0xEA) to avoid collisions.
