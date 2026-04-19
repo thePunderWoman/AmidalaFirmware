@@ -50,7 +50,7 @@ status = getvalue(_FS, 1)
 ' not other modes. We will use this flag to restore to that mode when
 ' pulse signals are restored
 If status <> prevStatus
-    If ((status and 2) = 0x2)
+    If ((status and 128) = 0x80)
 		If Not pulseMode
 			pulseMode = TRUE
 			'Reset controllers to Closed Loop Speed Position
