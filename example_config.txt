@@ -192,6 +192,12 @@ sstr=DM:FLUTTER
 sstr=DM:OVERLOAD
 # 21: Body Panels
 sstr=BD:CBIDATADOOR
+# 22: Alarm
+sstr=DM:ALARM
+# 23: Cantina
+sstr=DM:CANTINA
+# 24: Bloom
+sstr=DM:BLOOM
 
 # --- Button Mappings ---
 # Two mappings are available per button:
@@ -269,23 +275,50 @@ sstr=BD:CBIDATADOOR
 # Gestures use the same action/subcmd numbers but drop the button number:
 #   g=GestureStr,9,0          gesture triggers random toggle
 #   g=GestureStr,9,5,90       gesture goes to absolute 90°# Hello There
+
+## left controller upper left button is alt button
+altbtn=7
+altdomestick=1
+
+# lb=1,
+# lb=2,
+# lb=3,
+# lb=4,
+# Toggle Auto Dome
+lb=5,9,0 
+
+# Hello There
 b=1,5,17
 # Panel Flutter
 b=2,5,19
 # Mad Emote
 b=3,7,2,0
-# Very Mad Emote
-b=4,7,2,1
+# Bloom
+b=4,5,24
 # Toggle Musing
 b=5,8
 # Very Happy Emote
 b=6,7,0,1
-# Scream (Scared Strong)
-b=7,5,18
 # Overload
 b=8,5,20
 # CB Door Toggle
 b=9,5,21
+
+# Sad emote
+ab=1,7,1,0
+# Heart
+ab=2,5,16
+# Very Mad Emote
+ab=3,7,2,1
+# Alarm
+ab=4,5,22
+# Scream (Scared Strong)
+ab=8,5,18
+# Cantina (Scared Strong)
+ab=9,5,23
+# Reset / Cancel
+ab=5,5,11
+
 
 # --- Gesture Mappings (Stick Movements) ---
 # Format: g=GestureString,Action,Arg1,Arg2
@@ -296,23 +329,11 @@ b=9,5,21
 g=9,5,9
 # Pies Open / Close
 g=252,5,12
-# Toggle Musing
-# g=3,8
 # Leia
 g=4,5,15
-# Reset
-g=5,5,11
-# Vader
-g=6,5,8
-# Hello There
-g=7,5,17
 # Low Panels Open / Close
 g=8,5,13
 # All Panels Open / Close
 g=858,5,14
-# Heart
-g=1,5,16
-# Flutter
-g=2,5,19
 
 #END
