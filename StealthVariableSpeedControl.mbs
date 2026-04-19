@@ -10,13 +10,13 @@ Option Explicit
 #define PULSE_HIGH          2000
 
 #define RPM_LOW             500
-#define RPM_HIGH            4000 ' Maximum value any higher and loop errors happen
+#define RPM_HIGH            3000 ' Maximum value any higher and loop errors happen
 
 #define ACCELERATION_LOW    10000
 #define ACCELERATION_HIGH   30000
 
-#define DECELERATION_LOW    17000
-#define DECELERATION_HIGH   43000
+#define DECELERATION_LOW    8000
+#define DECELERATION_HIGH   25000
 
 dim Pulse as integer
 dim PrevPulse as integer
@@ -53,9 +53,9 @@ If status <> prevStatus
     If ((status and 128) = 0x80)
 		If Not pulseMode
 			pulseMode = TRUE
-			'Reset controllers to Closed Loop Speed Position
-            setconfig(_MMOD, 1, 6)
-            setconfig(_MMOD, 2, 6)
+			'Reset controllers to Closed Loop Speed
+            setconfig(_MMOD, 1, 1)
+            setconfig(_MMOD, 2, 1)
 		End If
 	ElseIf pulseMode
 		' Pulse has been disabled
