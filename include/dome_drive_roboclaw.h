@@ -42,8 +42,6 @@
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
 
 #include "ReelTwo.h"
-#include "core/AnimatedEvent.h"
-#include "core/SetupEvent.h"
 #include "JoystickController.h"
 #include "drive_config.h"
 #include "pin_config.h"
@@ -58,7 +56,7 @@
 #include <EEPROM.h>
 #endif
 
-class DomeDriveRoboClaw : public SetupEvent, public AnimatedEvent {
+class DomeDriveRoboClaw {
 public:
     // ---- Operational states -------------------------------------------------
 
@@ -96,10 +94,8 @@ public:
                       JoystickController& stick);
 #endif
 
-    // ---- SetupEvent / AnimatedEvent overrides --------------------------------
-
-    virtual void setup() override;
-    virtual void animate() override;
+    void setup();
+    void animate();
 
     // ---- Joystick drive configuration ---------------------------------------
 
