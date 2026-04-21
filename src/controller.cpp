@@ -165,9 +165,9 @@ void AmidalaController::setup() {
       params.domeseekl,   params.domeseekr,
       params.domefudge,
       DEFAULT_DOME_SPEED_TARGET, params.domespeedmin);
-  // RoboClaw address/channel can be overridden at runtime via config.
-  // (Requires reinitialising fDomeDrive, which is not supported mid-run;
-  // change drive_config.h defaults or reflash for hardware changes.)
+  // setup() is called explicitly here (after config is applied) rather than
+  // via the ReelTwo SetupEvent pool, so homing starts with correct parameters.
+  fDomeDrive.setup();
 #endif
 #endif
 
@@ -201,6 +201,9 @@ void AmidalaController::setup() {
 }
 
 void AmidalaController::animate() {
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+  fDomeDrive.animate();
+#endif
   fConsole.process();
 #ifdef EXPERIMENTAL_JEVOIS_STEERING
   fJevois.process();
