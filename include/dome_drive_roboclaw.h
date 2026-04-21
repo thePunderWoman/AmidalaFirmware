@@ -4,11 +4,10 @@
 //
 // Architecture
 // ------------
-// DomeDriveRoboClaw inherits DomeDrive (Reeltwo) for the joystick drive path
-// (throttle mapping, deadband, acceleration scaling).  All autonomous movement
-// modes (homing, calibration, go-to-angle, random wander, absolute-stick) are
-// implemented directly in this class using encoder-derived position — the
-// ReelTwo DomePosition auto-mode machinery is not used.
+// DomeDriveRoboClaw is a self-contained AnimatedEvent/SetupEvent that handles
+// all dome movement: joystick drive, homing, calibration, go-to-angle, random
+// wander, and absolute-stick mode.  It has no dependency on any ReelTwo drive
+// class beyond the AnimatedEvent/SetupEvent hooks and JoystickController.
 //
 // Position coordinate system
 // --------------------------
@@ -42,16 +41,24 @@
 
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
 
-#include "drive/DomeDrive.h"
+#include "ReelTwo.h"
+#include "core/AnimatedEvent.h"
+#include "core/SetupEvent.h"
+#include "JoystickController.h"
 #include "drive_config.h"
 #include "pin_config.h"
+
+// Minimum random-wander move distance in degrees.
+#ifndef DOME_RANDOM_MOVE_MIN_DEGREES
+#define DOME_RANDOM_MOVE_MIN_DEGREES 5
+#endif
 
 #ifndef UNIT_TEST
 #include <RoboClaw.h>
 #include <EEPROM.h>
 #endif
 
-class DomeDriveRoboClaw : public DomeDrive {
+class DomeDriveRoboClaw : public SetupEvent, public AnimatedEvent {
 public:
     // ---- Operational states -------------------------------------------------
 
@@ -89,12 +96,28 @@ public:
                       JoystickController& stick);
 #endif
 
-    // ---- DomeDrive / AnimatedEvent overrides --------------------------------
+    // ---- SetupEvent / AnimatedEvent overrides --------------------------------
 
     virtual void setup() override;
     virtual void animate() override;
-    virtual void stop() override;
-    virtual void motor(float m) override;
+
+    // ---- Joystick drive configuration ---------------------------------------
+
+    void stop();
+    void setEnable(bool enable)    { fEnabled = enable; }
+    bool getEnable()         const { return fEnabled; }
+    void setInverted(bool invert)  { fInverted = invert; }
+    void setMaxSpeed(float m)      { fMaxSpeed = max(0.0f, min(m, 1.0f)); }
+    float getMaxSpeed()      const { return fMaxSpeed; }
+    void setUseLeftStick()         { fUseLeftStick = true; }
+    void setUseRightStick()        { fUseLeftStick = false; }
+    bool useLeftStick()      const { return fUseLeftStick; }
+    bool isMoving()          const { return fMoving; }
+    // Retained for call-site compatibility; acceleration smoothing is not
+    // implemented (dome motor inertia provides sufficient smoothing in practice).
+    void setScaling(bool)                      {}
+    void setThrottleAccelerationScale(unsigned) {}
+    void setThrottleDecelerationScale(unsigned) {}
 
     // ---- RoboClaw-specific public API ---------------------------------------
 
@@ -269,6 +292,16 @@ public:
     static int normalizeDegrees(int degrees);
 
 private:
+    // ---- Joystick state -----------------------------------------------------
+
+    JoystickController& fDomeStick;
+    float    fMaxSpeed        = 1.0f;
+    bool     fUseLeftStick    = false;
+    bool     fInverted        = false;
+    bool     fEnabled         = true;
+    bool     fJoyWasConnected = false;
+    bool     fMoving          = false;
+
     // ---- Hardware state (excluded from UNIT_TEST builds) --------------------
 
 #ifndef UNIT_TEST
@@ -355,6 +388,7 @@ private:
 
     // ---- Private helpers ----------------------------------------------------
 
+    void    driveFromJoystick();
     int32_t readEncoder();
     /**
      * Compute the angular error to targetDegrees, issue the proportional speed
