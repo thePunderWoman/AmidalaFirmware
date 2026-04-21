@@ -10,12 +10,10 @@ void AmidalaConfig::applyDomePositionParams() {
   AmidalaParameters &params = fController->params;
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
   fController->fDomeDrive.applyDomePositionParams(
-      params.domehomemin, params.domehomemax,
       params.domeseekmin, params.domeseekmax,
       params.domeseekl,   params.domeseekr,
       params.domefudge,
-      params.domespeedhome, DEFAULT_DOME_SPEED_TARGET,
-      params.domespeedseek, params.domespeedmin,
+      DEFAULT_DOME_SPEED_TARGET, params.domespeedmin,
       params.domedecelzone);
 #endif
 #endif
