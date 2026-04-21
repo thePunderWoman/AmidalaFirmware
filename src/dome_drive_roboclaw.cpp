@@ -36,16 +36,12 @@ DomeDriveRoboClaw::DomeDriveRoboClaw(HardwareSerial& serial,
                                      uint8_t channel,
                                      uint8_t hallPin,
                                      JoystickController& stick)
-    : DomeDrive(stick),
+    : fDomeStick(stick),
       fRoboClaw(&serial, 10000),
       fAddress(address),
       fChannel(channel),
       fHallPin(hallPin)
 {
-    setMaxSpeed(1.0f);
-    setScaling(true);
-    setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
-    setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);
 }
 
 #else // UNIT_TEST
@@ -54,15 +50,11 @@ DomeDriveRoboClaw::DomeDriveRoboClaw(uint8_t address,
                                      uint8_t channel,
                                      uint8_t hallPin,
                                      JoystickController& stick)
-    : DomeDrive(stick),
+    : fDomeStick(stick),
       fAddress(address),
       fChannel(channel),
       fHallPin(hallPin)
 {
-    setMaxSpeed(1.0f);
-    setScaling(true);
-    setThrottleAccelerationScale(DEFAULT_DOME_ACCELERATION_SCALE);
-    setThrottleDecelerationScale(DEFAULT_DOME_DECELERATION_SCALE);
 }
 
 #endif // UNIT_TEST
@@ -140,11 +132,6 @@ void DomeDriveRoboClaw::animate() {
         }
 
         case kStateAbsoluteStick:
-            // Direct closed-loop control — same pattern as homing/calibration.
-            // DomeDrive::animate() → domeStick() requires abs(m) != 0 or
-            // fAutoDrive != 0 to enter the motor block.  With the stick zeroed
-            // both are 0, so the entire motor path (including DomePosition kTarget)
-            // is skipped.  Drive the motor directly instead and return early.
             handleAbsoluteStick();
             return;
 
@@ -172,8 +159,8 @@ void DomeDriveRoboClaw::animate() {
         checkObstruction();
     }
 
-    // 6. Let the DomeDrive base handle joystick + DomePosition auto modes.
-    DomeDrive::animate();
+    // 6. Joystick direct drive.
+    driveFromJoystick();
 }
 
 // ---------------------------------------------------------------------------
@@ -182,16 +169,7 @@ void DomeDriveRoboClaw::animate() {
 
 void DomeDriveRoboClaw::stop() {
     sendMotorCommand(0.0f);
-    DomeDrive::stop();
-}
-
-// ---------------------------------------------------------------------------
-// motor()  — called by DomeDrive::domeStick() with -1.0 to +1.0
-// ---------------------------------------------------------------------------
-
-/*virtual*/
-void DomeDriveRoboClaw::motor(float m) {
-    sendMotorCommand(m);
+    fMoving = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -495,7 +473,6 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
             DEBUG_PRINTLN("DOME: Parking at front (0 deg)");
             goToAngle(0);
         }
-        DomeDrive::animate();
         return;
     }
 
@@ -507,14 +484,8 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
         return;
     }
 
-    // kHomingContinue: keep sweeping.
-    // Drive the motor directly — autonomousDriveDome() is only consumed by
-    // DomeDrive::animate() when a joystick is connected, so homing would
-    // silently stall without a controller.
-    // Do NOT call DomeDrive::animate() here: when a controller is connected,
-    // domeStick() sees idle input (m=0) and immediately calls motor(0),
-    // cancelling the homing command every cycle.  Joystick is intentionally
-    // ignored during homing — it resumes normally once kStateHomed is reached.
+    // kHomingContinue: keep sweeping. Joystick input is intentionally ignored
+    // during homing — it resumes normally once kStateHomed is reached.
     sendMotorCommand(kHomingSpeed);
 }
 
@@ -557,9 +528,6 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
     }
 
     if (fState == kStateCalibrating) {
-        // Same reason as handleHoming: drive directly, and do NOT call
-        // DomeDrive::animate() — a connected joystick at idle would call
-        // motor(0) and cancel the calibration sweep every cycle.
         sendMotorCommand(kCalibrationSpeed);
     }
 }
@@ -590,9 +558,6 @@ void DomeDriveRoboClaw::handleAbsoluteStick() {
             fAbsStickTargetDegrees = newTarget;
     }
 
-    // Proportional closed-loop: drive toward fAbsStickTargetDegrees.
-    // Do NOT call DomeDrive::animate() — domeStick() gates all motor commands
-    // on abs(m) != 0 or fAutoDrive != 0; with neither set the motor would stall.
     driveClosedLoop(fAbsStickTargetDegrees);
 }
 
@@ -633,6 +598,47 @@ void DomeDriveRoboClaw::handleRandomMode() {
         DEBUG_PRINT((fRandomNextMoveMs - millis()) / 1000);
         DEBUG_PRINTLN("s");
     }
+}
+
+void DomeDriveRoboClaw::driveFromJoystick() {
+    if (!fEnabled) {
+        stop();
+        return;
+    }
+
+    if (!fDomeStick.isConnected()) {
+        if (fJoyWasConnected) {
+            stop();
+            fJoyWasConnected = false;
+        }
+        return;
+    }
+    fJoyWasConnected = true;
+
+    // Map the configured stick axis from raw [-128, 127] to [-1.0, 1.0].
+    int8_t rawX = fUseLeftStick ? fDomeStick.state.analog.stick.lx
+                                : fDomeStick.state.analog.stick.rx;
+    float m = (float)(rawX + 128) / 127.5f - 1.0f;
+
+    // Deadband: ignore small deflections near centre.
+    if (fabsf(m) < 0.2f) {
+        m = 0.0f;
+    } else {
+        m = powf(fabsf(m) - 0.2f, 1.4f) * (m < 0.0f ? -1.0f : 1.0f);
+    }
+
+    // L2/R2 trigger boosts speed above the configured base maximum.
+    float triggerVal = fUseLeftStick
+                           ? (float)fDomeStick.state.analog.button.l2 / 255.0f
+                           : (float)fDomeStick.state.analog.button.r2 / 255.0f;
+    float speed = fMaxSpeed + triggerVal * (1.0f - fMaxSpeed);
+
+    // Negate to match hardware wiring (positive stick → motor drives dome CW as
+    // seen from above).  Flip sign if the dome direction is inverted in config.
+    m = fInverted ? (m * speed) : (-m * speed);
+
+    fMoving = (m != 0.0f);
+    sendMotorCommand(m);
 }
 
 void DomeDriveRoboClaw::handleGoToAngle() {

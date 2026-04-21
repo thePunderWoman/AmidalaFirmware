@@ -309,7 +309,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
 #ifdef RDH_SERIAL
   RDHSerial &autoDome = fController->fAutoDome;
 #endif
-  DomeDrive *domeDrive = &fController->fDomeDrive;
+  auto *domeDrive = &fController->fDomeDrive;
   if (startswith(cmd, "sb=")) {
     if (params.sbcount < params.getSoundBankCount()) {
       AmidalaParameters::SoundBank *sb =
