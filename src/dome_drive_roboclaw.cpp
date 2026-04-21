@@ -180,6 +180,10 @@ void DomeDriveRoboClaw::animate() {
             handleRandomMode();
             return;
 
+        case kStateGoToAngle:
+            handleGoToAngle();
+            return;
+
         default:
             break;
     }
@@ -244,8 +248,10 @@ void DomeDriveRoboClaw::goToAngle(int degrees) {
         return;
     }
     degrees = normalizeDegrees(degrees);
-    fDomePos.setDomeTargetPosition(degrees);
-    fDomePos.setDomeMode(DomePosition::kTarget);
+    DEBUG_PRINT("DOME: goToAngle target=");
+    DEBUG_PRINTLN(degrees);
+    fGoToTargetDegrees = degrees;
+    fState = kStateGoToAngle;
 }
 
 void DomeDriveRoboClaw::goToRelative(int delta) {
@@ -663,6 +669,14 @@ void DomeDriveRoboClaw::handleRandomMode() {
         DEBUG_PRINT("DOME: Random arrived, next move in ");
         DEBUG_PRINT((fRandomNextMoveMs - millis()) / 1000);
         DEBUG_PRINTLN("s");
+    }
+}
+
+void DomeDriveRoboClaw::handleGoToAngle() {
+    if (driveClosedLoop(fGoToTargetDegrees)) {
+        stop();
+        fState = kStateHomed;
+        DEBUG_PRINTLN("DOME: goToAngle complete");
     }
 }
 
