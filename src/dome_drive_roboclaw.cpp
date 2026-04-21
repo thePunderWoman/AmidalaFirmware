@@ -40,8 +40,7 @@ DomeDriveRoboClaw::DomeDriveRoboClaw(HardwareSerial& serial,
       fRoboClaw(&serial, 10000),
       fAddress(address),
       fChannel(channel),
-      fHallPin(hallPin),
-      fDomePos(*this)           // safe: DomePosition ctor only stores the ref
+      fHallPin(hallPin)
 {
     setMaxSpeed(1.0f);
     setScaling(true);
@@ -58,8 +57,7 @@ DomeDriveRoboClaw::DomeDriveRoboClaw(uint8_t address,
     : DomeDrive(stick),
       fAddress(address),
       fChannel(channel),
-      fHallPin(hallPin),
-      fDomePos(*this)
+      fHallPin(hallPin)
 {
     setMaxSpeed(1.0f);
     setScaling(true);
@@ -90,25 +88,6 @@ void DomeDriveRoboClaw::setup() {
 
     // Restore calibration from EEPROM (works with real or mock EEPROM).
     loadCalibrationFromEEPROM();
-
-    // Wire our encoder-derived position into DomeDrive's auto-movement logic.
-    setDomePosition(&fDomePos);
-
-    // Apply sensible defaults; caller may override via applyDomePositionParams().
-    fDomePos.setDomeHomeMinDelay(DEFAULT_DOME_HOME_MIN_DELAY);
-    fDomePos.setDomeHomeMaxDelay(DEFAULT_DOME_HOME_MAX_DELAY);
-    fDomePos.setDomeAutoMinDelay(DEFAULT_DOME_SEEK_MIN_DELAY);
-    fDomePos.setDomeAutoMaxDelay(DEFAULT_DOME_SEEK_MAX_DELAY);
-    fDomePos.setDomeAutoLeftDegrees(DEFAULT_DOME_SEEK_LEFT);
-    fDomePos.setDomeAutoRightDegrees(DEFAULT_DOME_SEEK_RIGHT);
-    fDomePos.setDomeFudgeFactor(DEFAULT_DOME_FUDGE);
-    fDomePos.setDomeHomeSpeed(DEFAULT_DOME_SPEED_HOME);
-    fDomePos.setDomeTargetSpeed(DEFAULT_DOME_SPEED_TARGET);
-    fDomePos.setDomeAutoSpeed(DEFAULT_DOME_SPEED_SEEK);
-    fDomePos.setDomeMinSpeed(DEFAULT_DOME_SPEED_MIN);
-    fDomePos.setTimeout(DEFAULT_DOME_TIMEOUT);
-    // Home angle is 0°: "facing front" after homing completes.
-    fDomePos.setDomeHomePosition(0);
 
     // Kick off homing so the dome establishes its position reference on boot.
     startHoming();
@@ -284,7 +263,7 @@ void DomeDriveRoboClaw::toggleRandomMode() {
 }
 
 void DomeDriveRoboClaw::disableAutoMode() {
-    fDomePos.setDomeDefaultMode(DomePosition::kOff);
+    // No-op: retained as a public API hook for external callers (e.g. controller.h).
 }
 
 void DomeDriveRoboClaw::enableAbsoluteStickMode() {
@@ -311,11 +290,6 @@ void DomeDriveRoboClaw::toggleAbsoluteStickMode() {
 
 void DomeDriveRoboClaw::startSequencePause(uint32_t durationMs) {
     if (!fSequenceActive) {
-        // Snapshot the user's current auto-mode so endSequencePause() can
-        // restore it.  setDomeDefaultMode() also resets the active mode, so
-        // random wander stops immediately on this cycle.
-        fPreSequenceDefaultMode = fDomePos.getDomeDefaultMode();
-        fDomePos.setDomeDefaultMode(DomePosition::kOff);
         // One-shot stop so the motor doesn't coast on its last commanded speed
         // until the sequence issues its own move (or the RoboClaw packet-serial
         // timeout elapses).  Only done on the initial activation — subsequent
@@ -331,7 +305,6 @@ void DomeDriveRoboClaw::startSequencePause(uint32_t durationMs) {
 
 void DomeDriveRoboClaw::endSequencePause() {
     if (!fSequenceActive) return;
-    fDomePos.setDomeDefaultMode(fPreSequenceDefaultMode);
     fSequenceActive        = false;
     fSequencePauseExpiryMs = 0;
     DEBUG_PRINTLN("DOME: Sequence pause cleared");
@@ -343,25 +316,11 @@ void DomeDriveRoboClaw::setMaxSpeedPct(float pct) {
 }
 
 void DomeDriveRoboClaw::applyDomePositionParams(
-        uint8_t homeMinDelay, uint8_t homeMaxDelay,
         uint8_t seekMinDelay, uint8_t seekMaxDelay,
         uint8_t seekLeft,     uint8_t seekRight,
         uint8_t fudge,
-        uint8_t speedHome,    uint8_t speedTarget,
-        uint8_t speedSeek,    uint8_t speedMin,
+        uint8_t speedTarget,  uint8_t speedMin,
         uint8_t decelZone) {
-    fDomePos.setDomeHomeMinDelay(homeMinDelay);
-    fDomePos.setDomeHomeMaxDelay(homeMaxDelay);
-    fDomePos.setDomeAutoMinDelay(seekMinDelay);
-    fDomePos.setDomeAutoMaxDelay(seekMaxDelay);
-    fDomePos.setDomeAutoLeftDegrees(seekLeft);
-    fDomePos.setDomeAutoRightDegrees(seekRight);
-    fDomePos.setDomeFudgeFactor(fudge);
-    fDomePos.setDomeHomeSpeed(speedHome);
-    fDomePos.setDomeTargetSpeed(speedTarget);
-    fDomePos.setDomeAutoSpeed(speedSeek);
-    fDomePos.setDomeMinSpeed(speedMin);
-    // Cache params used by handleAbsoluteStick() and handleRandomMode().
     fAbsStickFudge       = fudge;
     fAbsStickSpeedMin    = speedMin;
     fAbsStickSpeedTarget = speedTarget;
@@ -434,6 +393,11 @@ void DomeDriveRoboClaw::sendMotorCommand(float m) {
 #ifndef UNIT_TEST
     // Clamp to -1..1 and apply max-speed modifier from DomeDrive base.
     m = max(-1.0f, min(m, 1.0f));
+    // Below-minimum commands are treated as zero (dead-band, not a floor) to
+    // prevent buzzing the motor at speeds too low to actually move the dome.
+    float minSpeed = (float)fAbsStickSpeedMin / 100.0f;
+    if (m != 0.0f && fabsf(m) < minSpeed)
+        m = 0.0f;
     int32_t speed = (int32_t)(m * (float)fQPPS);
 #ifdef DOME_DEBUG
     DEBUG_PRINT(F("DOME: sendMotorCommand m="));
@@ -522,7 +486,6 @@ void DomeDriveRoboClaw::handleHoming(bool hallFired) {
     if (action == kHomingComplete) {
         stop();
         fState = kStateHomed;
-        fDomePos.setDomeHomePosition(0);
         DEBUG_PRINTLN("DOME: Homing complete");
         checkObstruction();
         // The hall sensor rarely sits at the dome's front; after finding it,

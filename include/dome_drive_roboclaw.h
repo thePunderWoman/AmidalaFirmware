@@ -4,13 +4,11 @@
 //
 // Architecture
 // ------------
-// DomeDriveRoboClaw inherits DomeDrive (Reeltwo), which already provides:
-//   - Joystick-to-motor throttle mapping, deadband, and acceleration scaling
-//   - Autonomous movement modes (kHome, kRandom, kTarget) via DomePosition
-//   - moveDomeToTarget() with near-target deceleration
-//
-// DomeDriveRoboClaw also implements DomePositionProvider so it can feed its
-// own encoder-derived position back into DomeDrive's auto-movement logic.
+// DomeDriveRoboClaw inherits DomeDrive (Reeltwo) for the joystick drive path
+// (throttle mapping, deadband, acceleration scaling).  All autonomous movement
+// modes (homing, calibration, go-to-angle, random wander, absolute-stick) are
+// implemented directly in this class using encoder-derived position — the
+// ReelTwo DomePosition auto-mode machinery is not used.
 //
 // Position coordinate system
 // --------------------------
@@ -45,8 +43,6 @@
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
 
 #include "drive/DomeDrive.h"
-#include "drive/DomePosition.h"
-#include "drive/DomePositionProvider.h"
 #include "drive_config.h"
 #include "pin_config.h"
 
@@ -55,7 +51,7 @@
 #include <EEPROM.h>
 #endif
 
-class DomeDriveRoboClaw : public DomeDrive, public DomePositionProvider {
+class DomeDriveRoboClaw : public DomeDrive {
 public:
     // ---- Operational states -------------------------------------------------
 
@@ -99,17 +95,6 @@ public:
     virtual void animate() override;
     virtual void stop() override;
     virtual void motor(float m) override;
-
-    // ---- DomePositionProvider interface -------------------------------------
-    // Called by DomeDrive's DomePosition every animate() cycle.
-
-    /** Returns true once the hall sensor has been found (homing complete). */
-    virtual bool ready() override {
-        return fState == kStateHomed || fState == kStateAbsoluteStick;
-    }
-
-    /** Current dome angle in degrees (0 = front, increases clockwise). */
-    virtual int getAngle() override { return fCurrentDegrees; }
 
     // ---- RoboClaw-specific public API ---------------------------------------
 
@@ -205,13 +190,11 @@ public:
     /** Update the stall-detection timeout (ms). */
     void setStallTimeout(uint16_t ms) { fStallTimeoutMs = ms; }
 
-    /** Configure DomePosition auto-mode timing from loaded params. */
-    void applyDomePositionParams(uint8_t homeMinDelay, uint8_t homeMaxDelay,
-                                 uint8_t seekMinDelay, uint8_t seekMaxDelay,
-                                 uint8_t seekLeft, uint8_t seekRight,
+    /** Configure auto-mode timing and speed params from loaded config. */
+    void applyDomePositionParams(uint8_t seekMinDelay, uint8_t seekMaxDelay,
+                                 uint8_t seekLeft,     uint8_t seekRight,
                                  uint8_t fudge,
-                                 uint8_t speedHome, uint8_t speedTarget,
-                                 uint8_t speedSeek, uint8_t speedMin,
+                                 uint8_t speedTarget,  uint8_t speedMin,
                                  uint8_t decelZone = DEFAULT_DOME_DECEL_ZONE);
 
     State getState() const { return fState; }
@@ -361,18 +344,8 @@ private:
 
     // ---- Sequence pause -----------------------------------------------------
 
-    bool                  fSequenceActive         = false;
-    uint32_t              fSequencePauseExpiryMs  = 0;
-    DomePosition::Mode    fPreSequenceDefaultMode = DomePosition::kOff;
-
-    // ---- DomePosition hook --------------------------------------------------
-
-    // fDomePos wraps *this (as DomePositionProvider) and is registered with the
-    // DomeDrive base via setDomePosition(&fDomePos) in setup().
-    // Initialising with *this in the member initialiser is safe because
-    // DomePosition's constructor only stores the reference — it does not call
-    // any virtual methods.
-    DomePosition fDomePos;
+    bool     fSequenceActive        = false;
+    uint32_t fSequencePauseExpiryMs = 0;
 
     // ---- ISR singleton ------------------------------------------------------
 
