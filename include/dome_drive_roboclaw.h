@@ -67,6 +67,7 @@ public:
         kStateObstructed,     ///< Stall detected; awaiting manual clearance
         kStateAbsoluteStick,  ///< Joystick angle maps directly to dome heading
         kStateRandom,         ///< Random wander mode
+        kStateGoToAngle,      ///< Driving to a programmed absolute target
     };
 
     // ---- Constructor --------------------------------------------------------
@@ -240,6 +241,7 @@ public:
             case kStateObstructed:    out.print(F("OBSTRUCTED"));    break;
             case kStateAbsoluteStick: out.print(F("AbsoluteStick")); break;
             case kStateRandom:        out.print(F("Random"));        break;
+            case kStateGoToAngle:     out.print(F("GoToAngle"));     break;
         }
         out.print(F(" cal="));
         out.print(isCalibrated() ? F("yes tpr=") : F("no"));
@@ -342,6 +344,8 @@ private:
 
     // ---- Random mode --------------------------------------------------------
 
+    int      fGoToTargetDegrees   = 0;   ///< Target for kStateGoToAngle
+
     int      fRandomTargetDegrees = 0;
     uint32_t fRandomNextMoveMs    = 0;
     bool     fRandomAtTarget      = true;   ///< true = waiting for next move
@@ -404,6 +408,7 @@ private:
     void    handleCalibrating(bool hallFired);
     void    handleAbsoluteStick();
     void    handleRandomMode();
+    void    handleGoToAngle();
 
 #ifdef UNIT_TEST
 public:
