@@ -246,14 +246,14 @@ void DomeDriveRoboClaw::disableAutoMode() {
 
 void DomeDriveRoboClaw::enableAbsoluteStickMode() {
     if (!isHomed() || !isCalibrated()) return;
-    // Hold current position until the stick gives a new target.
+    fStateBeforeAbsStick   = fState;
     fAbsStickTargetDegrees = fCurrentDegrees;
     fState = kStateAbsoluteStick;
 }
 
 void DomeDriveRoboClaw::disableAbsoluteStickMode() {
     if (fState == kStateAbsoluteStick) {
-        fState = kStateHomed;
+        fState = fStateBeforeAbsStick;
         disableAutoMode();
     }
 }

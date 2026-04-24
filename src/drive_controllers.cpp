@@ -135,7 +135,8 @@ void DomeController::process() {
     if (altHeld && !fAltEngagedAbsStick
         && fDriver->fDomeDrive.isHomed()
         && fDriver->fDomeDrive.isCalibrated()
-        && !fDriver->fDomeDrive.isAbsoluteStickMode()) {
+        && !fDriver->fDomeDrive.isAbsoluteStickMode()
+        && !fDriver->fDomeDrive.isRandomMode()) {
       fDriver->fDomeDrive.enableAbsoluteStickMode();
       fAltEngagedAbsStick = true;
     } else if (!altHeld && fAltEngagedAbsStick) {
