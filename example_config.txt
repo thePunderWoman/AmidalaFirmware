@@ -284,8 +284,8 @@ altdomestick=1
 # lb=2,
 # lb=3,
 # lb=4,
-# Toggle Auto Dome
-lb=5,9,0 
+# Reset / Cancel
+lb=5,5,11
 
 # Hello There
 b=1,5,17
@@ -312,12 +312,12 @@ ab=2,5,16
 ab=3,7,2,1
 # Alarm
 ab=4,5,22
+# Toggle Auto Dome
+ab=5,9,0
 # Scream (Scared Strong)
 ab=8,5,18
 # Cantina (Scared Strong)
 ab=9,5,23
-# Reset / Cancel
-ab=5,5,11
 
 
 # --- Gesture Mappings (Stick Movements) ---
