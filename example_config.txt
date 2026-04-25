@@ -90,13 +90,11 @@ domespeedseek=60
 # Lower values allow gentler final approach and reduce overshoot.
 domespeedmin=5
 # Delays between movements (Seconds)
-domehomemin=6
-domehomemax=8
 domeseekmin=6
-domeseekmax=8
+domeseekmax=20
 # Rotation range for seeking (Degrees)
-domeseekl=80
-domeseekr=80
+domeseekl=40
+domeseekr=40
 # Enable Dome Control on RC Channel 6 (y/n)
 domech6=n
 
@@ -198,6 +196,12 @@ sstr=DM:ALARM
 sstr=DM:CANTINA
 # 24: Bloom
 sstr=DM:BLOOM
+# 25: Random
+sstr=DM:RANDOM
+# 26: Disco
+sstr=DM:DISCO
+# 27: Rock March
+sstr=DM:ROCKMARCH
 
 # --- Button Mappings ---
 # Two mappings are available per button:
@@ -286,6 +290,10 @@ altdomestick=1
 # lb=4,
 # Reset / Cancel
 lb=5,5,11
+# Rock March
+lb=3,5,27
+# Rock March
+lb=4,5,26
 
 # Hello There
 b=1,5,17
@@ -308,12 +316,14 @@ b=9,5,21
 ab=1,7,1,0
 # Heart
 ab=2,5,16
-# Very Mad Emote
-ab=3,7,2,1
+# Vader
+ab=3,5,8
 # Alarm
 ab=4,5,22
 # Toggle Auto Dome
 ab=5,9,0
+# Random
+ab=6,5,25
 # Scream (Scared Strong)
 ab=8,5,18
 # Cantina (Scared Strong)

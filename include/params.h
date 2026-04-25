@@ -142,8 +142,6 @@ struct AmidalaParameters {
   uint16_t domepos; // current dome position (used only in RDH_SERIAL builds)
   uint16_t domehome;
   uint8_t domemode;
-  uint8_t domehomemin;
-  uint8_t domehomemax;
   uint8_t domeseekmin;
   uint8_t domeseekmax;
   uint8_t domeseekr;
@@ -228,8 +226,6 @@ struct AmidalaParameters {
       domehome = DEFAULT_DOME_HOME_POSITION;
       domepos = domehome;
       domemode = 0; // Force manual mode to stop auto-spinning on startup
-      domehomemin = DEFAULT_DOME_HOME_MIN_DELAY;
-      domehomemax = DEFAULT_DOME_HOME_MAX_DELAY;
       domeseekmin = DEFAULT_DOME_SEEK_MIN_DELAY;
       domeseekmax = DEFAULT_DOME_SEEK_MAX_DELAY;
       domeseekl = DEFAULT_DOME_SEEK_LEFT;
