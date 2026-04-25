@@ -222,10 +222,6 @@ void AmidalaConfig::showCurrentConfiguration() {
     fOutput->println(params.domeflip ? F("true") : F("false"));
     fOutput->print(F("domegest: "));
     fOutput->println(params.domegest.getGestureString(gesture));
-    fOutput->print(F("domehomemin: "));
-    fOutput->println(params.domehomemin);
-    fOutput->print(F("domehomemax: "));
-    fOutput->println(params.domehomemax);
     fOutput->print(F("domeseekmin: "));
     fOutput->println(params.domeseekmin);
     fOutput->print(F("domeseekmax: "));
@@ -776,18 +772,6 @@ bool AmidalaConfig::processConfig(const char *cmd) {
 #else
     return false;
 #endif
-  } else if (intparam(cmd, "domehomemin=", params.domehomemin, 1, 255)) {
-    // autoDome.setDomeHomeMinDelay(params.domehomemin);
-    return true;
-  } else if (intparam(cmd, "domehomemax=", params.domehomemax, 1, 255)) {
-    // autoDome.setDomeHomeMaxDelay(params.domehomemax);
-    return true;
-  } else if (intparam(cmd, "domeseekmin=", params.domehomemin, 1, 255)) {
-    // autoDome.setDomeSeekMinDelay(params.domehomemin);
-    return true;
-  } else if (intparam(cmd, "domeseekmax=", params.domehomemax, 1, 255)) {
-    // autoDome.setDomeSeekMaxDelay(params.domehomemax);
-    return true;
   } else if (intparam(cmd, "domeseekr=", params.domeseekr, 1, 180)) {
     applyDomePositionParams();
     return true;
