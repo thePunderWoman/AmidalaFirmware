@@ -67,32 +67,23 @@ void AmidalaConsole::processGesture(const char *gesture) {
   }
 }
 
-void AmidalaConsole::processButton(unsigned num) {
-  print("Processing Button ");
+void AmidalaConsole::processButtonLayer(unsigned num, const char *label,
+                                        ButtonAction *actions) {
+  print(label);
   println(num);
   AmidalaParameters &params = fController->params;
+  if (num >= 1 && num <= params.getButtonCount())
+    process(actions[num - 1]);
+}
 
-  if (num >= 1 && num <= params.getButtonCount()) {
-    process(params.B[num - 1]);
-  }
+void AmidalaConsole::processButton(unsigned num) {
+  processButtonLayer(num, "Processing Button ", fController->params.B);
 }
 
 void AmidalaConsole::processLongButton(unsigned num) {
-  print("Processing Long Button ");
-  println(num);
-  AmidalaParameters &params = fController->params;
-
-  if (num >= 1 && num <= params.getButtonCount()) {
-    process(params.LB[num - 1]);
-  }
+  processButtonLayer(num, "Processing Long Button ", fController->params.LB);
 }
 
 void AmidalaConsole::processAltButton(unsigned num) {
-  print("Processing Alt Button ");
-  println(num);
-  AmidalaParameters &params = fController->params;
-
-  if (num >= 1 && num <= params.getButtonCount()) {
-    process(params.AB[num - 1]);
-  }
+  processButtonLayer(num, "Processing Alt Button ", fController->params.AB);
 }

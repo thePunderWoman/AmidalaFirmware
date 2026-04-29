@@ -71,6 +71,8 @@ public:
 private:
   AmidalaController *fController = nullptr;
   unsigned fPos;
+  void processButtonLayer(unsigned num, const char *label,
+                          ButtonAction *actions);
   char fBuffer[CONSOLE_BUFFER_SIZE];
   bool fMonitor = false;
   bool fPrompt = false;
