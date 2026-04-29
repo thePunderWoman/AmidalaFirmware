@@ -776,25 +776,13 @@ bool AmidalaConfig::processConfig(const char *cmd) {
 #else
     return false;
 #endif
-  } else if (intparam(cmd, "domeseekr=", params.domeseekr, 1, 180)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domeseekl=", params.domeseekl, 1, 180)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domefudge=", params.domefudge, 1, 45)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domespeedhome=", params.domespeedhome, 1, 100)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domespeedseek=", params.domespeedseek, 1, 100)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domespeedmin=", params.domespeedmin, 0, 30)) {
-    applyDomePositionParams();
-    return true;
-  } else if (intparam(cmd, "domedecelzone=", params.domedecelzone, 5, 90)) {
+  } else if (intparam(cmd, "domeseekr=",    params.domeseekr,    1,   180) ||
+             intparam(cmd, "domeseekl=",    params.domeseekl,    1,   180) ||
+             intparam(cmd, "domefudge=",    params.domefudge,    1,    45) ||
+             intparam(cmd, "domespeedhome=",params.domespeedhome,1,   100) ||
+             intparam(cmd, "domespeedseek=",params.domespeedseek,1,   100) ||
+             intparam(cmd, "domespeedmin=", params.domespeedmin, 0,    30) ||
+             intparam(cmd, "domedecelzone=",params.domedecelzone,5,    90)) {
     applyDomePositionParams();
     return true;
   // ---- RoboClaw dome drive parameters (parsed regardless of active dome

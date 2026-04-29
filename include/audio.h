@@ -59,6 +59,9 @@ public:
 private:
   AmidalaController *fController = nullptr;
 
+  // Send SetVolume to all three HCR channels with independent values.
+  void sendAllHCRVolumes(uint8_t v, uint8_t a, uint8_t b);
+
   // Send a SetVolume command to the channel(s) selected by wheel (same enum as
   // volumewheel / altvolumewheel: 0=global, 1=voice, 2=chA, 3=chB).
   // Also updates fSavedVol* for the affected channels.
@@ -75,7 +78,7 @@ private:
   uint8_t fSavedVolA = 50;
   uint8_t fSavedVolB = 50;
   bool fMuted = false;
-  // Initialized so the first call always passes the throttle check.
+  // Initialized via unsigned wraparound so the first call always passes the throttle check.
   uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
   // Local mirror of the HCR muse state — avoids needing fHCR.GetMuse() which
   // requires update() to have run and received a QM response from the board.

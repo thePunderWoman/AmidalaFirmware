@@ -62,25 +62,20 @@ void AmidalaAudio::randomToggle() {
 #endif
 }
 
+void AmidalaAudio::sendAllHCRVolumes(uint8_t v, uint8_t a, uint8_t b) {
+  fController->fHCR.SetVolume(CH_V, v);
+  fController->fHCR.SetVolume(CH_A, a);
+  fController->fHCR.SetVolume(CH_B, b);
+}
+
 void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
   switch (wheel) {
-    case 1:
-      fSavedVolV = volume;
-      fController->fHCR.SetVolume(CH_V, volume);
-      break;
-    case 2:
-      fSavedVolA = volume;
-      fController->fHCR.SetVolume(CH_A, volume);
-      break;
-    case 3:
-      fSavedVolB = volume;
-      fController->fHCR.SetVolume(CH_B, volume);
-      break;
+    case 1: fSavedVolV = volume; fController->fHCR.SetVolume(CH_V, volume); break;
+    case 2: fSavedVolA = volume; fController->fHCR.SetVolume(CH_A, volume); break;
+    case 3: fSavedVolB = volume; fController->fHCR.SetVolume(CH_B, volume); break;
     default:
       fSavedVolV = fSavedVolA = fSavedVolB = volume;
-      fController->fHCR.SetVolume(CH_V, volume);
-      fController->fHCR.SetVolume(CH_A, volume);
-      fController->fHCR.SetVolume(CH_B, volume);
+      sendAllHCRVolumes(volume, volume, volume);
       break;
   }
 }
@@ -88,9 +83,7 @@ void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
 void AmidalaAudio::restoreVolumes() {
   fMuted = false;
   fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
-  fController->fHCR.SetVolume(CH_V, fSavedVolV);
-  fController->fHCR.SetVolume(CH_A, fSavedVolA);
-  fController->fHCR.SetVolume(CH_B, fSavedVolB);
+  sendAllHCRVolumes(fSavedVolV, fSavedVolA, fSavedVolB);
 }
 
 void AmidalaAudio::setVolumeNoResponse(uint8_t volume) {
@@ -139,9 +132,7 @@ void AmidalaAudio::toggleMute() {
       restoreVolumes();
     } else {
       fMuted = true;
-      fController->fHCR.SetVolume(CH_V, 0);
-      fController->fHCR.SetVolume(CH_A, 0);
-      fController->fHCR.SetVolume(CH_B, 0);
+      sendAllHCRVolumes(0, 0, 0);
     }
   }
 #endif

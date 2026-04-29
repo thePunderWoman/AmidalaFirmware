@@ -1,17 +1,19 @@
 #include "controller.h"
 
 // ---------------------------------------------------------------------------
-// Alt-button helpers
-//
 // Button numbering (1-based, matches B[]/LB[]/AB[] indices):
 //   Drive stick: triangle=1, circle=2, cross=3, square=4, l3=5
 //   Dome  stick: triangle=6, circle=7, cross=8, square=9
-//   (Dome l3 starts gesture mode and cannot be the alt button.)
+//   (Dome l3 is reserved for gesture input and cannot be configured as
+//   the alt or mute button.)
 //
 // DISPATCH_BUTTON: on button_up, route to alt layer or normal layer.
 //   Suppresses the button entirely if it is the configured alt modifier.
 // DISPATCH_LONG: on long_button_up, only fires when alt is not held.
 //   Suppresses long-press for the alt button itself.
+//
+// DRIVE_BTNFIELD / DOME_BTNFIELD: extract a boolean from a Ps3ButtonData
+//   struct by button number, avoiding repetitive switch blocks.
 // ---------------------------------------------------------------------------
 
 #define DISPATCH_BUTTON(btnfield, num, altbtn, altHeld)                        \
@@ -22,6 +24,14 @@
 #define DISPATCH_LONG(btnfield, num, altbtn, altHeld)                          \
   if (event.long_button_up.btnfield && (altbtn) != (num) && !(altHeld))       \
     fDriver->processLongButton(num);
+
+// Map drive-stick button number (1–5) to a field in a Ps3ButtonData struct.
+#define DRIVE_BTNFIELD(num, btns) \
+  ((num)==1?(btns).triangle:(num)==2?(btns).circle:(num)==3?(btns).cross:(num)==4?(btns).square:(btns).l3)
+
+// Map dome-stick button number (6–9) to a field in a Ps3ButtonData struct.
+#define DOME_BTNFIELD(num, btns) \
+  ((num)==6?(btns).triangle:(num)==7?(btns).circle:(num)==8?(btns).cross:(btns).square)
 
 // ---------------------------------------------------------------------------
 // DriveController
@@ -42,17 +52,8 @@ void DriveController::notify() {
   } else {
     // ---- Alt-button state (drive buttons 1–5) --------------------------------
     int altbtn = fDriver->params.altbtn;
-    if (altbtn >= 1 && altbtn <= 5) {
-      bool held = false;
-      switch (altbtn) {
-        case 1: held = state.button.triangle; break;
-        case 2: held = state.button.circle;   break;
-        case 3: held = state.button.cross;    break;
-        case 4: held = state.button.square;   break;
-        case 5: held = state.button.l3;       break;
-      }
-      fDriver->setAltHeld(held);
-    }
+    if (altbtn >= 1 && altbtn <= 5)
+      fDriver->setAltHeld(DRIVE_BTNFIELD(altbtn, state.button));
     bool altHeld = fDriver->isAltHeld();
 
     // ---- Button dispatch -----------------------------------------------------
@@ -70,17 +71,8 @@ void DriveController::notify() {
 
     // ---- Double-press mute detection (buttons 1–5) ---------------------------
     int muteBtn = fDriver->params.mutebutton;
-    if (muteBtn >= 1 && muteBtn <= 5) {
-      bool btnUp = false;
-      switch (muteBtn) {
-        case 1: btnUp = event.button_up.triangle; break;
-        case 2: btnUp = event.button_up.circle;   break;
-        case 3: btnUp = event.button_up.cross;    break;
-        case 4: btnUp = event.button_up.square;   break;
-        case 5: btnUp = event.button_up.l3;       break;
-      }
-      if (btnUp) fDriver->noteMuteBtnUp();
-    }
+    if (muteBtn >= 1 && muteBtn <= 5 && DRIVE_BTNFIELD(muteBtn, event.button_up))
+      fDriver->noteMuteBtnUp();
   }
 }
 
@@ -135,16 +127,8 @@ void DomeController::process() {
 
   // ---- Alt-button state (dome buttons 6–9) ----------------------------------
   int altbtn = fDriver->params.altbtn;
-  if (altbtn >= 6 && altbtn <= 9) {
-    bool held = false;
-    switch (altbtn) {
-      case 6: held = state.button.triangle; break;
-      case 7: held = state.button.circle;   break;
-      case 8: held = state.button.cross;    break;
-      case 9: held = state.button.square;   break;
-    }
-    fDriver->setAltHeld(held);
-  }
+  if (altbtn >= 6 && altbtn <= 9)
+    fDriver->setAltHeld(DOME_BTNFIELD(altbtn, state.button));
 
   // ---- Alt dome-stick mode --------------------------------------------------
   // altdomestick=1: while alt is held, engage abs-stick mode on the dome.
@@ -188,16 +172,8 @@ void DomeController::process() {
 
       // ---- Double-press mute detection (buttons 6–9) -------------------------
       int muteBtn = fDriver->params.mutebutton;
-      if (muteBtn >= 6 && muteBtn <= 9) {
-        bool btnUp = false;
-        switch (muteBtn) {
-          case 6: btnUp = event.button_up.triangle; break;
-          case 7: btnUp = event.button_up.circle;   break;
-          case 8: btnUp = event.button_up.cross;    break;
-          case 9: btnUp = event.button_up.square;   break;
-        }
-        if (btnUp) fDriver->noteMuteBtnUp();
-      }
+      if (muteBtn >= 6 && muteBtn <= 9 && DOME_BTNFIELD(muteBtn, event.button_up))
+        fDriver->noteMuteBtnUp();
     }
     return;
   } else if (fGestureTimeOut < millis()) {
