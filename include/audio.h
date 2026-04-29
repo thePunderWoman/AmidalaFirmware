@@ -27,7 +27,12 @@ public:
   void randomToggle();
 
   // Set volume without printing a response (0–100).
+  // Routes to the channel(s) selected by params.volumewheel.
   void setVolumeNoResponse(uint8_t volume);
+
+  // Same as setVolumeNoResponse but uses params.altvolumewheel for routing.
+  // Falls through to setVolumeNoResponse when altvolumewheel == 0.
+  void setAltVolumeNoResponse(uint8_t volume);
 
   // Play a sound from the given sound bank (1-based).
   // If snd == 0, selects the next/random file based on the bank's mode.
@@ -48,6 +53,10 @@ public:
 
 private:
   AmidalaController *fController = nullptr;
+  // Send a SetVolume command to the channel(s) selected by wheel (same enum as
+  // volumewheel / altvolumewheel: 0=global, 1=voice, 2=chA, 3=chB).
+  // Does NOT apply the throttle — callers are responsible for that.
+  void applyHCRVolume(uint8_t wheel, uint8_t volume);
   // Initialized so the first call always passes the throttle check.
   uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
   // Local mirror of the HCR muse state — avoids needing fHCR.GetMuse() which

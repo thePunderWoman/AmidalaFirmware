@@ -287,6 +287,104 @@ void test_altdomestick_clamps_above_one() {
     TEST_ASSERT_EQUAL(1, p.altdomestick);
 }
 
+// ---- Per-channel volume config keys -----------------------------------------
+
+void test_volume_channel_fields_are_distinct_from_each_other() {
+    AmidalaParameters p;
+    TEST_ASSERT_NOT_EQUAL((void*)&p.volume,    (void*)&p.volumeChA);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.volume,    (void*)&p.volumeChB);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.volumeChA, (void*)&p.volumeChB);
+    TEST_ASSERT_NOT_EQUAL((void*)&p.volumewheel, (void*)&p.altvolumewheel);
+}
+
+void test_volume_channel_defaults_after_init() {
+    AmidalaParameters p;
+    memset(EEPROM.data, 0, sizeof(EEPROM.data));
+    p.init(true);
+    TEST_ASSERT_EQUAL(50, p.volume);
+    TEST_ASSERT_EQUAL(50, p.volumeChA);
+    TEST_ASSERT_EQUAL(50, p.volumeChB);
+    TEST_ASSERT_EQUAL(0,  p.volumewheel);
+    TEST_ASSERT_EQUAL(0,  p.altvolumewheel);
+}
+
+void test_volumeChA_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("volumeChA=30", "volumeChA=", p.volumeChA, 0, 100);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(30, p.volumeChA);
+}
+
+void test_volumeChB_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("volumeChB=20", "volumeChB=", p.volumeChB, 0, 100);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(20, p.volumeChB);
+}
+
+void test_volumewheel_accepts_zero_global() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("volumewheel=0", "volumewheel=", p.volumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.volumewheel);
+}
+
+void test_volumewheel_accepts_three_max() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("volumewheel=3", "volumewheel=", p.volumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(3, p.volumewheel);
+}
+
+void test_volumewheel_clamps_above_three() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 4 > 3 → clamped to 3
+    bool matched = intparam("volumewheel=4", "volumewheel=", p.volumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(3, p.volumewheel);
+}
+
+void test_altvolumewheel_accepts_zero_fallthrough() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altvolumewheel=0", "altvolumewheel=", p.altvolumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.altvolumewheel);
+}
+
+void test_altvolumewheel_accepts_nonzero() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("altvolumewheel=2", "altvolumewheel=", p.altvolumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(2, p.altvolumewheel);
+}
+
+void test_altvolumewheel_clamps_above_three() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    // 5 > 3 → clamped to 3
+    bool matched = intparam("altvolumewheel=5", "altvolumewheel=", p.altvolumewheel, 0, 3);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(3, p.altvolumewheel);
+}
+
+void test_channel_volumes_are_independent_of_volume() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    intparam("volume=70",    "volume=",    p.volume,    0, 100);
+    intparam("volumeChA=30", "volumeChA=", p.volumeChA, 0, 100);
+    intparam("volumeChB=20", "volumeChB=", p.volumeChB, 0, 100);
+    TEST_ASSERT_EQUAL(70, p.volume);
+    TEST_ASSERT_EQUAL(30, p.volumeChA);
+    TEST_ASSERT_EQUAL(20, p.volumeChB);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -323,6 +421,18 @@ int main(int argc, char **argv) {
     RUN_TEST(test_altdomestick_intparam_zero);
     RUN_TEST(test_altdomestick_intparam_one);
     RUN_TEST(test_altdomestick_clamps_above_one);
+
+    RUN_TEST(test_volume_channel_fields_are_distinct_from_each_other);
+    RUN_TEST(test_volume_channel_defaults_after_init);
+    RUN_TEST(test_volumeChA_intparam_routes_to_correct_field);
+    RUN_TEST(test_volumeChB_intparam_routes_to_correct_field);
+    RUN_TEST(test_volumewheel_accepts_zero_global);
+    RUN_TEST(test_volumewheel_accepts_three_max);
+    RUN_TEST(test_volumewheel_clamps_above_three);
+    RUN_TEST(test_altvolumewheel_accepts_zero_fallthrough);
+    RUN_TEST(test_altvolumewheel_accepts_nonzero);
+    RUN_TEST(test_altvolumewheel_clamps_above_three);
+    RUN_TEST(test_channel_volumes_are_independent_of_volume);
 
     return UNITY_END();
 }

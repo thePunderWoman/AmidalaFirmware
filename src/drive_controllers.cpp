@@ -105,8 +105,11 @@ void DomeController::notify() {
 void DomeController::process() {
   if (event.analog_changed.button.l1) {
     /* Volume */
-    fDriver->setVolumeNoResponse(
-        map(state.analog.button.l1, 0, 255, 0, 100));
+    uint8_t vol = map(state.analog.button.l1, 0, 255, 0, 100);
+    if (fDriver->isAltHeld())
+      fDriver->setAltVolumeNoResponse(vol);
+    else
+      fDriver->setVolumeNoResponse(vol);
   }
   if (event.analog_changed.button.l2) {
     /* Throttle */

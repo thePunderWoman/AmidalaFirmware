@@ -126,6 +126,103 @@ void test_three_windows_produce_three_updates() {
     TEST_ASSERT_EQUAL_INT(3, h.callCount);
 }
 
+// ---- Volume routing harness -------------------------------------------------
+// Mirrors the logic in AmidalaAudio::applyHCRVolume.
+// wheel: 0=global, 1=voice (CH_V), 2=chA (CH_A), 3=chB (CH_B).
+
+struct VolumeRouteHarness {
+    int chV = -1, chA = -1, chB = -1;
+
+    void apply(uint8_t wheel, uint8_t volume) {
+        switch (wheel) {
+            case 1: chV = volume; break;
+            case 2: chA = volume; break;
+            case 3: chB = volume; break;
+            default:
+                chV = chA = chB = (int)volume;
+                break;
+        }
+    }
+
+    void reset() { chV = chA = chB = -1; }
+};
+
+// ---- volumewheel routing ----------------------------------------------------
+
+void test_volumewheel_global_sets_all_channels() {
+    VolumeRouteHarness h;
+    h.apply(0, 75);
+    TEST_ASSERT_EQUAL_INT(75, h.chV);
+    TEST_ASSERT_EQUAL_INT(75, h.chA);
+    TEST_ASSERT_EQUAL_INT(75, h.chB);
+}
+
+void test_volumewheel_voice_sets_only_chV() {
+    VolumeRouteHarness h;
+    h.apply(1, 60);
+    TEST_ASSERT_EQUAL_INT(60, h.chV);
+    TEST_ASSERT_EQUAL_INT(-1, h.chA);
+    TEST_ASSERT_EQUAL_INT(-1, h.chB);
+}
+
+void test_volumewheel_chA_sets_only_chA() {
+    VolumeRouteHarness h;
+    h.apply(2, 40);
+    TEST_ASSERT_EQUAL_INT(-1, h.chV);
+    TEST_ASSERT_EQUAL_INT(40, h.chA);
+    TEST_ASSERT_EQUAL_INT(-1, h.chB);
+}
+
+void test_volumewheel_chB_sets_only_chB() {
+    VolumeRouteHarness h;
+    h.apply(3, 30);
+    TEST_ASSERT_EQUAL_INT(-1, h.chV);
+    TEST_ASSERT_EQUAL_INT(-1, h.chA);
+    TEST_ASSERT_EQUAL_INT(30, h.chB);
+}
+
+void test_volumewheel_unknown_value_falls_back_to_global() {
+    VolumeRouteHarness h;
+    h.apply(99, 50);
+    TEST_ASSERT_EQUAL_INT(50, h.chV);
+    TEST_ASSERT_EQUAL_INT(50, h.chA);
+    TEST_ASSERT_EQUAL_INT(50, h.chB);
+}
+
+// ---- altvolumewheel fall-through logic --------------------------------------
+// Mirrors the decision in AmidalaAudio::setAltVolumeNoResponse:
+//   altvolumewheel == 0  →  call setVolumeNoResponse (use volumewheel routing)
+//   altvolumewheel != 0  →  route via altvolumewheel
+
+static bool altWheelFallsThrough(uint8_t altvolumewheel) {
+    return altvolumewheel == 0;
+}
+
+void test_altvolumewheel_zero_falls_through() {
+    TEST_ASSERT_TRUE(altWheelFallsThrough(0));
+}
+
+void test_altvolumewheel_one_does_not_fall_through() {
+    TEST_ASSERT_FALSE(altWheelFallsThrough(1));
+}
+
+void test_altvolumewheel_two_does_not_fall_through() {
+    TEST_ASSERT_FALSE(altWheelFallsThrough(2));
+}
+
+void test_altvolumewheel_three_does_not_fall_through() {
+    TEST_ASSERT_FALSE(altWheelFallsThrough(3));
+}
+
+void test_altvolumewheel_routes_to_correct_channel_when_nonzero() {
+    // When altvolumewheel is set, the same applyHCRVolume logic applies.
+    VolumeRouteHarness h;
+    h.apply(2, 20);  // altvolumewheel=2 (chA)
+    TEST_ASSERT_EQUAL_INT(-1, h.chV);
+    TEST_ASSERT_EQUAL_INT(20, h.chA);
+    TEST_ASSERT_EQUAL_INT(-1, h.chB);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -145,6 +242,18 @@ int main(int argc, char **argv) {
 
     RUN_TEST(test_burst_of_10_rapid_calls_lets_only_one_through);
     RUN_TEST(test_three_windows_produce_three_updates);
+
+    RUN_TEST(test_volumewheel_global_sets_all_channels);
+    RUN_TEST(test_volumewheel_voice_sets_only_chV);
+    RUN_TEST(test_volumewheel_chA_sets_only_chA);
+    RUN_TEST(test_volumewheel_chB_sets_only_chB);
+    RUN_TEST(test_volumewheel_unknown_value_falls_back_to_global);
+
+    RUN_TEST(test_altvolumewheel_zero_falls_through);
+    RUN_TEST(test_altvolumewheel_one_does_not_fall_through);
+    RUN_TEST(test_altvolumewheel_two_does_not_fall_through);
+    RUN_TEST(test_altvolumewheel_three_does_not_fall_through);
+    RUN_TEST(test_altvolumewheel_routes_to_correct_channel_when_nonzero);
 
     return UNITY_END();
 }
