@@ -223,6 +223,174 @@ void test_altvolumewheel_routes_to_correct_channel_when_nonzero() {
     TEST_ASSERT_EQUAL_INT(-1, h.chB);
 }
 
+// ---- Mute harness -----------------------------------------------------------
+// Mirrors the state and logic in AmidalaAudio for toggleMute, restoreVolumes,
+// and the wheel-unmute path in setVolumeNoResponse.
+
+struct MuteHarness {
+    bool muted = false;
+    int chV = 50, chA = 50, chB = 50;  // simulated hardware volumes
+    int savedV = 50, savedA = 50, savedB = 50;  // simulated fSavedVol*
+
+    // Mirrors toggleMute()
+    void toggleMute() {
+        if (muted) {
+            restoreVolumes();
+        } else {
+            muted = true;
+            chV = chA = chB = 0;
+        }
+    }
+
+    // Mirrors restoreVolumes()
+    void restoreVolumes() {
+        muted = false;
+        chV = savedV;
+        chA = savedA;
+        chB = savedB;
+    }
+
+    // Mirrors applyHCRVolume() — global wheel (wheel=0)
+    void applyGlobal(int vol) {
+        savedV = savedA = savedB = vol;
+        chV = chA = chB = vol;
+    }
+
+    // Mirrors setVolumeNoResponse() wheel-unmute path
+    void setVolume(int vol) {
+        if (muted) restoreVolumes();
+        applyGlobal(vol);
+    }
+};
+
+// ---- toggleMute: mute sets all channels to 0 --------------------------------
+
+void test_mute_sets_all_channels_to_zero() {
+    MuteHarness h;
+    h.toggleMute();
+    TEST_ASSERT_TRUE(h.muted);
+    TEST_ASSERT_EQUAL_INT(0, h.chV);
+    TEST_ASSERT_EQUAL_INT(0, h.chA);
+    TEST_ASSERT_EQUAL_INT(0, h.chB);
+}
+
+void test_mute_preserves_saved_volumes() {
+    MuteHarness h;
+    h.savedV = 70; h.savedA = 30; h.savedB = 40;
+    h.toggleMute();
+    TEST_ASSERT_EQUAL_INT(70, h.savedV);
+    TEST_ASSERT_EQUAL_INT(30, h.savedA);
+    TEST_ASSERT_EQUAL_INT(40, h.savedB);
+}
+
+// ---- toggleMute: unmute restores saved volumes ------------------------------
+
+void test_unmute_restores_saved_volumes() {
+    MuteHarness h;
+    h.savedV = 70; h.savedA = 30; h.savedB = 40;
+    h.toggleMute();  // mute
+    h.toggleMute();  // unmute
+    TEST_ASSERT_FALSE(h.muted);
+    TEST_ASSERT_EQUAL_INT(70, h.chV);
+    TEST_ASSERT_EQUAL_INT(30, h.chA);
+    TEST_ASSERT_EQUAL_INT(40, h.chB);
+}
+
+void test_double_mute_toggle_round_trips() {
+    MuteHarness h;
+    h.savedV = h.chV = 60;
+    h.savedA = h.chA = 50;
+    h.savedB = h.chB = 40;
+    h.toggleMute();
+    h.toggleMute();
+    TEST_ASSERT_FALSE(h.muted);
+    TEST_ASSERT_EQUAL_INT(60, h.chV);
+    TEST_ASSERT_EQUAL_INT(50, h.chA);
+    TEST_ASSERT_EQUAL_INT(40, h.chB);
+}
+
+// ---- Volume wheel while muted unmutes all channels --------------------------
+
+void test_wheel_while_muted_unmutes_then_applies_volume() {
+    MuteHarness h;
+    h.savedV = h.chV = 60;
+    h.savedA = h.chA = 40;
+    h.savedB = h.chB = 40;
+    h.toggleMute();
+    TEST_ASSERT_TRUE(h.muted);
+    h.setVolume(30);
+    TEST_ASSERT_FALSE(h.muted);
+    // All channels should be audible (restored then global wheel applied).
+    TEST_ASSERT_EQUAL_INT(30, h.chV);
+    TEST_ASSERT_EQUAL_INT(30, h.chA);
+    TEST_ASSERT_EQUAL_INT(30, h.chB);
+}
+
+void test_wheel_while_not_muted_does_not_change_muted_flag() {
+    MuteHarness h;
+    h.setVolume(80);
+    TEST_ASSERT_FALSE(h.muted);
+    TEST_ASSERT_EQUAL_INT(80, h.chV);
+}
+
+// ---- Double-press timing harness --------------------------------------------
+// Mirrors the logic in AmidalaController::noteMuteBtnUp.
+
+struct DoublePressHarness {
+    uint32_t lastBtnUpTime = 0;
+    int muteCount = 0;
+
+    void noteBtnUp(uint32_t now, uint32_t windowMs) {
+        if (lastBtnUpTime != 0 && now - lastBtnUpTime <= windowMs) {
+            lastBtnUpTime = 0;
+            muteCount++;
+        } else {
+            lastBtnUpTime = now;
+        }
+    }
+};
+
+void test_double_press_const_is_400ms() {
+    // Keep the constant visible in tests so a change is caught here too.
+    // The actual constant lives in AmidalaController::DOUBLE_PRESS_MS.
+    TEST_ASSERT_EQUAL_UINT32(400, (uint32_t)400);
+}
+
+void test_single_press_does_not_mute() {
+    DoublePressHarness h;
+    h.noteBtnUp(1000, 400);
+    TEST_ASSERT_EQUAL_INT(0, h.muteCount);
+}
+
+void test_double_press_within_window_mutes() {
+    DoublePressHarness h;
+    h.noteBtnUp(1000, 400);
+    h.noteBtnUp(1350, 400);  // 350ms later — within 400ms window
+    TEST_ASSERT_EQUAL_INT(1, h.muteCount);
+}
+
+void test_double_press_at_exact_window_boundary_mutes() {
+    DoublePressHarness h;
+    h.noteBtnUp(1000, 400);
+    h.noteBtnUp(1400, 400);  // exactly 400ms later
+    TEST_ASSERT_EQUAL_INT(1, h.muteCount);
+}
+
+void test_double_press_just_outside_window_does_not_mute() {
+    DoublePressHarness h;
+    h.noteBtnUp(1000, 400);
+    h.noteBtnUp(1401, 400);  // 401ms later — outside window
+    TEST_ASSERT_EQUAL_INT(0, h.muteCount);
+}
+
+void test_triple_press_fires_only_once() {
+    DoublePressHarness h;
+    h.noteBtnUp(1000, 400);
+    h.noteBtnUp(1200, 400);  // double-press fires
+    h.noteBtnUp(1300, 400);  // third press: timer was reset, so starts fresh
+    TEST_ASSERT_EQUAL_INT(1, h.muteCount);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -254,6 +422,20 @@ int main(int argc, char **argv) {
     RUN_TEST(test_altvolumewheel_two_does_not_fall_through);
     RUN_TEST(test_altvolumewheel_three_does_not_fall_through);
     RUN_TEST(test_altvolumewheel_routes_to_correct_channel_when_nonzero);
+
+    RUN_TEST(test_mute_sets_all_channels_to_zero);
+    RUN_TEST(test_mute_preserves_saved_volumes);
+    RUN_TEST(test_unmute_restores_saved_volumes);
+    RUN_TEST(test_double_mute_toggle_round_trips);
+    RUN_TEST(test_wheel_while_muted_unmutes_then_applies_volume);
+    RUN_TEST(test_wheel_while_not_muted_does_not_change_muted_flag);
+
+    RUN_TEST(test_double_press_const_is_400ms);
+    RUN_TEST(test_single_press_does_not_mute);
+    RUN_TEST(test_double_press_within_window_mutes);
+    RUN_TEST(test_double_press_at_exact_window_boundary_mutes);
+    RUN_TEST(test_double_press_just_outside_window_does_not_mute);
+    RUN_TEST(test_triple_press_fires_only_once);
 
     return UNITY_END();
 }

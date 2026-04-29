@@ -822,6 +822,8 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     return true;
   } else if (intparam(cmd, "altdomestick=", params.altdomestick, 0, 1)) {
     return true;
+  } else if (intparam(cmd, "mutebutton=", params.mutebutton, 0, 9)) {
+    return true;
   } else if (strcmp(cmd, "reboot") == 0) {
     void (*resetArduino)() = NULL;
     resetArduino();

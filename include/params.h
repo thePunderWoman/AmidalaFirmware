@@ -178,6 +178,10 @@ struct AmidalaParameters {
   //   0 = no change (default), 1 = abs-stick mode (RoboClaw only).
   uint8_t altbtn;
   uint8_t altdomestick;
+  // mutebutton: which button (1–9, same numbering as altbtn) toggles HCR mute
+  // when double-pressed.  0 = disabled (default).  May be the same button as
+  // altbtn — a quick double-tap fires mute while a held press is the alt modifier.
+  uint8_t mutebutton;
 
   constexpr unsigned getSoundBankCount() {
     return sizeof(SB) / sizeof(SB[0]);
@@ -258,6 +262,7 @@ struct AmidalaParameters {
       domeimu = true;
       altbtn = 0;
       altdomestick = 0;
+      mutebutton = 0;
       minpulse = DEFAULT_DOME_MIN_PULSE;
       maxpulse = DEFAULT_DOME_MAX_PULSE;
       sRAMInited = true;
