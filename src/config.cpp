@@ -673,6 +673,10 @@ bool AmidalaConfig::processConfig(const char *cmd) {
   } else if (charparam(cmd, "acktype=", "gadsr", params.acktype) ||
              charparam(cmd, "b9=", "ynksdb", params.b9) ||
              intparam(cmd, "volume=", params.volume, 0, 100) ||
+             intparam(cmd, "volumeChA=", params.volumeChA, 0, 100) ||
+             intparam(cmd, "volumeChB=", params.volumeChB, 0, 100) ||
+             intparam(cmd, "volumewheel=", params.volumewheel, 0, 3) ||
+             intparam(cmd, "altvolumewheel=", params.altvolumewheel, 0, 3) ||
              intparam(cmd, "startupem=", params.startupem, 0, 4) ||
              intparam(cmd, "startuplvl=", params.startuplvl, 0, 1) ||
              intparam(cmd, "ackem=", params.ackem, 0, 4) ||

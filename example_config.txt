@@ -40,8 +40,28 @@ ackem=0
 acklvl=0
 
 # --- General System Settings ---
-# Global Volume (0-100)
+# Global Volume (0-100). Sets the initial volume for the HCR voice channel and,
+# if volumeChA/volumeChB are not overridden, all HCR channels.
 volume=50
+# HCR Channel A initial volume (0-100). Defaults to volume= if not set.
+# Useful when wav files are louder than voice — set lower than volume= to balance.
+#volumeChA=50
+# HCR Channel B initial volume (0-100). Defaults to volume= if not set.
+#volumeChB=50
+# Which channel the volume wheel (L1 trigger) controls:
+#   0 = global (all three HCR channels, default)
+#   1 = voice only (CH_V)
+#   2 = channel A only (CH_A)
+#   3 = channel B only (CH_B)
+# Has no effect when using VMusic audio.
+#volumewheel=0
+# Which channel is controlled when the alt button is held and the volume wheel turns.
+#   0 = fall through to volumewheel behaviour (default, no separate alt channel)
+#   1 = voice only (CH_V)
+#   2 = channel A only (CH_A)
+#   3 = channel B only (CH_B)
+# Only active when altbtn= is configured and audiohw=hcr.
+#altvolumewheel=0
 # Startup Sound: Play a sound when the robot boots (y/n)
 startup=y
 # Random Sounds: Start in random sound mode on boot (y/n)

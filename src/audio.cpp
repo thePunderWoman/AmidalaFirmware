@@ -7,8 +7,8 @@ extern AmidalaController amidala;
 static void hcrDelayedInit() {
   AmidalaParameters &params = amidala.params;
   amidala.fHCR.SetVolume(CH_V, params.volume);
-  amidala.fHCR.SetVolume(CH_A, params.volume);
-  amidala.fHCR.SetVolume(CH_B, params.volume);
+  amidala.fHCR.SetVolume(CH_A, params.volumeChA);
+  amidala.fHCR.SetVolume(CH_B, params.volumeChB);
   if (params.rndon) {
     amidala.fHCR.Muse(params.mindelay, params.maxdelay);
     amidala.fHCR.SetMuse(1);
@@ -59,6 +59,19 @@ void AmidalaAudio::randomToggle() {
 #endif
 }
 
+void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
+  switch (wheel) {
+    case 1: fController->fHCR.SetVolume(CH_V, volume); break;
+    case 2: fController->fHCR.SetVolume(CH_A, volume); break;
+    case 3: fController->fHCR.SetVolume(CH_B, volume); break;
+    default:
+      fController->fHCR.SetVolume(CH_V, volume);
+      fController->fHCR.SetVolume(CH_A, volume);
+      fController->fHCR.SetVolume(CH_B, volume);
+      break;
+  }
+}
+
 void AmidalaAudio::setVolumeNoResponse(uint8_t volume) {
   AmidalaParameters &params = fController->params;
 #ifndef VMUSIC_SERIAL
@@ -66,13 +79,31 @@ void AmidalaAudio::setVolumeNoResponse(uint8_t volume) {
     uint32_t now = millis();
     if (now - fLastVolumeUpdate < VOLUME_THROTTLE_MS) return;
     fLastVolumeUpdate = now;
-    fController->fHCR.SetVolume(CH_V, volume);
-    fController->fHCR.SetVolume(CH_A, volume);
-    fController->fHCR.SetVolume(CH_B, volume);
+    applyHCRVolume(params.volumewheel, volume);
   }
 #else
   if (params.audiohw == AUDIO_HW_VMUSIC) {
     fController->fVMusic.setVolumeNoResponse(volume);
+  }
+#endif
+}
+
+void AmidalaAudio::setAltVolumeNoResponse(uint8_t volume) {
+  AmidalaParameters &params = fController->params;
+#ifndef VMUSIC_SERIAL
+  if (params.audiohw == AUDIO_HW_HCR) {
+    if (params.altvolumewheel == 0) {
+      setVolumeNoResponse(volume);
+      return;
+    }
+    uint32_t now = millis();
+    if (now - fLastVolumeUpdate < VOLUME_THROTTLE_MS) return;
+    fLastVolumeUpdate = now;
+    applyHCRVolume(params.altvolumewheel, volume);
+  }
+#else
+  if (params.audiohw == AUDIO_HW_VMUSIC) {
+    setVolumeNoResponse(volume);
   }
 #endif
 }

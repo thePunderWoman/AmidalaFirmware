@@ -78,6 +78,9 @@ public:
   inline void setVolumeNoResponse(unsigned volume) {
     fAudio.setVolumeNoResponse(volume);
   }
+  inline void setAltVolumeNoResponse(unsigned volume) {
+    fAudio.setAltVolumeNoResponse(volume);
+  }
 
   AmidalaConsole fConsole;
   AmidalaAudio fAudio;

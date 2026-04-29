@@ -99,6 +99,17 @@ struct AmidalaParameters {
   uint8_t gcount;
   uint8_t sbcount;
   uint8_t volume;
+  uint8_t volumeChA;      // HCR channel A initial volume (0–100, default matches volume)
+  uint8_t volumeChB;      // HCR channel B initial volume (0–100, default matches volume)
+  // Which channel the volume wheel controls:
+  //   0 = global (all three channels, current behaviour)
+  //   1 = voice only (CH_V)
+  //   2 = channel A only (CH_A)
+  //   3 = channel B only (CH_B)
+  uint8_t volumewheel;
+  // Which channel alt+wheel controls (same enum as volumewheel).
+  // 0 = fall through to volumewheel behaviour (no separate alt channel).
+  uint8_t altvolumewheel;
   bool startup;
   bool rndon;
   bool ackon;
@@ -188,6 +199,10 @@ struct AmidalaParameters {
     if (!sRAMInited) {
       memset(this, '\0', sizeof(*this));
       volume = 50;
+      volumeChA = 50;
+      volumeChB = 50;
+      volumewheel = 0;
+      altvolumewheel = 0;
       startup = true;
       rndon = true;
       rnd.setGesture("3");
