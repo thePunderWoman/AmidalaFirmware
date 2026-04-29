@@ -303,6 +303,12 @@ sstr=DM:ROCKMARCH
 ## left controller upper left button is alt button
 altbtn=7
 altdomestick=1
+# Mute button: double-pressing this button toggles HCR mute (all channels to 0
+# and back).  Same button numbering as altbtn.  May be the same button as altbtn
+# — a quick double-tap fires mute while holding acts as the alt modifier.
+# Moving the volume wheel while muted automatically unmutes.
+# 0 = disabled (default).
+#mutebutton=0
 
 # lb=1,
 # lb=2,

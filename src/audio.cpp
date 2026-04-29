@@ -24,6 +24,9 @@ void AmidalaAudio::init(AmidalaController *controller) {
 #ifndef VMUSIC_SERIAL
   AmidalaParameters &params = fController->params;
   if (params.audiohw == AUDIO_HW_HCR) {
+    fSavedVolV = params.volume;
+    fSavedVolA = params.volumeChA;
+    fSavedVolB = params.volumeChB;
     fMusing = params.rndon;
     fController->fHCR.begin();
     DelayCall::schedule(hcrDelayedInit, 5000);
@@ -61,10 +64,20 @@ void AmidalaAudio::randomToggle() {
 
 void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
   switch (wheel) {
-    case 1: fController->fHCR.SetVolume(CH_V, volume); break;
-    case 2: fController->fHCR.SetVolume(CH_A, volume); break;
-    case 3: fController->fHCR.SetVolume(CH_B, volume); break;
+    case 1:
+      fSavedVolV = volume;
+      fController->fHCR.SetVolume(CH_V, volume);
+      break;
+    case 2:
+      fSavedVolA = volume;
+      fController->fHCR.SetVolume(CH_A, volume);
+      break;
+    case 3:
+      fSavedVolB = volume;
+      fController->fHCR.SetVolume(CH_B, volume);
+      break;
     default:
+      fSavedVolV = fSavedVolA = fSavedVolB = volume;
       fController->fHCR.SetVolume(CH_V, volume);
       fController->fHCR.SetVolume(CH_A, volume);
       fController->fHCR.SetVolume(CH_B, volume);
@@ -72,10 +85,19 @@ void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
   }
 }
 
+void AmidalaAudio::restoreVolumes() {
+  fMuted = false;
+  fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
+  fController->fHCR.SetVolume(CH_V, fSavedVolV);
+  fController->fHCR.SetVolume(CH_A, fSavedVolA);
+  fController->fHCR.SetVolume(CH_B, fSavedVolB);
+}
+
 void AmidalaAudio::setVolumeNoResponse(uint8_t volume) {
   AmidalaParameters &params = fController->params;
 #ifndef VMUSIC_SERIAL
   if (params.audiohw == AUDIO_HW_HCR) {
+    if (fMuted) restoreVolumes();
     uint32_t now = millis();
     if (now - fLastVolumeUpdate < VOLUME_THROTTLE_MS) return;
     fLastVolumeUpdate = now;
@@ -96,6 +118,7 @@ void AmidalaAudio::setAltVolumeNoResponse(uint8_t volume) {
       setVolumeNoResponse(volume);
       return;
     }
+    if (fMuted) restoreVolumes();
     uint32_t now = millis();
     if (now - fLastVolumeUpdate < VOLUME_THROTTLE_MS) return;
     fLastVolumeUpdate = now;
@@ -104,6 +127,22 @@ void AmidalaAudio::setAltVolumeNoResponse(uint8_t volume) {
 #else
   if (params.audiohw == AUDIO_HW_VMUSIC) {
     setVolumeNoResponse(volume);
+  }
+#endif
+}
+
+void AmidalaAudio::toggleMute() {
+#ifndef VMUSIC_SERIAL
+  AmidalaParameters &params = fController->params;
+  if (params.audiohw == AUDIO_HW_HCR) {
+    if (fMuted) {
+      restoreVolumes();
+    } else {
+      fMuted = true;
+      fController->fHCR.SetVolume(CH_V, 0);
+      fController->fHCR.SetVolume(CH_A, 0);
+      fController->fHCR.SetVolume(CH_B, 0);
+    }
   }
 #endif
 }

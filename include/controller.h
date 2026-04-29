@@ -82,6 +82,27 @@ public:
     fAudio.setAltVolumeNoResponse(volume);
   }
 
+  inline void toggleMute() { fAudio.toggleMute(); }
+
+  // Maximum gap between two button-up events to count as a double-press.
+  static const uint32_t DOUBLE_PRESS_MS = 400;
+
+  // Call on every button-up event for the configured mutebutton.
+  // Fires toggleMute() and resets the timer when a double-press is detected.
+  inline void noteMuteBtnUp() {
+    uint32_t now = millis();
+    if (fLastMuteBtnUpTime != 0 &&
+        now - fLastMuteBtnUpTime <= DOUBLE_PRESS_MS) {
+      fLastMuteBtnUpTime = 0;
+      toggleMute();
+    } else {
+      fLastMuteBtnUpTime = now;
+    }
+  }
+
+  // Reset the double-press timer (call on controller disconnect).
+  inline void resetMutePressTimer() { fLastMuteBtnUpTime = 0; }
+
   AmidalaConsole fConsole;
   AmidalaAudio fAudio;
   AmidalaConfig fConfig;
@@ -309,6 +330,7 @@ private:
   PPMDecoder fPPMDecoder;
   bool fMinimal = true;
   bool fAltHeld = false;
+  uint32_t fLastMuteBtnUpTime = 0;
   uint32_t fDriveStateMillis = 0;
   uint32_t fDomeStateMillis = 0;
   float fDomeThrottle = 0;

@@ -45,6 +45,11 @@ public:
   // Toggle HCR muse on/off.
   void toggleMuse();
 
+  // Toggle mute on/off.
+  // Mute: sets all HCR channels to 0 while remembering the live volumes.
+  // Unmute: restores the last-applied per-channel volumes.
+  void toggleMute();
+
   // Trigger the configured acknowledgement emote (if ackon is enabled).
   void playAck();
 
@@ -53,10 +58,23 @@ public:
 
 private:
   AmidalaController *fController = nullptr;
+
   // Send a SetVolume command to the channel(s) selected by wheel (same enum as
   // volumewheel / altvolumewheel: 0=global, 1=voice, 2=chA, 3=chB).
+  // Also updates fSavedVol* for the affected channels.
   // Does NOT apply the throttle — callers are responsible for that.
   void applyHCRVolume(uint8_t wheel, uint8_t volume);
+
+  // Restore all three HCR channels from fSavedVol* and clear fMuted.
+  // Also resets fLastVolumeUpdate so the next throttle check passes immediately.
+  void restoreVolumes();
+
+  // Last-applied non-muted volume per HCR channel (updated by applyHCRVolume,
+  // seeded from params in init()).
+  uint8_t fSavedVolV = 50;
+  uint8_t fSavedVolA = 50;
+  uint8_t fSavedVolB = 50;
+  bool fMuted = false;
   // Initialized so the first call always passes the throttle check.
   uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
   // Local mirror of the HCR muse state — avoids needing fHCR.GetMuse() which

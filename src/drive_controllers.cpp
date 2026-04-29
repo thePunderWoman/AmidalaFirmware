@@ -67,6 +67,20 @@ void DriveController::notify() {
     DISPATCH_LONG(cross,    3, altbtn, altHeld)
     DISPATCH_LONG(square,   4, altbtn, altHeld)
     DISPATCH_LONG(l3,       5, altbtn, altHeld)
+
+    // ---- Double-press mute detection (buttons 1–5) ---------------------------
+    int muteBtn = fDriver->params.mutebutton;
+    if (muteBtn >= 1 && muteBtn <= 5) {
+      bool btnUp = false;
+      switch (muteBtn) {
+        case 1: btnUp = event.button_up.triangle; break;
+        case 2: btnUp = event.button_up.circle;   break;
+        case 3: btnUp = event.button_up.cross;    break;
+        case 4: btnUp = event.button_up.square;   break;
+        case 5: btnUp = event.button_up.l3;       break;
+      }
+      if (btnUp) fDriver->noteMuteBtnUp();
+    }
   }
 }
 
@@ -81,6 +95,9 @@ void DriveController::onDisconnect() {
   int altbtn = fDriver->params.altbtn;
   if (altbtn >= 1 && altbtn <= 5)
     fDriver->setAltHeld(false);
+  int muteBtn = fDriver->params.mutebutton;
+  if (muteBtn >= 1 && muteBtn <= 5)
+    fDriver->resetMutePressTimer();
   fDriver->disableController();
 }
 
@@ -168,6 +185,19 @@ void DomeController::process() {
       DISPATCH_LONG(circle,   7, altbtn, altHeld)
       DISPATCH_LONG(cross,    8, altbtn, altHeld)
       DISPATCH_LONG(square,   9, altbtn, altHeld)
+
+      // ---- Double-press mute detection (buttons 6–9) -------------------------
+      int muteBtn = fDriver->params.mutebutton;
+      if (muteBtn >= 6 && muteBtn <= 9) {
+        bool btnUp = false;
+        switch (muteBtn) {
+          case 6: btnUp = event.button_up.triangle; break;
+          case 7: btnUp = event.button_up.circle;   break;
+          case 8: btnUp = event.button_up.cross;    break;
+          case 9: btnUp = event.button_up.square;   break;
+        }
+        if (btnUp) fDriver->noteMuteBtnUp();
+      }
     }
     return;
   } else if (fGestureTimeOut < millis()) {
@@ -233,6 +263,9 @@ void DomeController::onDisconnect() {
   int altbtn = fDriver->params.altbtn;
   if (altbtn >= 6 && altbtn <= 9)
     fDriver->setAltHeld(false);
+  int muteBtn = fDriver->params.mutebutton;
+  if (muteBtn >= 6 && muteBtn <= 9)
+    fDriver->resetMutePressTimer();
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
   if (fAltEngagedAbsStick) {
     fDriver->fDomeDrive.disableAbsoluteStickMode();

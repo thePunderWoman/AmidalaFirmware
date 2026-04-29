@@ -374,6 +374,52 @@ void test_altvolumewheel_clamps_above_three() {
     TEST_ASSERT_EQUAL(3, p.altvolumewheel);
 }
 
+// ---- mutebutton config key --------------------------------------------------
+
+void test_mutebutton_intparam_routes_to_correct_field() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("mutebutton=7", "mutebutton=", p.mutebutton, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(7, p.mutebutton);
+}
+
+void test_mutebutton_accepts_zero_disabled() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("mutebutton=0", "mutebutton=", p.mutebutton, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(0, p.mutebutton);
+}
+
+void test_mutebutton_accepts_nine_max() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("mutebutton=9", "mutebutton=", p.mutebutton, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(9, p.mutebutton);
+}
+
+void test_mutebutton_clamps_above_nine() {
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    bool matched = intparam("mutebutton=10", "mutebutton=", p.mutebutton, 0, 9);
+    TEST_ASSERT_TRUE(matched);
+    TEST_ASSERT_EQUAL(9, p.mutebutton);
+}
+
+void test_mutebutton_default_is_zero_after_init() {
+    AmidalaParameters p;
+    memset(EEPROM.data, 0, sizeof(EEPROM.data));
+    p.init(true);
+    TEST_ASSERT_EQUAL(0, p.mutebutton);
+}
+
+void test_mutebutton_field_is_distinct_from_altbtn() {
+    AmidalaParameters p;
+    TEST_ASSERT_NOT_EQUAL((void*)&p.mutebutton, (void*)&p.altbtn);
+}
+
 void test_channel_volumes_are_independent_of_volume() {
     AmidalaParameters p;
     memset(&p, 0, sizeof(p));
@@ -433,6 +479,13 @@ int main(int argc, char **argv) {
     RUN_TEST(test_altvolumewheel_accepts_nonzero);
     RUN_TEST(test_altvolumewheel_clamps_above_three);
     RUN_TEST(test_channel_volumes_are_independent_of_volume);
+
+    RUN_TEST(test_mutebutton_intparam_routes_to_correct_field);
+    RUN_TEST(test_mutebutton_accepts_zero_disabled);
+    RUN_TEST(test_mutebutton_accepts_nine_max);
+    RUN_TEST(test_mutebutton_clamps_above_nine);
+    RUN_TEST(test_mutebutton_default_is_zero_after_init);
+    RUN_TEST(test_mutebutton_field_is_distinct_from_altbtn);
 
     return UNITY_END();
 }
