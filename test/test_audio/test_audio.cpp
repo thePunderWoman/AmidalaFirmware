@@ -391,6 +391,54 @@ void test_triple_press_fires_only_once() {
     TEST_ASSERT_EQUAL_INT(1, h.muteCount);
 }
 
+// ---- L1 analog release filter -----------------------------------------------
+// Mirrors the guard in DomeController::process():
+//   if (raw > 0) { vol = map(raw, 0, 255, 0, 100); apply(vol); }
+// Releasing the button fires analog_changed with raw==0; that must not update
+// the volume (which would silently zero it out).
+
+struct L1VolumeFilterHarness {
+    int lastVolume = -1;  // -1 means no update received
+
+    void onAnalogChanged(uint8_t raw) {
+        if (raw > 0)
+            lastVolume = map(raw, 0, 255, 0, 100);
+    }
+};
+
+void test_l1_release_does_not_update_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(0);
+    TEST_ASSERT_EQUAL_INT(-1, h.lastVolume);
+}
+
+void test_l1_full_press_sets_volume_100() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(255);
+    TEST_ASSERT_EQUAL_INT(100, h.lastVolume);
+}
+
+void test_l1_half_press_sets_volume_roughly_50() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(128);
+    TEST_ASSERT_INT_WITHIN(2, 50, h.lastVolume);
+}
+
+void test_l1_minimum_nonzero_raw_sets_nonzero_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(1);
+    TEST_ASSERT_GREATER_OR_EQUAL_INT(0, h.lastVolume);
+    TEST_ASSERT_NOT_EQUAL(-1, h.lastVolume);
+}
+
+void test_l1_release_after_press_does_not_change_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(200);
+    int volAfterPress = h.lastVolume;
+    h.onAnalogChanged(0);  // button released
+    TEST_ASSERT_EQUAL_INT(volAfterPress, h.lastVolume);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -436,6 +484,12 @@ int main(int argc, char **argv) {
     RUN_TEST(test_double_press_at_exact_window_boundary_mutes);
     RUN_TEST(test_double_press_just_outside_window_does_not_mute);
     RUN_TEST(test_triple_press_fires_only_once);
+
+    RUN_TEST(test_l1_release_does_not_update_volume);
+    RUN_TEST(test_l1_full_press_sets_volume_100);
+    RUN_TEST(test_l1_half_press_sets_volume_roughly_50);
+    RUN_TEST(test_l1_minimum_nonzero_raw_sets_nonzero_volume);
+    RUN_TEST(test_l1_release_after_press_does_not_change_volume);
 
     return UNITY_END();
 }
