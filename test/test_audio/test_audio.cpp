@@ -138,6 +138,7 @@ struct VolumeRouteHarness {
             case 1: chV = volume; break;
             case 2: chA = volume; break;
             case 3: chB = volume; break;
+            case 4: chA = chB = volume; break;
             default:
                 chV = chA = chB = (int)volume;
                 break;
@@ -179,6 +180,14 @@ void test_volumewheel_chB_sets_only_chB() {
     TEST_ASSERT_EQUAL_INT(-1, h.chV);
     TEST_ASSERT_EQUAL_INT(-1, h.chA);
     TEST_ASSERT_EQUAL_INT(30, h.chB);
+}
+
+void test_volumewheel_chAB_sets_chA_and_chB_only() {
+    VolumeRouteHarness h;
+    h.apply(4, 55);
+    TEST_ASSERT_EQUAL_INT(-1, h.chV);
+    TEST_ASSERT_EQUAL_INT(55, h.chA);
+    TEST_ASSERT_EQUAL_INT(55, h.chB);
 }
 
 void test_volumewheel_unknown_value_falls_back_to_global() {
@@ -391,6 +400,54 @@ void test_triple_press_fires_only_once() {
     TEST_ASSERT_EQUAL_INT(1, h.muteCount);
 }
 
+// ---- L1 analog release filter -----------------------------------------------
+// Mirrors the guard in DomeController::process():
+//   if (raw > 0) { vol = map(raw, 0, 255, 0, 100); apply(vol); }
+// Releasing the button fires analog_changed with raw==0; that must not update
+// the volume (which would silently zero it out).
+
+struct L1VolumeFilterHarness {
+    int lastVolume = -1;  // -1 means no update received
+
+    void onAnalogChanged(uint8_t raw) {
+        if (raw > 0)
+            lastVolume = map(raw, 0, 255, 0, 100);
+    }
+};
+
+void test_l1_release_does_not_update_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(0);
+    TEST_ASSERT_EQUAL_INT(-1, h.lastVolume);
+}
+
+void test_l1_full_press_sets_volume_100() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(255);
+    TEST_ASSERT_EQUAL_INT(100, h.lastVolume);
+}
+
+void test_l1_half_press_sets_volume_roughly_50() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(128);
+    TEST_ASSERT_INT_WITHIN(2, 50, h.lastVolume);
+}
+
+void test_l1_minimum_nonzero_raw_sets_nonzero_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(1);
+    TEST_ASSERT_GREATER_OR_EQUAL_INT(0, h.lastVolume);
+    TEST_ASSERT_NOT_EQUAL(-1, h.lastVolume);
+}
+
+void test_l1_release_after_press_does_not_change_volume() {
+    L1VolumeFilterHarness h;
+    h.onAnalogChanged(200);
+    int volAfterPress = h.lastVolume;
+    h.onAnalogChanged(0);  // button released
+    TEST_ASSERT_EQUAL_INT(volAfterPress, h.lastVolume);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -415,6 +472,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_volumewheel_voice_sets_only_chV);
     RUN_TEST(test_volumewheel_chA_sets_only_chA);
     RUN_TEST(test_volumewheel_chB_sets_only_chB);
+    RUN_TEST(test_volumewheel_chAB_sets_chA_and_chB_only);
     RUN_TEST(test_volumewheel_unknown_value_falls_back_to_global);
 
     RUN_TEST(test_altvolumewheel_zero_falls_through);
@@ -436,6 +494,12 @@ int main(int argc, char **argv) {
     RUN_TEST(test_double_press_at_exact_window_boundary_mutes);
     RUN_TEST(test_double_press_just_outside_window_does_not_mute);
     RUN_TEST(test_triple_press_fires_only_once);
+
+    RUN_TEST(test_l1_release_does_not_update_volume);
+    RUN_TEST(test_l1_full_press_sets_volume_100);
+    RUN_TEST(test_l1_half_press_sets_volume_roughly_50);
+    RUN_TEST(test_l1_minimum_nonzero_raw_sets_nonzero_volume);
+    RUN_TEST(test_l1_release_after_press_does_not_change_volume);
 
     return UNITY_END();
 }

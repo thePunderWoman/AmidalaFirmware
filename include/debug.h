@@ -6,11 +6,12 @@
 
 #pragma once
 
-#define USE_DEBUG
+// #define USE_DEBUG
 // #define USE_DOME_SENSOR_SERIAL_DEBUG
 // #define USE_POCKET_REMOTE_DEBUG
 // #define USE_PPM_DEBUG
 // #define USE_MOTOR_DEBUG
 // #define USE_DOME_DEBUG
+// #define USE_VOLUME_WHEEL_DEBUG
 // #define USE_SERVO_DEBUG
 // #define USE_VERBOSE_SERVO_DEBUG

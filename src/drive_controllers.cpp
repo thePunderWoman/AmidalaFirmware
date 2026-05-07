@@ -1,4 +1,18 @@
+#include "debug.h"
 #include "controller.h"
+
+#ifdef USE_VOLUME_WHEEL_DEBUG
+#define VOLUME_WHEEL_DEBUG_PRINT(raw, vol) \
+    do { \
+        DEBUG_PRINT("volwheel raw="); DEBUG_PRINT(raw); \
+        DEBUG_PRINT(" vol="); DEBUG_PRINTLN(vol); \
+    } while (0)
+#define VOLUME_WHEEL_DEBUG_SKIP(raw) \
+    do { DEBUG_PRINT("volwheel raw="); DEBUG_PRINT(raw); DEBUG_PRINTLN(" (skipped)"); } while (0)
+#else
+#define VOLUME_WHEEL_DEBUG_PRINT(raw, vol) do {} while (0)
+#define VOLUME_WHEEL_DEBUG_SKIP(raw)       do {} while (0)
+#endif
 
 // ---------------------------------------------------------------------------
 // Button numbering (1-based, matches B[]/LB[]/AB[] indices):
@@ -113,12 +127,18 @@ void DomeController::notify() {
 
 void DomeController::process() {
   if (event.analog_changed.button.l1) {
-    /* Volume */
-    uint8_t vol = map(state.analog.button.l1, 0, 255, 0, 100);
-    if (fDriver->isAltHeld())
-      fDriver->setAltVolumeNoResponse(vol);
-    else
-      fDriver->setVolumeNoResponse(vol);
+    /* Volume — skip the release event (raw==0) to avoid zeroing volume */
+    uint8_t raw = state.analog.button.l1;
+    if (raw > 0) {
+      uint8_t vol = map(raw, 0, 255, 0, 100);
+      VOLUME_WHEEL_DEBUG_PRINT(raw, vol);
+      if (fDriver->isAltHeld())
+        fDriver->setAltVolumeNoResponse(vol);
+      else
+        fDriver->setVolumeNoResponse(vol);
+    } else {
+      VOLUME_WHEEL_DEBUG_SKIP(raw);
+    }
   }
   if (event.analog_changed.button.l2) {
     /* Throttle */
