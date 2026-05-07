@@ -1,4 +1,15 @@
+#include "debug.h"
 #include "controller.h"
+
+#ifdef USE_VOLUME_WHEEL_DEBUG
+#define HCR_VOLUME_DEBUG_PRINT(wheel, vol) \
+    do { \
+        DEBUG_PRINT("hcr vol wheel="); DEBUG_PRINT(wheel); \
+        DEBUG_PRINT(" vol="); DEBUG_PRINTLN(vol); \
+    } while (0)
+#else
+#define HCR_VOLUME_DEBUG_PRINT(wheel, vol) do {} while (0)
+#endif
 
 // amidala is the global AmidalaController instance defined in AmidalaFirmware.ino (entry point).
 extern AmidalaController amidala;
@@ -62,17 +73,32 @@ void AmidalaAudio::randomToggle() {
 #endif
 }
 
+void AmidalaAudio::sendHCRVolume(uint8_t ch, uint8_t vol) {
+  uint32_t now = millis();
+  uint32_t elapsed = now - fLastHCRSend;
+  if (elapsed < HCR_INTERCMD_DELAY_MS)
+    delay(HCR_INTERCMD_DELAY_MS - elapsed);
+  fController->fHCR.SetVolume(ch, vol);
+  fLastHCRSend = millis();
+}
+
 void AmidalaAudio::sendAllHCRVolumes(uint8_t v, uint8_t a, uint8_t b) {
-  fController->fHCR.SetVolume(CH_V, v);
-  fController->fHCR.SetVolume(CH_A, a);
-  fController->fHCR.SetVolume(CH_B, b);
+  sendHCRVolume(CH_V, v);
+  sendHCRVolume(CH_A, a);
+  sendHCRVolume(CH_B, b);
 }
 
 void AmidalaAudio::applyHCRVolume(uint8_t wheel, uint8_t volume) {
+  HCR_VOLUME_DEBUG_PRINT(wheel, volume);
   switch (wheel) {
-    case 1: fSavedVolV = volume; fController->fHCR.SetVolume(CH_V, volume); break;
-    case 2: fSavedVolA = volume; fController->fHCR.SetVolume(CH_A, volume); break;
-    case 3: fSavedVolB = volume; fController->fHCR.SetVolume(CH_B, volume); break;
+    case 1: fSavedVolV = volume; sendHCRVolume(CH_V, volume); break;
+    case 2: fSavedVolA = volume; sendHCRVolume(CH_A, volume); break;
+    case 3: fSavedVolB = volume; sendHCRVolume(CH_B, volume); break;
+    case 4:
+      fSavedVolA = fSavedVolB = volume;
+      sendHCRVolume(CH_A, volume);
+      sendHCRVolume(CH_B, volume);
+      break;
     default:
       fSavedVolV = fSavedVolA = fSavedVolB = volume;
       sendAllHCRVolumes(volume, volume, volume);

@@ -55,6 +55,10 @@ public:
 
   // Minimum milliseconds between HCR SetVolume commands. Exposed for tests.
   static const uint32_t VOLUME_THROTTLE_MS = 80;
+  // Gap between back-to-back SetVolume calls when setting multiple channels.
+  // At 9600 baud each command takes ~9ms to transmit; 10ms gives the HCR
+  // time to finish receiving and parsing each one before the next arrives.
+  static const uint32_t HCR_INTERCMD_DELAY_MS = 50;
 
 private:
   AmidalaController *fController = nullptr;
@@ -63,10 +67,14 @@ private:
   void sendAllHCRVolumes(uint8_t v, uint8_t a, uint8_t b);
 
   // Send a SetVolume command to the channel(s) selected by wheel (same enum as
-  // volumewheel / altvolumewheel: 0=global, 1=voice, 2=chA, 3=chB).
+  // volumewheel / altvolumewheel: 0=global, 1=voice, 2=chA, 3=chB, 4=chA+chB).
   // Also updates fSavedVol* for the affected channels.
   // Does NOT apply the throttle — callers are responsible for that.
   void applyHCRVolume(uint8_t wheel, uint8_t volume);
+
+  // Send a single SetVolume command to the HCR, enforcing HCR_INTERCMD_DELAY_MS
+  // since the last send. All HCR volume sends must go through here.
+  void sendHCRVolume(uint8_t ch, uint8_t vol);
 
   // Restore all three HCR channels from fSavedVol* and clear fMuted.
   // Also resets fLastVolumeUpdate so the next throttle check passes immediately.
@@ -80,6 +88,8 @@ private:
   bool fMuted = false;
   // Initialized via unsigned wraparound so the first call always passes the throttle check.
   uint32_t fLastVolumeUpdate = (uint32_t)(0u - VOLUME_THROTTLE_MS);
+  // Tracks the last time any SetVolume command was sent to the HCR.
+  uint32_t fLastHCRSend = (uint32_t)(0u - HCR_INTERCMD_DELAY_MS);
   // Local mirror of the HCR muse state — avoids needing fHCR.GetMuse() which
   // requires update() to have run and received a QM response from the board.
   bool fMusing = false;

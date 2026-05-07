@@ -138,6 +138,7 @@ struct VolumeRouteHarness {
             case 1: chV = volume; break;
             case 2: chA = volume; break;
             case 3: chB = volume; break;
+            case 4: chA = chB = volume; break;
             default:
                 chV = chA = chB = (int)volume;
                 break;
@@ -179,6 +180,14 @@ void test_volumewheel_chB_sets_only_chB() {
     TEST_ASSERT_EQUAL_INT(-1, h.chV);
     TEST_ASSERT_EQUAL_INT(-1, h.chA);
     TEST_ASSERT_EQUAL_INT(30, h.chB);
+}
+
+void test_volumewheel_chAB_sets_chA_and_chB_only() {
+    VolumeRouteHarness h;
+    h.apply(4, 55);
+    TEST_ASSERT_EQUAL_INT(-1, h.chV);
+    TEST_ASSERT_EQUAL_INT(55, h.chA);
+    TEST_ASSERT_EQUAL_INT(55, h.chB);
 }
 
 void test_volumewheel_unknown_value_falls_back_to_global() {
@@ -463,6 +472,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_volumewheel_voice_sets_only_chV);
     RUN_TEST(test_volumewheel_chA_sets_only_chA);
     RUN_TEST(test_volumewheel_chB_sets_only_chB);
+    RUN_TEST(test_volumewheel_chAB_sets_chA_and_chB_only);
     RUN_TEST(test_volumewheel_unknown_value_falls_back_to_global);
 
     RUN_TEST(test_altvolumewheel_zero_falls_through);
