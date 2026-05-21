@@ -11,10 +11,14 @@ AmidalaController amidala;
 void setup() {
   REELTWO_READY();
 
-  randomSeed(analogRead(3));
+  randomSeed(analogRead(ANALOG1_PIN));
+
+  // Initialise the SPI bus with the custom GPIOs before any SPI device (SD,
+  // XBee) calls begin().
+  SPI.begin(SPI_SCK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, -1);
 
   CONSOLE_SERIAL.begin(DEFAULT_BAUD_RATE);
-  XBEE_SERIAL.begin(57600);
+  // XBee serial init omitted — XBee 3 uses SPI (see PR esp32-2).
 #ifdef VMUSIC_SERIAL
   VMUSIC_SERIAL.begin(9600);
 #endif

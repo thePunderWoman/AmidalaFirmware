@@ -19,12 +19,21 @@ typedef uint8_t byte;
 #define LOW  0
 #define HIGH 1
 
-// ---- Analog pin numbers (Arduino Mega 2560 mapping) ----
+// ---- Analog pin constants (native test fallback values) ----
+// ESP32-S3 pin_config.h uses raw GPIO numbers for analog pins (not A0/A1).
+// These are kept so any test or library code that references A0-A3 compiles.
 #ifndef A0
-#define A0 54
-#define A1 55
-#define A2 56
-#define A3 57
+#define A0 1
+#define A1 2
+#define A2 3
+#define A3 4
+#endif
+
+// ---- SD card chip-select (native test fallback) ----
+// The mock SD.begin() ignores the pin argument; this just satisfies the
+// compiler when config.h's SD path references SD_CS_PIN.
+#ifndef SD_CS_PIN
+#define SD_CS_PIN 0
 #endif
 
 // ---- Arduino pin mode constants ----
@@ -220,6 +229,9 @@ struct SerialClass {
   template<typename T> void print(T)   {}
 };
 static SerialClass Serial;
+// Serial0 is UART0 on ESP32-S3; pin_config.h defines SERIAL = Serial0.
+// Alias it to Serial so native tests compile without a second stub.
+static SerialClass& Serial0 = Serial;
 
 // ---- SD / File stubs (used by config_reader.h in SD path) ----
 

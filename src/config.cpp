@@ -380,38 +380,38 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       b->sound.serialstr = 0;
       switch (args[1]) {
       case ButtonAction::kSound:
-        b->sound.soundbank = max(1, min(args[2], params.sbcount));
+        b->sound.soundbank = max(1, (int)min(args[2], params.sbcount));
         b->sound.sound = (argcount >= 4) ? args[3] : 0;
         b->sound.sound =
             min(b->sound.sound, params.SB[b->sound.soundbank].numfiles);
         b->action = args[1];
         break;
       case ButtonAction::kServo:
-        b->servo.num = max(1, min(args[2], 8));
+        b->servo.num = max(1, min((int)args[2], 8));
         b->servo.pos = (argcount >= 4) ? args[3] : 0;
-        b->servo.pos = min(max(b->servo.pos, 0), 180);
+        b->servo.pos = min(max((int)b->servo.pos, 0), 180);
         b->action = args[1];
         break;
       case ButtonAction::kDigitalOut:
-        b->dout.num = max(1, min(args[2], 8));
+        b->dout.num = max(1, min((int)args[2], 8));
         b->dout.state = (argcount >= 4) ? args[3] : 0;
-        b->dout.state = min(2, b->dout.state);
+        b->dout.state = min(2, (int)b->dout.state);
         b->action = args[1];
         break;
       case ButtonAction::kI2CCmd:
-        b->i2ccmd.target = min(args[2], 100);
+        b->i2ccmd.target = min((int)args[2], 100);
         b->i2ccmd.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
       case ButtonAction::kSerialStr:
-        b->serial.serialstr = min(args[2], MAX_SERIAL_STRINGS);
+        b->serial.serialstr = min((int)args[2], MAX_SERIAL_STRINGS);
         DEBUG_PRINT("BUTTON SERIAL #");
         DEBUG_PRINTLN(b->serial.serialstr);
         if (b->action == 0)
           b->action = args[1];
         break;
       case ButtonAction::kI2CStr:
-        b->i2cstr.target = min(args[2], 100);
+        b->i2cstr.target = min((int)args[2], 100);
         b->i2cstr.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
@@ -452,36 +452,36 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       b->sound.serialstr = 0;
       switch (args[1]) {
       case ButtonAction::kSound:
-        b->sound.soundbank = max(1, min(args[2], params.sbcount));
+        b->sound.soundbank = max(1, (int)min(args[2], params.sbcount));
         b->sound.sound = (argcount >= 4) ? args[3] : 0;
         b->sound.sound =
             min(b->sound.sound, params.SB[b->sound.soundbank].numfiles);
         b->action = args[1];
         break;
       case ButtonAction::kServo:
-        b->servo.num = max(1, min(args[2], 8));
+        b->servo.num = max(1, min((int)args[2], 8));
         b->servo.pos = (argcount >= 4) ? args[3] : 0;
-        b->servo.pos = min(max(b->servo.pos, 0), 180);
+        b->servo.pos = min(max((int)b->servo.pos, 0), 180);
         b->action = args[1];
         break;
       case ButtonAction::kDigitalOut:
-        b->dout.num = max(1, min(args[2], 8));
+        b->dout.num = max(1, min((int)args[2], 8));
         b->dout.state = (argcount >= 4) ? args[3] : 0;
-        b->dout.state = min(2, b->dout.state);
+        b->dout.state = min(2, (int)b->dout.state);
         b->action = args[1];
         break;
       case ButtonAction::kI2CCmd:
-        b->i2ccmd.target = min(args[2], 100);
+        b->i2ccmd.target = min((int)args[2], 100);
         b->i2ccmd.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
       case ButtonAction::kSerialStr:
-        b->serial.serialstr = min(args[2], MAX_SERIAL_STRINGS);
+        b->serial.serialstr = min((int)args[2], MAX_SERIAL_STRINGS);
         if (b->action == 0)
           b->action = args[1];
         break;
       case ButtonAction::kI2CStr:
-        b->i2cstr.target = min(args[2], 100);
+        b->i2cstr.target = min((int)args[2], 100);
         b->i2cstr.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
@@ -522,36 +522,36 @@ bool AmidalaConfig::processConfig(const char *cmd) {
       b->sound.serialstr = 0;
       switch (args[1]) {
       case ButtonAction::kSound:
-        b->sound.soundbank = max(1, min(args[2], params.sbcount));
+        b->sound.soundbank = max(1, (int)min(args[2], params.sbcount));
         b->sound.sound = (argcount >= 4) ? args[3] : 0;
         b->sound.sound =
             min(b->sound.sound, params.SB[b->sound.soundbank].numfiles);
         b->action = args[1];
         break;
       case ButtonAction::kServo:
-        b->servo.num = max(1, min(args[2], 8));
+        b->servo.num = max(1, min((int)args[2], 8));
         b->servo.pos = (argcount >= 4) ? args[3] : 0;
-        b->servo.pos = min(max(b->servo.pos, 0), 180);
+        b->servo.pos = min(max((int)b->servo.pos, 0), 180);
         b->action = args[1];
         break;
       case ButtonAction::kDigitalOut:
-        b->dout.num = max(1, min(args[2], 8));
+        b->dout.num = max(1, min((int)args[2], 8));
         b->dout.state = (argcount >= 4) ? args[3] : 0;
-        b->dout.state = min(2, b->dout.state);
+        b->dout.state = min(2, (int)b->dout.state);
         b->action = args[1];
         break;
       case ButtonAction::kI2CCmd:
-        b->i2ccmd.target = min(args[2], 100);
+        b->i2ccmd.target = min((int)args[2], 100);
         b->i2ccmd.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
       case ButtonAction::kSerialStr:
-        b->serial.serialstr = min(args[2], MAX_SERIAL_STRINGS);
+        b->serial.serialstr = min((int)args[2], MAX_SERIAL_STRINGS);
         if (b->action == 0)
           b->action = args[1];
         break;
       case ButtonAction::kI2CStr:
-        b->i2cstr.target = min(args[2], 100);
+        b->i2cstr.target = min((int)args[2], 100);
         b->i2cstr.cmd = (argcount >= 4) ? args[3] : 0;
         b->action = args[1];
         break;
@@ -581,7 +581,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     return false;
   } else if (startswith(cmd, "sstr=")) {
     SerialString *a =
-        &params.Str[min(params.serialcount, params.getSerialStringCount() - 1)];
+        &params.Str[min((unsigned)params.serialcount, params.getSerialStringCount() - 1)];
     strncpy(a->str, cmd, sizeof(a->str) - 1);
     a->str[sizeof(a->str) - 1] = '\0';
     if (params.serialcount < params.getSerialStringCount())
@@ -600,7 +600,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     if (*cmd == ',')
       cmd++;
     GestureAction *g =
-        &params.G[min(params.gcount, params.getGestureCount() - 1)];
+        &params.G[min((unsigned)params.gcount, params.getGestureCount() - 1)];
     ButtonAction *b = &g->action;
     g->gesture.setGesture(gesture);
     if (!g->gesture.isEmpty()) {
@@ -613,32 +613,32 @@ bool AmidalaConfig::processConfig(const char *cmd) {
         b->sound.serialstr = 0;
         switch (b->action = args[0]) {
         case ButtonAction::kSound:
-          b->sound.soundbank = max(1, min(args[1], params.sbcount));
+          b->sound.soundbank = max(1, (int)min(args[1], params.sbcount));
           b->sound.sound = (argcount >= 3) ? args[2] : 0;
           b->sound.sound =
               min(b->sound.sound, params.SB[b->sound.soundbank].numfiles);
           break;
         case ButtonAction::kServo:
-          b->servo.num = max(1, min(args[1], 8));
+          b->servo.num = max(1, min((int)args[1], 8));
           b->servo.pos = (argcount >= 3) ? args[2] : 0;
-          b->servo.pos = min(max(b->servo.pos, 0), 180);
+          b->servo.pos = min(max((int)b->servo.pos, 0), 180);
           break;
         case ButtonAction::kDigitalOut:
-          b->dout.num = max(1, min(args[1], 8));
+          b->dout.num = max(1, min((int)args[1], 8));
           b->dout.state = (argcount >= 3) ? args[2] : 0;
-          b->dout.state = min(2, b->dout.state);
+          b->dout.state = min(2, (int)b->dout.state);
           break;
         case ButtonAction::kI2CCmd:
-          b->i2ccmd.target = min(args[1], 100);
+          b->i2ccmd.target = min((int)args[1], 100);
           b->i2ccmd.cmd = (argcount >= 3) ? args[2] : 0;
           break;
         case ButtonAction::kSerialStr:
-          b->serial.serialstr = min(args[1], MAX_SERIAL_STRINGS);
+          b->serial.serialstr = min((int)args[1], MAX_SERIAL_STRINGS);
           DEBUG_PRINT("GESTURE SERIAL #");
           DEBUG_PRINTLN(b->serial.serialstr);
           break;
         case ButtonAction::kI2CStr:
-          b->i2cstr.target = min(args[1], 100);
+          b->i2cstr.target = min((int)args[1], 100);
           b->i2cstr.cmd = (argcount >= 3) ? args[2] : 0;
           break;
         case ButtonAction::kHCREmote:

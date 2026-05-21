@@ -3,92 +3,103 @@
 // All physical I/O pin numbers and serial port aliases are defined here so
 // that wiring changes require edits in exactly one place.
 //
-// Note: SERIAL is conditionally defined based on DOME_DRIVE_SERIAL and
-// RDH_SERIAL. Those symbols come from drive_config.h and rdh_serial.h,
-// which must be included (via controller.h) before this header is included.
+// Target: ESP32-S3 WROOM1 N16R8 — Amidala custom PCB.
 //
-// Note: If VMUSIC_SERIAL is ever enabled, move #include "pin_config.h" in the
-// .ino to before the #ifndef VMUSIC_SERIAL / #include <hcr.h> block so that
-// the guard evaluates correctly.
+// Note: drive-system serial symbols (DOME_DRIVE_SERIAL, RDH_SERIAL) come from
+// drive_config.h and must be resolved before this header is included.
 
 #pragma once
 
-// ---- Servo output pins (PWM) ------------------------------------------------
+// ---- Servo output pins (LEDC PWM via ServoDispatchESP32) --------------------
+// 8 channels on this PCB.
 
-#define SERVO1_PIN  2
-#define SERVO2_PIN  3
-#define SERVO3_PIN  4
-#define SERVO4_PIN  5
-#define SERVO5_PIN  6
-#define SERVO6_PIN  7
-#define SERVO7_PIN  8
-#define SERVO8_PIN  9
-#define SERVO9_PIN  10
-#define SERVO10_PIN 11
-#define SERVO11_PIN 12
-#define SERVO12_PIN 13
+#define SERVO1_PIN  3
+#define SERVO2_PIN  4
+#define SERVO3_PIN  5
+#define SERVO4_PIN  6
+#define SERVO5_PIN  7
+#define SERVO6_PIN  15
+#define SERVO7_PIN  16
+#define SERVO8_PIN  46   // Strapping pin — safe after boot
 
 // ---- Digital output pins ----------------------------------------------------
+// 6 channels available on this PCB.  DOUT7/8 (DRIVE_ACTIVE / DOME_ACTIVE)
+// are not wired; setDigitalPin() treats a 0 entry as absent.
 
-#define DOUT1_PIN 22
-#define DOUT2_PIN 23
-#define DOUT3_PIN 24
-#define DOUT4_PIN 25
-#define DOUT5_PIN 26
-#define DOUT6_PIN 27
-#define DOUT7_PIN 28
-#define DOUT8_PIN 29
+#define DOUT1_PIN   11
+#define DOUT2_PIN   12
+#define DOUT3_PIN   13
+#define DOUT4_PIN   14
+#define DOUT5_PIN   9
+#define DOUT6_PIN   10
 
-#define DRIVE_ACTIVE_PIN DOUT7_PIN
-#define DOME_ACTIVE_PIN  DOUT8_PIN
+// ---- Hall-effect sensor (RoboClaw dome drive) --------------------------------
+// Wired to the Digital 4 header (GPIO14).  All ESP32-S3 GPIOs support
+// external interrupts, so any digital pin would work here.
+
+#define DOME_HALL_PIN  14
 
 // ---- PPM RC input -----------------------------------------------------------
 
-#define PPMIN_PIN 49
+#define PPMIN_PIN   47
 
-// ---- Analog inputs ----------------------------------------------------------
+// ---- Analog inputs (ADC1, WiFi-safe) ----------------------------------------
 
-#define ANALOG1_PIN A0
-#define ANALOG2_PIN A1
+#define ANALOG1_PIN  1   // ADC1_0
+#define ANALOG2_PIN  2   // ADC1_1
 
-// ---- Mode select pins (active-low with INPUT_PULLUP) ------------------------
+// ---- SD card chip-select pin ------------------------------------------------
 
-#define RCSEL_PIN 30
-#define SEL2_PIN  31
+#define SD_CS_PIN   39
 
-// ---- Status LED / indicator pins --------------------------------------------
+// ---- Mode select pins -------------------------------------------------------
+// RCSEL: disabled by default — GPIO12/13 serve as DOUT2/3.
+//   Define ESP32_RCSEL_ENABLE to reclaim them as RCSEL A/B (loses DOUT2/3).
+// SEL2 A: available on GPIO21 unless AUX serial is enabled.
+//   Define ESP32_AUX_SERIAL to use GPIO21/38 as UART2; SEL2 is then unavailable.
 
-#define STATUS_J1_PIN 32
-#define STATUS_J2_PIN 33
-#define STATUS_RC_PIN 34
-#define STATUS_S1_PIN 35
-#define STATUS_S2_PIN 36
-#define STATUS_S3_PIN 37
-#define STATUS_S4_PIN 38
+#ifdef ESP32_RCSEL_ENABLE
+#define RCSEL_PIN   12   // RCSEL A, shared with DOUT2
+#endif
 
-// ---- Dome hall-effect sensor (RoboClaw dome drive only) --------------------
-// Pin 18 = Arduino Mega INT5 (hardware interrupt 5), currently unassigned.
-// The sensor output is active-LOW; attach to INPUT_PULLUP and trigger on FALLING.
-// Only used when DOME_DRIVE == DOME_DRIVE_ROBOCLAW.
-#define DOME_HALL_PIN 18
+#ifndef ESP32_AUX_SERIAL
+#define SEL2_PIN    21   // SEL2 A; SEL2 B (GPIO38) reserved for future 2-bit expansion
+#endif
 
-// ---- I2C bus pins (Arduino Mega: SDA = pin 20, SCL = pin 21) ---------------
+// ---- SPI bus pins -----------------------------------------------------------
 
-#define I2C_SDA_PIN 20
-#define I2C_SCL_PIN 21
+#define SPI_MOSI_PIN      35
+#define SPI_MISO_PIN      36
+#define SPI_SCK_PIN       37
+#define XBEE_CS_PIN       40
+#define SPI_SPARE_CS_PIN  41
+#define XBEE_ATTN_PIN     42
+
+// ---- I2C bus pins -----------------------------------------------------------
+// Both are strapping pins but safe to use after boot.
+
+#define I2C_SDA_PIN  45
+#define I2C_SCL_PIN  48
+
+// ---- AUX serial (UART2 on SW-UART header) -----------------------------------
+// Mutually exclusive with SEL2 A/B.  Enable with -DESP32_AUX_SERIAL.
+
+#ifdef ESP32_AUX_SERIAL
+#define AUX_SERIAL         Serial2
+#define AUX_SERIAL_TX_PIN  21
+#define AUX_SERIAL_RX_PIN  38
+#endif
 
 // ---- Serial port assignments ------------------------------------------------
+// Serial  = USB-CDC console  (ARDUINO_USB_CDC_ON_BOOT=1)
+// Serial0 = UART0 GPIO43/44  WCB / body controller out  (was Serial3 on Mega)
+// Serial1 = UART1 GPIO17/18  RoboClaw dome drive         (see drive_config.h)
 
-#define CONSOLE_SERIAL Serial
-#define XBEE_SERIAL    Serial1
+#define CONSOLE_SERIAL  Serial   // USB-CDC
 
-// Uncomment the line below to enable the VMusic2 audio board on Serial2.
-// See note at the top of this file about include ordering when enabling this.
-// #define VMUSIC_SERIAL  Serial2
-
-// SERIAL is Serial3 when Serial3 is not already claimed by the drive or
-// dome controller. DOME_DRIVE_SERIAL and RDH_SERIAL are resolved from the
-// drive-system configuration before this header is included.
+// SERIAL (downstream WCB output) — ESP32 Arduino.h defines SERIAL as 0x0
+// (a UART index constant).  Undefine it so we can use SERIAL as a Stream alias.
 #if !defined(DOME_DRIVE_SERIAL) && !defined(RDH_SERIAL)
-#define SERIAL Serial3
+#undef  SERIAL
+#define SERIAL  Serial0          // UART0, GPIO43/44 — WCB serial out
 #endif

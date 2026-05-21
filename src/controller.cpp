@@ -10,7 +10,7 @@ extern ServoPD tiltservo;
 
 AmidalaController::AmidalaController()
     : fConsole(),
-      fHCR(&Serial3, HCR_BAUD_RATE),
+      fHCR(&SERIAL, HCR_BAUD_RATE),
 #ifdef VMUSIC_SERIAL
       fVMusic(VMUSIC_SERIAL),
 #endif
@@ -84,7 +84,7 @@ void AmidalaController::setup() {
   fConsole.println(F("Activating Digital Outputs"));
   fConsole.println(F("Init i2c Bus"));
 
-  Wire.begin();
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   Wire.setClock(100000L);
 #if defined(WIRE_HAS_TIMEOUT)
   Wire.setWireTimeout(3000, true);
@@ -104,6 +104,7 @@ void AmidalaController::setup() {
   remote[0]->type = remote[0]->kFailsafe;
   remote[1]->type = remote[1]->kFailsafe;
 
+#ifdef STATUS_J1_PIN
   pinMode(STATUS_J1_PIN, OUTPUT);
   pinMode(STATUS_J2_PIN, OUTPUT);
   pinMode(STATUS_RC_PIN, OUTPUT);
@@ -111,6 +112,7 @@ void AmidalaController::setup() {
   pinMode(STATUS_S2_PIN, OUTPUT);
   pinMode(STATUS_S3_PIN, OUTPUT);
   pinMode(STATUS_S4_PIN, OUTPUT);
+#endif
 
   pinMode(DOUT1_PIN, OUTPUT);
   pinMode(DOUT2_PIN, OUTPUT);
@@ -118,15 +120,23 @@ void AmidalaController::setup() {
   pinMode(DOUT4_PIN, OUTPUT);
   pinMode(DOUT5_PIN, OUTPUT);
   pinMode(DOUT6_PIN, OUTPUT);
+#ifdef DOUT7_PIN
   pinMode(DOUT7_PIN, OUTPUT);
+#endif
+#ifdef DOUT8_PIN
   pinMode(DOUT8_PIN, OUTPUT);
+#endif
 
   pinMode(ANALOG2_PIN, INPUT);
 
   pinMode(PPMIN_PIN, INPUT);
 
+#ifdef SEL2_PIN
   pinMode(SEL2_PIN, INPUT_PULLUP);
+#endif
+#ifdef RCSEL_PIN
   pinMode(RCSEL_PIN, INPUT_PULLUP);
+#endif
 
   setDigitalPin(1, false);
   setDigitalPin(2, false);
@@ -137,7 +147,9 @@ void AmidalaController::setup() {
   setDigitalPin(7, false);
   setDigitalPin(8, false);
 
+#ifndef ARDUINO_ARCH_ESP32
   fXBee.setSerial(XBEE_SERIAL);
+#endif
 
   fTankDrive.setMaxSpeed(MAXIMUM_SPEED);
   fTankDrive.setThrottleAccelerationScale(ACCELERATION_SCALE);
@@ -171,7 +183,12 @@ void AmidalaController::setup() {
 #endif
 #endif
 
-  for (unsigned i = 0; i < params.getServoCount(); i++) {
+  // Servo GPIO numbers are non-sequential, so use a lookup table.
+  static const uint8_t kServoPins[] = {
+      SERVO1_PIN, SERVO2_PIN, SERVO3_PIN, SERVO4_PIN,
+      SERVO5_PIN, SERVO6_PIN, SERVO7_PIN, SERVO8_PIN,
+  };
+  for (unsigned i = 0; i < sizeof(kServoPins) / sizeof(kServoPins[0]); i++) {
     uint16_t minpulse =
         params.S[i].minpulse ? params.S[i].minpulse : params.minpulse;
     uint16_t maxpulse =
@@ -195,7 +212,7 @@ void AmidalaController::setup() {
                    (int32_t)(neutral_percent *
                              ((int32_t)maxpulse - (int32_t)minpulse)));
 
-    servoDispatch.setServo(i, SERVO1_PIN + i, minpulse, maxpulse,
+    servoDispatch.setServo(i, kServoPins[i], minpulse, maxpulse,
                            neutralpulse, 0);
   }
 }
@@ -256,8 +273,11 @@ void AmidalaController::animate() {
     remote[0]->type = remote[0]->kRC;
     remote[1]->type = remote[1]->kRC;
   }
-  if (checkRCMode() && remote[0]->type == remote[0]->kRC &&
-      !XBEE_SERIAL.available()) {
+  if (checkRCMode() && remote[0]->type == remote[0]->kRC
+#ifndef ARDUINO_ARCH_ESP32
+      && !XBEE_SERIAL.available()
+#endif
+      ) {
     if (fPPMDecoder.decode()) {
       remote[0]->x = fPPMDecoder.channel(0, 0, 1024, 512);
       remote[0]->y = fPPMDecoder.channel(1, 0, 1024, 512);
@@ -270,6 +290,7 @@ void AmidalaController::animate() {
       remote[1]->update();
     }
   } else {
+#ifndef ARDUINO_ARCH_ESP32
     fXBee.readPacket();
     if (fXBee.getResponse().isAvailable()) {
       if (fXBee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
@@ -312,6 +333,7 @@ void AmidalaController::animate() {
       for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++)
         remote[i]->lastPacket = 0;
     }
+#endif // !ARDUINO_ARCH_ESP32
     bool stickActive = false;
     for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
       auto r = remote[i];
@@ -357,10 +379,15 @@ void AmidalaController::animate() {
         fConsole.print(i + 1);
         fConsole.print(F(" FS "));
         fConsole.println(r->failsafe() ? F("ON") : F("OFF"));
-        if (i == 0)
+        if (i == 0) {
+#ifdef STATUS_J1_PIN
           digitalWrite(STATUS_J1_PIN, r->failsafe() ? LOW : HIGH);
-        else if (i == 1)
+#endif
+        } else if (i == 1) {
+#ifdef STATUS_J2_PIN
           digitalWrite(STATUS_J2_PIN, r->failsafe() ? LOW : HIGH);
+#endif
+        }
         r->failsafeNotice = r->failsafe();
       }
     }

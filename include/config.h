@@ -101,7 +101,7 @@ bool readConfig(VMusic& vm, Console& console) {
 /// were processed.
 template <typename Console>
 bool readConfig(Console& console) {
-    if (!SD.begin(4)) {
+    if (!SD.begin(SD_CS_PIN)) {
         Serial.println("initialization failed!");
         return false;
     }
