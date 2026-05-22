@@ -4,7 +4,7 @@
 // To enable autodome serial, uncomment the line below (or define it before
 // including this header):
 //
-//   #define RDH_SERIAL  Serial3
+//   #define RDH_SERIAL  Serial1
 //
 // RDHSerial wraps a Stream (typically a hardware UART) and provides:
 //   - Command methods to move the dome (setRelativePosition,

@@ -6,12 +6,8 @@
 
 #pragma once
 
-#ifdef ARDUINO_ARCH_ESP32
-
 // ESP32's TwoWire uses setTimeout(ms) instead of AVR's setWireTimeout(us, reset).
 // The HCR library calls _i2c->setWireTimeout(3000, true) (3000 µs = 3 ms).
 #ifndef setWireTimeout
 #define setWireTimeout(timeout_us, reset_on_timeout) setTimeout((timeout_us) / 1000)
 #endif
-
-#endif // ARDUINO_ARCH_ESP32

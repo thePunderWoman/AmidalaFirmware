@@ -34,10 +34,10 @@
 #define DOUT6_PIN   10
 
 // ---- Hall-effect sensor (RoboClaw dome drive) --------------------------------
-// Wired to the Digital 4 header (GPIO14).  All ESP32-S3 GPIOs support
+// Wired to the Digital 1 header (GPIO11).  All ESP32-S3 GPIOs support
 // external interrupts, so any digital pin would work here.
 
-#define DOME_HALL_PIN  14
+#define DOME_HALL_PIN  11
 
 // ---- PPM RC input -----------------------------------------------------------
 

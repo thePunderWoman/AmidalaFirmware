@@ -38,9 +38,6 @@
 #include "version.h"
 #include "pin_config.h"
 #include <EEPROM.h>
-#ifndef ARDUINO_ARCH_ESP32
-#include <XBee.h>
-#endif
 #include "ppm_decoder.h"
 #include "i2c_utils.h"
 
@@ -354,10 +351,6 @@ private:
   friend class DriveController;
   friend class DomeController;
 
-#ifndef ARDUINO_ARCH_ESP32
-  XBee fXBee;
-  ZBRxIoSampleResponse fResponse;
-#endif
   PPMDecoder fPPMDecoder;
   bool fMinimal = true;
   bool fAltHeld = false;

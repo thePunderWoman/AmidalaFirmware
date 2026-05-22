@@ -60,7 +60,7 @@ struct MockEEPROM {
   void    write(int addr, uint8_t v) { if (addr >= 0 && addr < (int)sizeof(data)) data[addr] = v; }
 
   // put<T>: write sizeof(T) bytes starting at addr, in memory order.
-  // Matches the Arduino EEPROM.put() template behaviour (byte-by-byte, LSB first on AVR).
+  // Matches the Arduino EEPROM.put() template behaviour (byte-by-byte, LSB first).
   template<typename T>
   const T& put(int addr, const T& t) {
     const uint8_t* ptr = (const uint8_t*)&t;

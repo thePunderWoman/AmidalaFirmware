@@ -12,7 +12,7 @@
 // identify a group of servos.
 //
 //   Pin  Group ID,      Min,  Max
-const ServoSettings servoSettings[] PROGMEM = {
+const ServoSettings servoSettings[] = {
     {SERVO1_PIN, 1000, 2000, 0}, {SERVO2_PIN, 1000, 2000, 0},
     {SERVO3_PIN, 1000, 2000, 0}, {SERVO4_PIN, 1000, 2000, 0},
     {SERVO5_PIN, 1000, 2000, 0}, {SERVO6_PIN, 1000, 2000, 0},

@@ -38,7 +38,7 @@ void test_dout_pins() {
 // ---- Dome hall-effect sensor -------------------------------------------------
 
 void test_dome_hall_pin() {
-    TEST_ASSERT_EQUAL(14, DOME_HALL_PIN);
+    TEST_ASSERT_EQUAL(11, DOME_HALL_PIN);
 }
 
 // ---- PPM RC input -----------------------------------------------------------

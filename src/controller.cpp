@@ -147,10 +147,6 @@ void AmidalaController::setup() {
   setDigitalPin(7, false);
   setDigitalPin(8, false);
 
-#ifndef ARDUINO_ARCH_ESP32
-  fXBee.setSerial(XBEE_SERIAL);
-#endif
-
   fTankDrive.setMaxSpeed(MAXIMUM_SPEED);
   fTankDrive.setThrottleAccelerationScale(ACCELERATION_SCALE);
   fTankDrive.setThrottleDecelerationScale(DECELRATION_SCALE);
@@ -273,11 +269,7 @@ void AmidalaController::animate() {
     remote[0]->type = remote[0]->kRC;
     remote[1]->type = remote[1]->kRC;
   }
-  if (checkRCMode() && remote[0]->type == remote[0]->kRC
-#ifndef ARDUINO_ARCH_ESP32
-      && !XBEE_SERIAL.available()
-#endif
-      ) {
+  if (checkRCMode() && remote[0]->type == remote[0]->kRC) {
     if (fPPMDecoder.decode()) {
       remote[0]->x = fPPMDecoder.channel(0, 0, 1024, 512);
       remote[0]->y = fPPMDecoder.channel(1, 0, 1024, 512);
@@ -290,50 +282,6 @@ void AmidalaController::animate() {
       remote[1]->update();
     }
   } else {
-#ifndef ARDUINO_ARCH_ESP32
-    fXBee.readPacket();
-    if (fXBee.getResponse().isAvailable()) {
-      if (fXBee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
-        fXBee.getResponse().getZBRxIoSampleResponse(fResponse);
-        if (fResponse.containsAnalog() && fResponse.containsDigital()) {
-          uint32_t addr = fResponse.getRemoteAddress64().getLsb();
-          for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
-            auto r = remote[i];
-            if (addr == r->addr) {
-              r->y = fResponse.getAnalog(0);
-              r->x = fResponse.getAnalog(1);
-              r->w1 = fResponse.getAnalog(2);
-              r->w2 = fResponse.getAnalog(3);
-
-              bool *b = r->button;
-              b[0] = !fResponse.isDigitalOn(5);
-              b[1] = !fResponse.isDigitalOn(6);
-              b[2] = !fResponse.isDigitalOn(10);
-              b[3] = !fResponse.isDigitalOn(11);
-              b[4] = !fResponse.isDigitalOn(4);
-              r->lastPacket = millis();
-              if (r->type != r->kXBee)
-                r->type = r->kXBee;
-              break;
-            }
-          }
-        }
-      } else {
-        DEBUG_PRINTLN();
-        DEBUG_PRINT("Expected I/O Sample, but got ");
-        DEBUG_PRINT_HEX(fXBee.getResponse().getApiId());
-        DEBUG_PRINTLN();
-      }
-    } else if (fXBee.getResponse().isError()) {
-#ifdef USE_POCKET_REMOTE_DEBUG
-      DEBUG_PRINTLN();
-      DEBUG_PRINT("Error reading packet.  Error code: ");
-      DEBUG_PRINTLN(fXBee.getResponse().getErrorCode());
-#endif
-      for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++)
-        remote[i]->lastPacket = 0;
-    }
-#endif // !ARDUINO_ARCH_ESP32
     bool stickActive = false;
     for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
       auto r = remote[i];
