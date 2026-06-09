@@ -1,0 +1,13 @@
+# Amidala Firmware — 16 MB factory partition table.
+#
+# Uses a single "factory" app partition (not ota_0/ota_1) so the bootloader
+# always boots this slot unconditionally.  OTA rollback does not apply to
+# factory partitions, which prevents the bootloader-crash loop that occurs
+# when the app crashes repeatedly before calling
+# esp_ota_mark_app_valid_cancel_rollback() (default_16MB.csv with OTA layout
+# triggered this after a series of qio_opi pin-conflict crashes).
+#
+# Name,     Type,  SubType,  Offset,   Size
+nvs,        data,  nvs,      0x9000,   0x5000,
+factory,    app,   factory,  0x10000,  0xF00000,
+coredump,   data,  coredump, 0xFF0000, 0x10000,

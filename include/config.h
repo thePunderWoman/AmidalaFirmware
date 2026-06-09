@@ -101,7 +101,15 @@ bool readConfig(VMusic& vm, Console& console) {
 /// were processed.
 template <typename Console>
 bool readConfig(Console& console) {
-    if (!SD.begin(SD_CS_PIN)) {
+    bool sdReady = false;
+    for (int attempt = 1; attempt <= 5 && !sdReady; attempt++) {
+        if (attempt > 1) {
+            Serial.printf("[SD] init attempt %d...\n", attempt);
+            delay(500);
+        }
+        sdReady = SD.begin(SD_CS_PIN);
+    }
+    if (!sdReady) {
         Serial.println("initialization failed!");
         return false;
     }

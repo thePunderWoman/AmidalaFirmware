@@ -14,9 +14,7 @@
 //   Pin  Group ID,      Min,  Max
 const ServoSettings servoSettings[] = {
     {SERVO1_PIN, 1000, 2000, 0}, {SERVO2_PIN, 1000, 2000, 0},
-    {SERVO3_PIN, 1000, 2000, 0}, {SERVO4_PIN, 1000, 2000, 0},
-    {SERVO5_PIN, 1000, 2000, 0}, {SERVO6_PIN, 1000, 2000, 0},
-    {SERVO7_PIN, 1000, 2000, 0}, {SERVO8_PIN, 1000, 2000, 0}};
+    {SERVO3_PIN, 1000, 2000, 0}, {SERVO4_PIN, 1000, 2000, 0}};
 
 // The concrete instance lives here — the only TU that includes
 // ServoDispatchDirect.h (and its ISR handlers via ServoDispatchPrivate.h).

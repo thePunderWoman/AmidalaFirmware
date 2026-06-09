@@ -286,7 +286,7 @@ public:
     // DOUT1_PIN + offset arithmetic.  Entries beyond the wired count are 0.
     static const uint8_t kDoutPins[] = {
         DOUT1_PIN, DOUT2_PIN, DOUT3_PIN, DOUT4_PIN,
-        DOUT5_PIN, DOUT6_PIN,
+        0, 0,
 #ifdef DOUT7_PIN
         DOUT7_PIN,
 #else

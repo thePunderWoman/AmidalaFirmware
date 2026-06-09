@@ -3,7 +3,7 @@
 // All physical I/O pin numbers and serial port aliases are defined here so
 // that wiring changes require edits in exactly one place.
 //
-// Target: ESP32-S3 WROOM1 N16R8 — Amidala custom PCB.
+// Target: ESP32-S3 WROOM1 N16R8 — Amidala custom PCB v1.1.
 //
 // Note: drive-system serial symbols (DOME_DRIVE_SERIAL, RDH_SERIAL) come from
 // drive_config.h and must be resolved before this header is included.
@@ -11,33 +11,28 @@
 #pragma once
 
 // ---- Servo output pins (LEDC PWM via ServoDispatchESP32) --------------------
-// 8 channels on this PCB.
+// 4 channels on this PCB (v1.1).
 
 #define SERVO1_PIN  3
 #define SERVO2_PIN  4
 #define SERVO3_PIN  5
 #define SERVO4_PIN  6
-#define SERVO5_PIN  7
-#define SERVO6_PIN  15
-#define SERVO7_PIN  16
-#define SERVO8_PIN  46   // Strapping pin — safe after boot
 
 // ---- Digital output pins ----------------------------------------------------
-// 6 channels available on this PCB.  DOUT7/8 (DRIVE_ACTIVE / DOME_ACTIVE)
-// are not wired; setDigitalPin() treats a 0 entry as absent.
+// 4 channels on this PCB (v1.1).
+// DRIVE_ACTIVE / DOME_ACTIVE are not wired; setDigitalPin() treats a 0 entry
+// as absent.
 
-#define DOUT1_PIN   11
-#define DOUT2_PIN   12
-#define DOUT3_PIN   13
-#define DOUT4_PIN   14
-#define DOUT5_PIN   9
-#define DOUT6_PIN   10
+#define DOUT1_PIN   39
+#define DOUT2_PIN   40
+#define DOUT3_PIN   41
+#define DOUT4_PIN   42
 
 // ---- Hall-effect sensor (RoboClaw dome drive) --------------------------------
-// Wired to the Digital 1 header (GPIO11).  All ESP32-S3 GPIOs support
+// Wired to the Digital 2 header (GPIO40).  All ESP32-S3 GPIOs support
 // external interrupts, so any digital pin would work here.
 
-#define DOME_HALL_PIN  11
+#define DOME_HALL_PIN  40
 
 // ---- PPM RC input -----------------------------------------------------------
 
@@ -50,17 +45,11 @@
 
 // ---- SD card chip-select pin ------------------------------------------------
 
-#define SD_CS_PIN   39
+#define SD_CS_PIN   10
 
-// ---- Mode select pins -------------------------------------------------------
-// RCSEL: disabled by default — GPIO12/13 serve as DOUT2/3.
-//   Define ESP32_RCSEL_ENABLE to reclaim them as RCSEL A/B (loses DOUT2/3).
+// ---- Mode select pin --------------------------------------------------------
 // SEL2 A: available on GPIO21 unless AUX serial is enabled.
 //   Define ESP32_AUX_SERIAL to use GPIO21/38 as UART2; SEL2 is then unavailable.
-
-#ifdef ESP32_RCSEL_ENABLE
-#define RCSEL_PIN   12   // RCSEL A, shared with DOUT2
-#endif
 
 #ifndef ESP32_AUX_SERIAL
 #define SEL2_PIN    21   // SEL2 A; SEL2 B (GPIO38) reserved for future 2-bit expansion
@@ -68,18 +57,18 @@
 
 // ---- SPI bus pins -----------------------------------------------------------
 
-#define SPI_MOSI_PIN      35
-#define SPI_MISO_PIN      36
-#define SPI_SCK_PIN       37
-#define XBEE_CS_PIN       40
-#define SPI_SPARE_CS_PIN  41
-#define XBEE_ATTN_PIN     42
+#define SPI_MOSI_PIN      11
+#define SPI_MISO_PIN      13
+#define SPI_SCK_PIN       12
+#define XBEE_CS_PIN        7
+#define XBEE_ATTN_PIN     16
+#define XBEE_SLEEP_PIN    15
+#define SPI_SPARE_CS_PIN  14
 
 // ---- I2C bus pins -----------------------------------------------------------
-// Both are strapping pins but safe to use after boot.
 
-#define I2C_SDA_PIN  45
-#define I2C_SCL_PIN  48
+#define I2C_SDA_PIN  8
+#define I2C_SCL_PIN  9
 
 // ---- AUX serial (UART2 on SW-UART header) -----------------------------------
 // Mutually exclusive with SEL2 A/B.  Enable with -DESP32_AUX_SERIAL.

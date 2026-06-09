@@ -118,8 +118,6 @@ void AmidalaController::setup() {
   pinMode(DOUT2_PIN, OUTPUT);
   pinMode(DOUT3_PIN, OUTPUT);
   pinMode(DOUT4_PIN, OUTPUT);
-  pinMode(DOUT5_PIN, OUTPUT);
-  pinMode(DOUT6_PIN, OUTPUT);
 #ifdef DOUT7_PIN
   pinMode(DOUT7_PIN, OUTPUT);
 #endif
@@ -134,10 +132,6 @@ void AmidalaController::setup() {
 #ifdef SEL2_PIN
   pinMode(SEL2_PIN, INPUT_PULLUP);
 #endif
-#ifdef RCSEL_PIN
-  pinMode(RCSEL_PIN, INPUT_PULLUP);
-#endif
-
   setDigitalPin(1, false);
   setDigitalPin(2, false);
   setDigitalPin(3, false);
@@ -182,7 +176,6 @@ void AmidalaController::setup() {
   // Servo GPIO numbers are non-sequential, so use a lookup table.
   static const uint8_t kServoPins[] = {
       SERVO1_PIN, SERVO2_PIN, SERVO3_PIN, SERVO4_PIN,
-      SERVO5_PIN, SERVO6_PIN, SERVO7_PIN, SERVO8_PIN,
   };
   for (unsigned i = 0; i < sizeof(kServoPins) / sizeof(kServoPins[0]); i++) {
     uint16_t minpulse =

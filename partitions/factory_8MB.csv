@@ -1,0 +1,10 @@
+# Amidala Firmware — 8 MB factory partition table (ESP32-S3-WROOM-1 N8R2).
+#
+# Single factory app partition — bootloader boots unconditionally, no OTA
+# rollback state to corrupt.  See partitions/factory_16MB.csv for notes on
+# why the default OTA layout caused a permanent boot loop.
+#
+# Name,     Type,  SubType,  Offset,   Size
+nvs,        data,  nvs,      0x9000,   0x5000,
+factory,    app,   factory,  0x10000,  0x7E0000,
+coredump,   data,  coredump, 0x7F0000, 0x10000,
