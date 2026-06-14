@@ -12,7 +12,7 @@ This is a fork of [Skelmir's (rimim) original Amidala Firmware](https://github.c
 
 - **Microcontroller:** ESP32-S3 WROOM1 N16R8 (16 MB flash, 8 MB OPI PSRAM) on a custom Amidala PCB
 - **Console:** USB-CDC (`Serial`) — connect via USB for the configuration console
-- **Configuration storage:** Micro SD card (`config.txt` loaded at startup, CS on GPIO39)
+- **Configuration storage:** Micro SD card (`config.txt` loaded at startup, CS on GPIO10)
 
 ## Features
 
@@ -192,15 +192,16 @@ The XBee 3 module connects via SPI on the dedicated XBee header:
 
 | Signal | GPIO |
 |--------|------|
-| MOSI | 35 |
-| MISO | 36 |
-| SCK | 37 |
-| CS | 40 |
-| ATTN | 42 |
+| MOSI | 11 |
+| MISO | 13 |
+| SCK | 12 |
+| CS | 7 |
+| ATTN | 16 |
+| SLEEP | 15 |
 
 ### Servo outputs (LEDC PWM)
 
-Eight servo channels are available:
+Four servo channels are available:
 
 | Channel | GPIO | Header |
 |---------|------|--------|
@@ -208,36 +209,30 @@ Eight servo channels are available:
 | S2 | 4 | Digital 7 |
 | S3 | 5 | Digital 6 |
 | S4 | 6 | Digital 5 |
-| S5 | 7 | Digital ... |
-| S6 | 15 | — |
-| S7 | 16 | — |
-| S8 | 46 | — |
 
 For PWM-based drive systems the motor controller's PWM inputs connect to S1 (right) and S2 (left), with S4 used for dome PWM.
 
 ### Digital outputs
 
-Six digital output channels:
+Four digital output channels:
 
 | Channel | GPIO | Header |
 |---------|------|--------|
-| DOUT1 / Hall sensor | 11 | Digital 1 |
-| DOUT2 | 12 | Digital 2 |
-| DOUT3 | 13 | Digital 3 |
-| DOUT4 | 14 | Digital 4 |
-| DOUT5 | 9 | Digital ... |
-| DOUT6 | 10 | Digital ... |
+| DOUT1 | 39 | Digital 1 |
+| DOUT2 / Hall sensor | 40 | Digital 2 |
+| DOUT3 | 41 | Digital 3 |
+| DOUT4 | 42 | Digital 4 |
 
-> The hall-effect sensor for the encoder dome drive plugs into the **Digital 1** header (GPIO11).
+> The hall-effect sensor for the encoder dome drive plugs into the **Digital 2** header (GPIO40).
 
 ### Other connections
 
 | Function | GPIO |
 |----------|------|
 | PPM RC receiver input | 47 |
-| SD card CS | 39 |
-| I2C SDA | 45 |
-| I2C SCL | 48 |
+| SD card CS | 10 |
+| I2C SDA | 8 |
+| I2C SCL | 9 |
 | Analog input 1 | 1 (ADC1_0) |
 | Analog input 2 | 2 (ADC1_1) |
 

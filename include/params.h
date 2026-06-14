@@ -88,12 +88,12 @@ struct AmidalaParameters {
   uint8_t rcj;
 
   SoundBank SB[20];
-  Channel S[12];
+  Channel S[4];
   ButtonAction B[9];
   ButtonAction LB[9];
   ButtonAction AB[9];   // Alt-button layer (dispatched when altbtn is held)
   GestureAction G[10];
-  DigitalOut D[8];
+  DigitalOut D[4];
   SerialString Str[MAX_SERIAL_STRINGS];
   uint8_t serialcount;
   uint8_t gcount;
