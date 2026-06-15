@@ -81,7 +81,7 @@ public:
                    unsigned neutralvalue) {
     uint16_t pulse = (ch < fChannelCount) ? fChannel[ch] : 0;
     if (pulse != 0)
-      return map(max(min(pulse, 1600), 600), 600, 1600, minvalue, maxvalue);
+      return map(max(min((int)pulse, 1600), 600), 600, 1600, minvalue, maxvalue);
     return neutralvalue;
   }
 

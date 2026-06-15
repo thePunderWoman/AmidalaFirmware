@@ -3,7 +3,7 @@
 //
 // ButtonAction  — what happens when a button is pressed or a gesture fires.
 // GestureAction — a (Gesture, ButtonAction) pair stored in config.
-// SerialString  — a short string sent to the primary serial port (Serial3).
+// SerialString  — a short string sent to the primary serial port (SERIAL / Serial0).
 //
 // Depends on: Gesture (core.h), Print (Arduino / arduino_mock.h)
 // In embedded builds hcr.h is included before this header and supplies the

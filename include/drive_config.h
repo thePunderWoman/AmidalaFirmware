@@ -71,12 +71,14 @@
 // ---- RoboClaw dome drive defaults -------------------------------------------
 // These apply only when DOME_DRIVE == DOME_DRIVE_ROBOCLAW.
 
-// Serial port used by the RoboClaw. Serial2 keeps Serial3 free for the
-// primary downstream output even when the RoboClaw dome drive is active.
-// (DOME_DRIVE_SERIAL is intentionally NOT defined here so pin_config.h still
-// assigns SERIAL = Serial3 for the primary output.)
+// Serial port used by the RoboClaw.
+// UART1 (GPIO17/18) — Serial0 (UART0) carries the WCB downstream output.
+// DOME_DRIVE_SERIAL is intentionally NOT defined here so pin_config.h still
+// assigns SERIAL = Serial0 for the primary output.
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
-#define ROBOCLAW_SERIAL    Serial2
+#define ROBOCLAW_SERIAL    Serial1   // UART1, GPIO17/18
+#define ROBOCLAW_RX_PIN    18        // UART1 RX
+#define ROBOCLAW_TX_PIN    17        // UART1 TX
 #define ROBOCLAW_BAUD_RATE 38400
 #endif
 
@@ -139,7 +141,7 @@
 // ---- Drive system resolution (derived — do not edit) ------------------------
 
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
-#define DRIVE_SERIAL      Serial3
+#define DRIVE_SERIAL      Serial0   // UART0, GPIO43/44
 #define DOME_DRIVE_SERIAL DRIVE_SERIAL
 #define CHANNEL_MIXING    true  // premix channels before sending commands
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
@@ -163,7 +165,7 @@
 #endif
 
 #if !defined(DOME_DRIVE_SERIAL) && DOME_DRIVE == DOME_DRIVE_SABER
-#define DOME_DRIVE_SERIAL Serial3
+#define DOME_DRIVE_SERIAL Serial0
 #endif
 
 #if defined(DOME_DRIVE) && DOME_DRIVE != DOME_DRIVE_SABER && \

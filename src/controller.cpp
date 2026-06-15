@@ -1,16 +1,15 @@
 #include "controller.h"
 #include "dome_position_math.h"
+#include "xbee_spi.h"
 
 // Hardware globals defined in src/globals.cpp.
 // ServoDispatch& avoids including ServoDispatchDirect.h here, which would
 // pull in ServoDispatchPrivate.h and duplicate ISR definitions.
 extern ServoDispatch& servoDispatch;
-extern ServoPD panservo;
-extern ServoPD tiltservo;
 
 AmidalaController::AmidalaController()
     : fConsole(),
-      fHCR(&Serial3, HCR_BAUD_RATE),
+      fHCR(&SERIAL, HCR_BAUD_RATE),
 #ifdef VMUSIC_SERIAL
       fVMusic(VMUSIC_SERIAL),
 #endif
@@ -21,9 +20,9 @@ AmidalaController::AmidalaController()
 #if DRIVE_SYSTEM == DRIVE_SYSTEM_SABER
       fTankDrive(128, DRIVE_SERIAL, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_PWM
-      fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
+      fTankDrive(servoDispatch, 1, 0, 2, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM
-      fTankDrive(servoDispatch, 1, 0, 4, fDriveStick),
+      fTankDrive(servoDispatch, 1, 0, 2, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_SERIAL
       fTankDrive(DRIVE_SERIAL, fDriveStick),
 #elif DRIVE_SYSTEM == DRIVE_SYSTEM_ROBOTEQ_PWM_SERIAL
@@ -84,7 +83,7 @@ void AmidalaController::setup() {
   fConsole.println(F("Activating Digital Outputs"));
   fConsole.println(F("Init i2c Bus"));
 
-  Wire.begin();
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   Wire.setClock(100000L);
 #if defined(WIRE_HAS_TIMEOUT)
   Wire.setWireTimeout(3000, true);
@@ -94,7 +93,7 @@ void AmidalaController::setup() {
     fConsole.println(F("Auto Correct Gestures Enabled"));
 
 #ifdef SERIAL
-  SERIAL.begin(params.serialbaud);
+  SERIAL.begin(params.serialbaud, SERIAL_8N1, SERIAL0_RX_PIN, SERIAL0_TX_PIN);
   sendSerialString(params.serialinit);
   fAudio.init(this);
 #endif
@@ -104,6 +103,7 @@ void AmidalaController::setup() {
   remote[0]->type = remote[0]->kFailsafe;
   remote[1]->type = remote[1]->kFailsafe;
 
+#ifdef STATUS_J1_PIN
   pinMode(STATUS_J1_PIN, OUTPUT);
   pinMode(STATUS_J2_PIN, OUTPUT);
   pinMode(STATUS_RC_PIN, OUTPUT);
@@ -111,23 +111,26 @@ void AmidalaController::setup() {
   pinMode(STATUS_S2_PIN, OUTPUT);
   pinMode(STATUS_S3_PIN, OUTPUT);
   pinMode(STATUS_S4_PIN, OUTPUT);
+#endif
 
   pinMode(DOUT1_PIN, OUTPUT);
   pinMode(DOUT2_PIN, OUTPUT);
   pinMode(DOUT3_PIN, OUTPUT);
   pinMode(DOUT4_PIN, OUTPUT);
-  pinMode(DOUT5_PIN, OUTPUT);
-  pinMode(DOUT6_PIN, OUTPUT);
+#ifdef DOUT7_PIN
   pinMode(DOUT7_PIN, OUTPUT);
+#endif
+#ifdef DOUT8_PIN
   pinMode(DOUT8_PIN, OUTPUT);
+#endif
 
   pinMode(ANALOG2_PIN, INPUT);
 
   pinMode(PPMIN_PIN, INPUT);
 
+#ifdef SEL2_PIN
   pinMode(SEL2_PIN, INPUT_PULLUP);
-  pinMode(RCSEL_PIN, INPUT_PULLUP);
-
+#endif
   setDigitalPin(1, false);
   setDigitalPin(2, false);
   setDigitalPin(3, false);
@@ -136,8 +139,6 @@ void AmidalaController::setup() {
   setDigitalPin(6, false);
   setDigitalPin(7, false);
   setDigitalPin(8, false);
-
-  fXBee.setSerial(XBEE_SERIAL);
 
   fTankDrive.setMaxSpeed(MAXIMUM_SPEED);
   fTankDrive.setThrottleAccelerationScale(ACCELERATION_SCALE);
@@ -171,7 +172,10 @@ void AmidalaController::setup() {
 #endif
 #endif
 
-  for (unsigned i = 0; i < params.getServoCount(); i++) {
+  static const uint8_t kServoPins[] = {
+      SERVO1_PIN, SERVO2_PIN, SERVO3_PIN,
+  };
+  for (unsigned i = 0; i < sizeof(kServoPins) / sizeof(kServoPins[0]); i++) {
     uint16_t minpulse =
         params.S[i].minpulse ? params.S[i].minpulse : params.minpulse;
     uint16_t maxpulse =
@@ -180,11 +184,7 @@ void AmidalaController::setup() {
     float neutral_percent = float(params.S[i].n) / 180.0f;
     bool reversed = params.S[i].r;
 
-    if (i == 3) {
-      if (!params.domeflip) {
-        reversed = !reversed;
-      }
-    } else if (reversed) {
+    if (reversed) {
       uint16_t temp = maxpulse;
       maxpulse = minpulse;
       minpulse = temp;
@@ -195,7 +195,7 @@ void AmidalaController::setup() {
                    (int32_t)(neutral_percent *
                              ((int32_t)maxpulse - (int32_t)minpulse)));
 
-    servoDispatch.setServo(i, SERVO1_PIN + i, minpulse, maxpulse,
+    servoDispatch.setServo(i, kServoPins[i], minpulse, maxpulse,
                            neutralpulse, 0);
   }
 }
@@ -256,8 +256,10 @@ void AmidalaController::animate() {
     remote[0]->type = remote[0]->kRC;
     remote[1]->type = remote[1]->kRC;
   }
+  xbeeSPIReceiveAll(remote, sizeof(remote) / sizeof(remote[0]));
+
   if (checkRCMode() && remote[0]->type == remote[0]->kRC &&
-      !XBEE_SERIAL.available()) {
+      digitalRead(XBEE_ATTN_PIN) == HIGH) {
     if (fPPMDecoder.decode()) {
       remote[0]->x = fPPMDecoder.channel(0, 0, 1024, 512);
       remote[0]->y = fPPMDecoder.channel(1, 0, 1024, 512);
@@ -270,48 +272,6 @@ void AmidalaController::animate() {
       remote[1]->update();
     }
   } else {
-    fXBee.readPacket();
-    if (fXBee.getResponse().isAvailable()) {
-      if (fXBee.getResponse().getApiId() == ZB_IO_SAMPLE_RESPONSE) {
-        fXBee.getResponse().getZBRxIoSampleResponse(fResponse);
-        if (fResponse.containsAnalog() && fResponse.containsDigital()) {
-          uint32_t addr = fResponse.getRemoteAddress64().getLsb();
-          for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
-            auto r = remote[i];
-            if (addr == r->addr) {
-              r->y = fResponse.getAnalog(0);
-              r->x = fResponse.getAnalog(1);
-              r->w1 = fResponse.getAnalog(2);
-              r->w2 = fResponse.getAnalog(3);
-
-              bool *b = r->button;
-              b[0] = !fResponse.isDigitalOn(5);
-              b[1] = !fResponse.isDigitalOn(6);
-              b[2] = !fResponse.isDigitalOn(10);
-              b[3] = !fResponse.isDigitalOn(11);
-              b[4] = !fResponse.isDigitalOn(4);
-              r->lastPacket = millis();
-              if (r->type != r->kXBee)
-                r->type = r->kXBee;
-              break;
-            }
-          }
-        }
-      } else {
-        DEBUG_PRINTLN();
-        DEBUG_PRINT("Expected I/O Sample, but got ");
-        DEBUG_PRINT_HEX(fXBee.getResponse().getApiId());
-        DEBUG_PRINTLN();
-      }
-    } else if (fXBee.getResponse().isError()) {
-#ifdef USE_POCKET_REMOTE_DEBUG
-      DEBUG_PRINTLN();
-      DEBUG_PRINT("Error reading packet.  Error code: ");
-      DEBUG_PRINTLN(fXBee.getResponse().getErrorCode());
-#endif
-      for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++)
-        remote[i]->lastPacket = 0;
-    }
     bool stickActive = false;
     for (unsigned i = 0; i < sizeof(remote) / sizeof(remote[0]); i++) {
       auto r = remote[i];
@@ -357,10 +317,15 @@ void AmidalaController::animate() {
         fConsole.print(i + 1);
         fConsole.print(F(" FS "));
         fConsole.println(r->failsafe() ? F("ON") : F("OFF"));
-        if (i == 0)
+        if (i == 0) {
+#ifdef STATUS_J1_PIN
           digitalWrite(STATUS_J1_PIN, r->failsafe() ? LOW : HIGH);
-        else if (i == 1)
+#endif
+        } else if (i == 1) {
+#ifdef STATUS_J2_PIN
           digitalWrite(STATUS_J2_PIN, r->failsafe() ? LOW : HIGH);
+#endif
+        }
         r->failsafeNotice = r->failsafe();
       }
     }

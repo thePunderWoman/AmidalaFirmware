@@ -38,7 +38,6 @@
 #include "version.h"
 #include "pin_config.h"
 #include <EEPROM.h>
-#include <XBee.h>
 #include "ppm_decoder.h"
 #include "i2c_utils.h"
 
@@ -145,37 +144,47 @@ public:
 #endif
 
   bool checkRCMode() {
+#ifdef RCSEL_PIN
     static bool sRCMode;
     if (digitalRead(RCSEL_PIN) == LOW) {
       if (!sRCMode) {
         fConsole.println("RC Enabled (" +
                          String(params.getRadioChannelCount()) + " Channels)");
+#ifdef STATUS_RC_PIN
         digitalWrite(STATUS_RC_PIN, HIGH);
+#endif
         sRCMode = true;
       }
       return true;
     }
     if (sRCMode) {
+#ifdef STATUS_RC_PIN
       digitalWrite(STATUS_RC_PIN, LOW);
+#endif
       sRCMode = false;
     }
     return false;
+#else
+    return false;
+#endif
   }
 
   bool checkSel2Mode() {
+#ifdef SEL2_PIN
     static bool sSel2Mode;
     if (digitalRead(SEL2_PIN) == LOW) {
       if (!sSel2Mode) {
-        // digitalWrite?
         sSel2Mode = true;
       }
       return true;
     }
     if (sSel2Mode) {
-      // digitalWrite?
       sSel2Mode = false;
     }
     return false;
+#else
+    return false;
+#endif
   }
 
   unsigned getDomeMode() {
@@ -273,9 +282,26 @@ public:
   void domeEmergencyStop();
 
   void setDigitalPin(int pin, bool state) {
+    // DOUT pins are non-sequential on ESP32 so use a lookup table rather than
+    // DOUT1_PIN + offset arithmetic.  Entries beyond the wired count are 0.
+    static const uint8_t kDoutPins[] = {
+        DOUT1_PIN, DOUT2_PIN, DOUT3_PIN, DOUT4_PIN,
+        0, 0,
+#ifdef DOUT7_PIN
+        DOUT7_PIN,
+#else
+        0,
+#endif
+#ifdef DOUT8_PIN
+        DOUT8_PIN,
+#else
+        0,
+#endif
+    };
     if (pin >= 1 && pin <= 8) {
       params.D[--pin].state = state;
-      digitalWrite(DOUT1_PIN + pin, (state) ? HIGH : LOW);
+      if (kDoutPins[pin] != 0)
+        digitalWrite(kDoutPins[pin], state ? HIGH : LOW);
     }
   }
 
@@ -325,8 +351,6 @@ private:
   friend class DriveController;
   friend class DomeController;
 
-  XBee fXBee;
-  ZBRxIoSampleResponse fResponse;
   PPMDecoder fPPMDecoder;
   bool fMinimal = true;
   bool fAltHeld = false;

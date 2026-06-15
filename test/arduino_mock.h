@@ -19,12 +19,21 @@ typedef uint8_t byte;
 #define LOW  0
 #define HIGH 1
 
-// ---- Analog pin numbers (Arduino Mega 2560 mapping) ----
+// ---- Analog pin constants (native test fallback values) ----
+// ESP32-S3 pin_config.h uses raw GPIO numbers for analog pins (not A0/A1).
+// These are kept so any test or library code that references A0-A3 compiles.
 #ifndef A0
-#define A0 54
-#define A1 55
-#define A2 56
-#define A3 57
+#define A0 1
+#define A1 2
+#define A2 3
+#define A3 4
+#endif
+
+// ---- SD card chip-select (native test fallback) ----
+// The mock SD.begin() ignores the pin argument; this just satisfies the
+// compiler when config.h's SD path references SD_CS_PIN.
+#ifndef SD_CS_PIN
+#define SD_CS_PIN 0
 #endif
 
 // ---- Arduino pin mode constants ----
@@ -51,7 +60,7 @@ struct MockEEPROM {
   void    write(int addr, uint8_t v) { if (addr >= 0 && addr < (int)sizeof(data)) data[addr] = v; }
 
   // put<T>: write sizeof(T) bytes starting at addr, in memory order.
-  // Matches the Arduino EEPROM.put() template behaviour (byte-by-byte, LSB first on AVR).
+  // Matches the Arduino EEPROM.put() template behaviour (byte-by-byte, LSB first).
   template<typename T>
   const T& put(int addr, const T& t) {
     const uint8_t* ptr = (const uint8_t*)&t;
@@ -68,6 +77,8 @@ struct MockEEPROM {
       ptr[i] = read(addr + i);
     return t;
   }
+
+  void commit() {}  // no-op: ESP32 NVS flush not needed in tests
 };
 static MockEEPROM EEPROM;
 
@@ -218,8 +229,16 @@ struct SerialClass {
   void print(char)          {}
   template<typename T> void println(T) {}
   template<typename T> void print(T)   {}
+  template<typename... Args> void printf(const char*, Args...) {}
 };
 static SerialClass Serial;
+// Serial0 is UART0 on ESP32-S3; pin_config.h defines SERIAL = Serial0.
+// Alias it to Serial so native tests compile without a second stub.
+static SerialClass& Serial0 = Serial;
+
+// ---- SPI stub (used by config.h SD.begin(pin, SPI)) ----
+struct MockSPIClass {};
+static MockSPIClass SPI;
 
 // ---- SD / File stubs (used by config_reader.h in SD path) ----
 
@@ -244,7 +263,8 @@ struct MockSDClass {
   bool        beginResult  = true;
   const char* fileContent  = nullptr;
 
-  bool begin(int /*pin*/)        { return beginResult; }
+  bool begin(int /*pin*/)                      { return beginResult; }
+  bool begin(int /*pin*/, MockSPIClass& /*spi*/) { return beginResult; }
   File open(const char* /*name*/) {
     return fileContent ? File(fileContent) : File();
   }

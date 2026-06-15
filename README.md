@@ -4,25 +4,27 @@ A firmware control system for an astromech or similar droid that uses dual XBee 
 
 This is a fork of [Skelmir's (rimim) original Amidala Firmware](https://github.com/reeltwo/AmidalaFirmware).
 
+> **This branch (`esp32-port`) targets the ESP32-S3 custom PCB.** The `main` branch targets the Arduino Mega 2560.
+
 > **Getting Started guide coming soon.** For now, see [example_config.txt](example_config.txt) for a complete, annotated example of every available configuration option.
 
 ## Hardware
 
-- **Microcontroller:** Arduino Mega 2560
-- **Shield:** DFRobot Mega Sensor Shield V2.4
-- **Configuration storage:** Micro SD card (`config.txt` loaded at startup)
+- **Microcontroller:** ESP32-S3 WROOM1 N16R8 (16 MB flash, 8 MB OPI PSRAM) on a custom Amidala PCB
+- **Console:** USB-CDC (`Serial`) — connect via USB for the configuration console
+- **Configuration storage:** Micro SD card (`config.txt` loaded at startup, CS on GPIO10)
 
 ## Features
 
 ### Remote Control
 
-Dual [XBee Pocket Remotes](https://reeltwo.github.io/Reeltwo) provide wireless control:
+Dual [XBee 3 Pocket Remotes](https://reeltwo.github.io/Reeltwo) provide wireless control via SPI:
 
 - **Drive controller (left XBee):** Drive throttle and button inputs
 - **Dome controller (right XBee):** Dome rotation, volume control, and gesture input
 - Graceful failsafe handling on signal loss
 
-An optional analog **RC receiver (PPM)** is also supported for drive control.
+An optional analog **RC receiver (PPM)** is also supported for drive control (GPIO47).
 
 ### Drive Systems
 
@@ -156,7 +158,7 @@ PPM RC receiver input for drive and dome control, with configurable failsafe tim
 
 ### Primary Serial and Auxiliary I2C
 
-- **Primary serial** (Serial3 / COM3): up to 40 configurable string templates sent to downstream devices on button or gesture actions
+- **Primary serial** (SERIAL / Serial0, GPIO43/44): up to 40 configurable string templates sent to downstream devices on button or gesture actions
 - **Auxiliary I2C**: send command bytes or strings to I2C devices by configured address as a secondary output path
 
 ## Configuration
@@ -176,45 +178,63 @@ Install [PlatformIO](https://platformio.org/) — it handles all library depende
 - [Reeltwo](https://github.com/reeltwo/Reeltwo)
 - [ReeltwoAudio](https://github.com/reeltwo/ReeltwoAudio)
 
-### XBee receiver
+### Serial ports
 
-Connect the XBee module to the **COM1** header on the DFRobot Mega Sensor Shield. This maps to Serial1 (Arduino Mega pins 18/19).
+| Port | GPIO | Function |
+|------|------|----------|
+| `Serial` (USB-CDC) | USB | Configuration console |
+| `Serial0` (UART0) | GPIO43 TX / GPIO44 RX | Primary serial output to downstream devices (WCB, etc.) |
+| `Serial1` (UART1) | GPIO17 TX / GPIO18 RX | RoboClaw dome drive (38400 baud) |
 
-### Primary serial output (Serial3 / COM3)
+### XBee 3 (SPI)
 
-Downstream devices that accept serial commands (e.g. sound controllers, lighting controllers) connect to the **COM3** header on the shield. This maps to Serial3 (Arduino Mega pins 14/15), running at 115200 baud by default. This is the primary output path; I2C is auxiliary/backup.
+The XBee 3 module connects via SPI on the dedicated XBee header:
 
-> COM3 is only available as primary serial when neither the Sabertooth drive system nor the RDH dome position sensor is in use (both also claim Serial3). See `drive_config.h` for details.
+| Signal | GPIO |
+|--------|------|
+| MOSI | 11 |
+| MISO | 13 |
+| SCK | 12 |
+| CS | 7 |
+| ATTN | 16 |
+| SLEEP | 15 |
 
-### Encoder Dome Drive
+### Servo outputs (LEDC PWM)
 
-| Connection | Details |
-|------------|---------|
-| RoboClaw serial | Serial2 (COM2 header, pins 16/17), 38400 baud |
-| Hall-effect sensor | Configured via `DOME_HALL_PIN` in `pin_config.h` |
-| Motor encoder | Connected to RoboClaw encoder input |
+Four servo channels are available:
 
-### Motor PWM outputs
+| Channel | GPIO | Header |
+|---------|------|--------|
+| S1 | 3 | Digital 8 |
+| S2 | 4 | Digital 7 |
+| S3 | 5 | Digital 6 |
+| S4 | 6 | Digital 5 |
 
-For PWM-based drive systems (PWM, RoboteQ PWM, or RoboteQ PWM+Serial), the motor controller's PWM inputs connect to the servo headers on the shield:
+For PWM-based drive systems the motor controller's PWM inputs connect to S1 (right) and S2 (left), with S4 used for dome PWM.
 
-| Function    | Servo channel | Arduino Mega pin |
-|-------------|:-------------:|:----------------:|
-| Drive Right | S1            | 2                |
-| Drive Left  | S2            | 3                |
-| Dome        | S4            | 5                |
+### Digital outputs
 
-For Sabertooth serial drive, Serial3 (COM3) is used instead of PWM.
+Four digital output channels:
+
+| Channel | GPIO | Header |
+|---------|------|--------|
+| DOUT1 | 39 | Digital 1 |
+| DOUT2 / Hall sensor | 40 | Digital 2 |
+| DOUT3 | 41 | Digital 3 |
+| DOUT4 | 42 | Digital 4 |
+
+> The hall-effect sensor for the encoder dome drive plugs into the **Digital 2** header (GPIO40).
 
 ### Other connections
 
-| Function              | Pin |
-|-----------------------|:---:|
-| PPM RC receiver input | 49  |
-| RC mode select        | 30  |
-| I2C SDA               | 20  |
-| I2C SCL               | 21  |
-| SD card CS            | 4   |
+| Function | GPIO |
+|----------|------|
+| PPM RC receiver input | 47 |
+| SD card CS | 10 |
+| I2C SDA | 8 |
+| I2C SCL | 9 |
+| Analog input 1 | 1 (ADC1_0) |
+| Analog input 2 | 2 (ADC1_1) |
 
 ## Building
 

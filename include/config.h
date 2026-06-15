@@ -96,17 +96,25 @@ bool readConfig(VMusic& vm, Console& console) {
 #  include "SPI.h"
 #endif
 
-/// Read config.txt from the SD card (chip-select pin 4).
+/// Read config.txt from the SD card.
 /// Returns true if the SD initialised, the file opened, and all characters
 /// were processed.
 template <typename Console>
 bool readConfig(Console& console) {
-    if (!SD.begin(4)) {
+    bool sdReady = false;
+    for (int attempt = 1; attempt <= 5 && !sdReady; attempt++) {
+        if (attempt > 1) {
+            Serial.printf("[SD] init attempt %d...\n", attempt);
+            delay(500);
+        }
+        sdReady = SD.begin(SD_CS_PIN, SPI);
+    }
+    if (!sdReady) {
         Serial.println("initialization failed!");
         return false;
     }
     Serial.println("initialization done.");
-    File conf = SD.open("config.txt");
+    File conf = SD.open("/config.txt");
     if (conf) {
         while (conf.available()) {
             char ch = conf.read();
