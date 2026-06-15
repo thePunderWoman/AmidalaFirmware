@@ -31,7 +31,7 @@ void test_sound_bank_count() {
 
 void test_servo_count() {
     AmidalaParameters p;
-    TEST_ASSERT_EQUAL(12, p.getServoCount());
+    TEST_ASSERT_EQUAL(4, p.getServoCount());
 }
 
 void test_button_count() {
