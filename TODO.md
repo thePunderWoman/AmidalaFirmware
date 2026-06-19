@@ -23,18 +23,19 @@
 - [x] Audio (`/config/audio`)
   - [x] Audio hardware display (compile-time, read-only)
   - [x] R2 Sounds volume (volume)
-  - [x] Per-channel volume (volumeChA, volumeChB)
-  - [x] Volume wheel assignment (volumewheel, altvolumewheel)
-  - [x] Startup emote (startupem, startuplvl)
-  - [x] Ack emote (ackem, acklvl)
+  - [x] Per-channel volume (volumeChA, volumeChB) — HCR only (WAV file channels)
+  - [x] Volume wheel assignment (volumewheel, altvolumewheel) — HCR only
+  - [x] Startup emote (startupem, startuplvl) — HCR only
+  - [x] Ack emote (ackem, acklvl) — HCR only
   - [x] Sound playback settings (startup sound, random sounds, ack sounds, delay range) — moved from General
-  - [ ] Sound banks list
+  - [x] Sound banks list (read-only) — VMusic only
+  - [x] HCR/VMusic sections gated by `audiohw` config value
 - [x] Dome drive (`/config/dome`)
   - [x] Speed settings (domespeed, domespeedhome, domespeedseek, domespeedmin)
   - [x] Position settings (domehome, domefudge, domeflip, domeimu, domech6)
   - [x] Seek range (domeseekl, domeseekr, domefudge)
-  - [x] RoboClaw-specific (domercaddr, domercchan, domercqpps, domefront, domestall)
-  - [ ] Dome commands (home, calibrate, stop, front, random toggle)
+  - [x] RoboClaw-specific (domercaddr, domercchan, domercqpps, domefront, domestall) — gated by `domehw === 'roboclaw'`
+  - [x] Dome commands (home, calibrate, stop, front, random) — action buttons via `/api/dome`
 - [ ] Buttons & Gestures (`/config/buttons`)
   - [ ] Button mapping table (b=, lb=, ab=)
   - [ ] Alt button config (altbtn, altdomestick)
@@ -43,7 +44,7 @@
   - [ ] Special gestures (rnd, ackgest, slowgest, domegest)
 - [x] Servos (`/config/servos`)
   - [x] Per-channel min/max/neutral/deadzone/trim/speed/reversed
-  - [ ] Global pulse limits (minpulse, maxpulse)
+  - [x] Global pulse limits (minpulse, maxpulse)
 - [x] XBee (`/config/xbee`)
   - [x] Drive remote address (xbr)
   - [x] Dome remote address (xbl)
@@ -53,6 +54,7 @@
   - [x] Channel count (rcchn), deadzone (rcd), jitter (rcj)
   - [x] Joystick calibration (rvrmin, rvrmax, rvlmin, rvlmax, j1adjv, j1adjh)
   - [x] Failsafe timeout (fst)
+  - [x] Informational banner clarifying RC-only applicability
 - [x] WiFi (`/config/wifi`)
   - [x] SSID (wifiSSID), password (wifiPassword), enable (wifion)
 

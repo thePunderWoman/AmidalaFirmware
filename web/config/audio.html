@@ -22,6 +22,15 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 .be:hover,.bs:hover,.bc:hover{opacity:1}
 .bc{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.sb-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.sb-dir{font-size:.82rem;color:var(--gold);min-width:5rem}
+.sb-meta{flex:1;font-size:.75rem;color:var(--dim)}
+.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem .2rem}
+.sb-form input,.sb-form select{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem}
+.sb-form input[type=text]{width:5.5rem}
+.sb-form input[type=number]{width:5rem}
+.sb-form button{background:none;border:1px solid var(--gold);color:var(--gold);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer}
+.sb-form button:hover{background:var(--gold);color:#000}
 </style>
 </head>
 <body>
@@ -38,19 +47,26 @@ var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'}
 var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
 var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var HCR    = function(d) { return d.audiohw === 'hcr'; };
+var VMUSIC = function(d) { return d.audiohw === 'vmusic'; };
+
+var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
+var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
+var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
   {section:'Hardware'},
   {key:'audiohw',        label:'Audio Board',        readOnly:true},
   {section:'Volume'},
   {key:'volume',         label:'R2 Sounds Volume',   type:'number', min:0, max:100},
-  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100},
-  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100},
-  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl},
-  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl},
-  {section:'Startup Emote'},
+  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl,   when:HCR},
+  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl,   when:HCR},
+  {section:'Startup Emote', when:HCR},
   {key:'startupem',  label:'Emotion', type:'select', options:_emo},
   {key:'startuplvl', label:'Level',   type:'select', options:_lvl},
-  {section:'Ack Emote'},
+  {section:'Ack Emote', when:HCR},
   {key:'ackem',  label:'Emotion', type:'select', options:_emo},
   {key:'acklvl', label:'Level',   type:'select', options:_lvl},
   {section:'Sound Playback'},
@@ -58,9 +74,92 @@ var SCHEMA = [
   {key:'rndon',    label:'Random Sounds',    type:'bool'},
   {key:'mindelay', label:'Random Min Delay', type:'number', min:0, max:1000, note:'seconds'},
   {key:'maxdelay', label:'Random Max Delay', type:'number', min:0, max:1000, note:'seconds'},
-  {key:'ackon',    label:'Ack Sounds',       type:'bool'}
+  {key:'ackon',    label:'Ack Sounds',       type:'bool'},
+  {section:'Sound Banks', when:VMUSIC}
 ];
-buildPage(SCHEMA, '/api/config');
+
+var _sbs = [];   // in-memory sound bank array
+
+function sbRender() {
+  var h = '';
+  _sbs.forEach(function(sb, i) {
+    h += '<div class="sb-row" data-i="'+i+'">'
+      + '<span class="sb-dir">'+sb.dir+'</span>'
+      + '<span class="sb-meta">'+sb.n+' file'+(sb.n!==1?'s':'')+' &middot; '+(sb.r?'random':'sequential')+'</span>'
+      + '<button class="be" onclick="sbEdit('+i+')">&#9998;</button>'
+      + '<button class="bc" onclick="sbDel('+i+')">&#10005;</button>'
+      + '</div>';
+  });
+  h += '<form class="sb-form" onsubmit="sbAdd(event)">'
+    + '<input id="sb-dir" type="text" maxlength="8" placeholder="DIR" required title="SD directory name, 1-8 chars">'
+    + '<input id="sb-n"   type="number" min="1" max="255" placeholder="# files" required>'
+    + '<select id="sb-r"><option value="r">Random</option><option value="s">Sequential</option></select>'
+    + '<button type="submit">Add</button>'
+    + '</form>';
+  document.getElementById('sb-area').innerHTML = h;
+}
+
+function sbSave(i, dir, n, r) {
+  return fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sb_'+i+'&value='+encodeURIComponent(dir+','+n+','+(r?'r':'s'))
+  });
+}
+
+function sbAdd(e) {
+  e.preventDefault();
+  var dir = document.getElementById('sb-dir').value.trim().toUpperCase();
+  var n   = parseInt(document.getElementById('sb-n').value, 10);
+  var r   = document.getElementById('sb-r').value === 'r';
+  sbSave(_sbs.length, dir, n, r).then(function(resp) {
+    if (!resp.ok) { showToast('Save failed', true); return; }
+    _sbs.push({dir:dir, n:n, r:r});
+    sbRender();
+    showToast('Sound bank added');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function sbEdit(i) {
+  var sb  = _sbs[i];
+  var dir = prompt('Directory name (1-8 chars):', sb.dir);
+  if (dir === null) return;
+  dir = dir.trim().toUpperCase();
+  var nStr = prompt('Number of files:', sb.n);
+  if (nStr === null) return;
+  var n = parseInt(nStr, 10);
+  var rStr = prompt('Playback mode (r=random / s=sequential):', sb.r ? 'r' : 's');
+  if (rStr === null) return;
+  var r = rStr.trim() === 'r';
+  sbSave(i, dir, n, r).then(function(resp) {
+    if (!resp.ok) { showToast('Save failed', true); return; }
+    _sbs[i] = {dir:dir, n:n, r:r};
+    sbRender();
+    showToast('Saved');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function sbDel(i) {
+  if (!confirm('Remove sound bank "'+_sbs[i].dir+'"?')) return;
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sb_del_'+i
+  }).then(function(resp) {
+    if (!resp.ok) { showToast('Delete failed', true); return; }
+    _sbs.splice(i, 1);
+    sbRender();
+    showToast('Removed');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+buildPage(SCHEMA, '/api/config', function(d) {
+  if (d.audiohw !== 'vmusic') return;
+  _sbs = (d.sbs || []).map(function(s){ return {dir:s.dir, n:s.n, r:s.r}; });
+  document.querySelector('main').insertAdjacentHTML('beforeend',
+    '<div id="sb-area"></div>');
+  sbRender();
+});
 </script>
 </body>
 </html>

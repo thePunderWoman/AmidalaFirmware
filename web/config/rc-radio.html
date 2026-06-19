@@ -22,6 +22,7 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 .be:hover,.bs:hover,.bc:hover{opacity:1}
 .bc{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.info-banner{border:1px solid var(--border);background:#0d0d0d;color:var(--dim);padding:.7rem 1rem;font-size:.75rem;line-height:1.6;margin-bottom:.8rem}
 </style>
 </head>
 <body>
@@ -50,7 +51,17 @@ var SCHEMA = [
   {key:'j1adjv',label:'Vertical Adjust',     type:'number', min:0,   max:80},
   {key:'j1adjh',label:'Horizontal Adjust',   type:'number', min:0,   max:80}
 ];
-buildPage(SCHEMA, '/api/config');
+buildPage(SCHEMA, '/api/config', function(d) {
+  if (d.rcchn == 0) {
+    var banner = '<div class="info-banner">RC Radio is not configured (channel count = 0). '
+      + 'These settings have no effect until an RC receiver is connected and rcchn is set to 6 or more.</div>';
+    document.querySelector('main').insertAdjacentHTML('afterbegin', banner);
+  } else {
+    document.querySelector('main').insertAdjacentHTML('afterbegin',
+      '<div class="info-banner">These settings apply only when using an RC radio receiver (PPM/PWM input). '
+      + 'If your build uses XBee or a wired pocket remote, this page has no effect.</div>');
+  }
+});
 </script>
 </body>
 </html>

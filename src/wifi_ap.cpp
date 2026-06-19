@@ -191,6 +191,50 @@ static bool rewriteServos() {
     return true;
 }
 
+static bool rewriteSoundBanks() {
+    String path = "/config.txt";
+    File f = SD.open(path, "r");
+    String out;
+    out.reserve(8192);
+
+    if (f) {
+        while (f.available()) {
+            String line = f.readStringUntil('\n');
+            if (line.endsWith("\r")) line.remove(line.length() - 1);
+            if (!line.startsWith("sb="))
+                out += line + "\n";
+        }
+        f.close();
+    } else {
+        out = "#START\n#END\n";
+    }
+
+    String lines;
+    for (uint8_t i = 0; i < sCtrl->params.sbcount; i++) {
+        const AmidalaParameters::SoundBank& sb = sCtrl->params.SB[i];
+        lines += "sb=";
+        lines += sb.dir;
+        lines += ",";
+        lines += String(sb.numfiles);
+        lines += ",";
+        lines += sb.random ? "r" : "s";
+        lines += "\n";
+    }
+
+    int endIdx = out.lastIndexOf("#END");
+    if (endIdx >= 0)
+        out = out.substring(0, endIdx) + lines + out.substring(endIdx);
+    else
+        out += lines;
+
+    SD.remove(path);
+    File wf = SD.open(path, "w");
+    if (!wf) return false;
+    wf.print(out);
+    wf.close();
+    return true;
+}
+
 // ---------------------------------------------------------------------------
 // REST API handlers
 // ---------------------------------------------------------------------------
@@ -303,6 +347,48 @@ static void handleApiConfigPost() {
         return;
     }
 
+    // sb_del_N — delete sound bank at index N, shift remainder down
+    if (key.startsWith("sb_del_")) {
+        int idx = key.substring(7).toInt();
+        if (idx < 0 || idx >= (int)sCtrl->params.sbcount) {
+            sServer.send(400, "text/plain", "index out of range"); return;
+        }
+        for (int j = idx; j < (int)sCtrl->params.sbcount - 1; j++)
+            sCtrl->params.SB[j] = sCtrl->params.SB[j + 1];
+        memset(&sCtrl->params.SB[sCtrl->params.sbcount - 1], 0, sizeof(AmidalaParameters::SoundBank));
+        sCtrl->params.sbcount--;
+        bool ok = rewriteSoundBanks();
+        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "deleted but SD write failed");
+        return;
+    }
+
+    // sb_N — update (or append when N == sbcount) sound bank at index N
+    // value format: DIR,numfiles,[s|r]
+    if (key.startsWith("sb_") && key.length() > 3 && isDigit(key[3])) {
+        int idx = key.substring(3).toInt();
+        if (idx < 0 || idx > (int)sCtrl->params.sbcount ||
+            idx >= (int)sCtrl->params.getSoundBankCount()) {
+            sServer.send(400, "text/plain", "index out of range"); return;
+        }
+        // Parse "DIR,numfiles,[s|r]"
+        int c1 = value.indexOf(',');
+        int c2 = c1 >= 0 ? value.indexOf(',', c1 + 1) : -1;
+        if (c1 < 0 || c2 < 0) {
+            sServer.send(400, "text/plain", "bad format: DIR,numfiles,[s|r]"); return;
+        }
+        AmidalaParameters::SoundBank& sb = sCtrl->params.SB[idx];
+        memset(&sb, 0, sizeof(sb));
+        String dir = value.substring(0, c1);
+        dir.toCharArray(sb.dir, sizeof(sb.dir));
+        sb.numfiles = (uint8_t)value.substring(c1 + 1, c2).toInt();
+        sb.random   = value.charAt(c2 + 1) == 'r';
+        if (idx == (int)sCtrl->params.sbcount)
+            sCtrl->params.sbcount++;
+        bool ok = rewriteSoundBanks();
+        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        return;
+    }
+
     // Generic key=value — delegate to processConfig
     String cmd = key + "=" + value;
     if (!sCtrl->fConfig.processConfig(cmd.c_str())) {
@@ -319,6 +405,16 @@ static void handleApiConfigPost() {
 static void handleApiEstop() {
     monAppend("! EMERGENCY STOP", 't');
     if (sCtrl) sCtrl->sendSerialString("ESTOP");
+    sServer.send(200, "text/plain", "OK");
+}
+
+static void handleApiDome() {
+    if (!sCtrl) { sServer.send(500, "text/plain", "no controller"); return; }
+    String cmd = sServer.arg("cmd");
+    if (cmd.isEmpty()) { sServer.send(400, "text/plain", "missing cmd"); return; }
+    String log = "dome=" + cmd;
+    monAppend(log.c_str(), 't');
+    sCtrl->processDomeCommand(cmd.c_str());
     sServer.send(200, "text/plain", "OK");
 }
 
@@ -459,6 +555,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     // REST API
     sServer.on("/api/info",   HTTP_GET,  handleApiInfo);
     sServer.on("/api/estop",  HTTP_POST, handleApiEstop);
+    sServer.on("/api/dome",   HTTP_POST, handleApiDome);
     sServer.on("/api/config", HTTP_GET,  handleApiConfigGet);
     sServer.on("/api/config", HTTP_POST, handleApiConfigPost);
 

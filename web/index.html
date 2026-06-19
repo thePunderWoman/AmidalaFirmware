@@ -44,7 +44,7 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
   <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
   <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
-  <a class="card" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
+  <a class="card" id="nav-rc" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
   <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
 </nav>
 <div class="sh">&#9670;&#9670; Tools &#9670;&#9670;</div>
@@ -54,13 +54,23 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/update"><div class="icon">&#8679;</div><div class="name">Firmware Update</div></a>
 </nav>
 <script>
-fetch('/api/info').then(function(r){return r.json();}).then(function(d){
+Promise.all([
+  fetch('/api/info').then(function(r){return r.json();}),
+  fetch('/api/config').then(function(r){return r.json();})
+]).then(function(results){
+  var d = results[0], cfg = results[1];
   document.getElementById('fwv').textContent='v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
   document.getElementById('bi-dr').textContent=d.drive||'none';
   document.getElementById('bi-do').textContent=d.dome||'none';
   document.getElementById('bi-au').textContent=d.audio;
   document.getElementById('bi-wi').textContent=d.wifi_ssid;
   if(d.free_heap) document.getElementById('bi-hp').textContent=Math.round(d.free_heap/1024)+' KB';
+  // Gate RC Radio card — hide it when XBee remotes are configured
+  var xbeeActive = cfg.xbr && cfg.xbr !== '00000000' || cfg.xbl && cfg.xbl !== '00000000';
+  if(xbeeActive) {
+    var rc=document.getElementById('nav-rc');
+    if(rc) rc.style.display='none';
+  }
 }).catch(function(){document.getElementById('fwv').textContent='connection error';});
 
 // Emergency stop — always visible on every page

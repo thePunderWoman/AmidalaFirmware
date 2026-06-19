@@ -82,6 +82,15 @@ _config = {
     "domercqpps":    1000,
     "domefront":     0,
     "domestall":     2000,
+    # Global servo pulse limits
+    "minpulse":      1000,
+    "maxpulse":      2000,
+    # Dome hardware type (compile-time constant)
+    "domehw":        "roboclaw",
+    # Sound banks (VMusic only; empty when using HCR)
+    # Switch audiohw to 'vmusic' below to test the VMusic UI with sample data.
+    "sbs": [],
+    # "sbs": [{"dir": "HAPPY", "n": 8, "r": True}, {"dir": "SAD", "n": 5, "r": False}],
     # Servos — list of {min, max, n, d, t, sp, r}
     "servos": [
         {"min":  0, "max": 180, "n": 90, "d": 4, "t":  0, "sp": 50, "r": 0},
@@ -181,6 +190,13 @@ class _Handler(SimpleHTTPRequestHandler):
                 _monitor["lines"] = _monitor["lines"][-32:]
             self._text("OK")
             return
+        if path == "/api/dome":
+            cmd = params.get("cmd", "")
+            print(f"  DOME    {cmd!r}")
+            _monitor["lines"].append({"t": "dome=" + cmd, "c": "tx"})
+            _monitor["seq"] += 1
+            self._text("OK")
+            return
         if path != "/api/config":
             self._text("Not Found", 404)
             return
@@ -201,6 +217,25 @@ class _Handler(SimpleHTTPRequestHandler):
                     if len(parts) > 5: sv["t"]   = int(parts[5])
                     if len(parts) > 6: sv["sp"]  = int(parts[6])
                     if len(parts) > 7: sv["r"]   = int(parts[7])
+        # sb_del_N — delete sound bank at index N
+        if key.startswith("sb_del_"):
+            idx = int(key[7:])
+            if 0 <= idx < len(_config["sbs"]):
+                _config["sbs"].pop(idx)
+            self._text("OK")
+            return
+        # sb_N — update or append sound bank at index N; value: DIR,numfiles,[s|r]
+        if key.startswith("sb_") and key[3:].isdigit():
+            idx = int(key[3:])
+            parts = value.split(",", 2)
+            if len(parts) == 3:
+                entry = {"dir": parts[0], "n": int(parts[1]), "r": parts[2] == "r"}
+                if idx == len(_config["sbs"]):
+                    _config["sbs"].append(entry)
+                elif 0 <= idx < len(_config["sbs"]):
+                    _config["sbs"][idx] = entry
+            self._text("OK")
+            return
         # sstr_del_N — delete serial string at index N
         if key.startswith("sstr_del_"):
             idx = int(key[9:])

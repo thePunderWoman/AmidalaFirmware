@@ -107,7 +107,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -141,20 +168,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
