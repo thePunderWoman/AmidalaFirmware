@@ -74,6 +74,53 @@ static bool updateConfigFile(const char* key, const char* value) {
 }
 
 // ---------------------------------------------------------------------------
+// Serial-string config file helpers
+// ---------------------------------------------------------------------------
+
+static bool rewriteSerialStrings() {
+    String path = "/config.txt";
+    File f = SD.open(path, "r");
+    String out;
+    out.reserve(8192);
+
+    if (f) {
+        while (f.available()) {
+            String line = f.readStringUntil('\n');
+            if (line.endsWith("\r")) line.remove(line.length() - 1);
+            if (!line.startsWith("sstr="))
+                out += line + "\n";
+        }
+        f.close();
+    } else {
+        out = "#START\n#END\n";
+    }
+
+    // Build new sstr= lines
+    String sstrs;
+    for (uint8_t i = 0; i < sCtrl->params.serialcount; i++) {
+        sstrs += "sstr=";
+        sstrs += sCtrl->params.Str[i].name;
+        sstrs += "|";
+        sstrs += sCtrl->params.Str[i].str;
+        sstrs += "\n";
+    }
+
+    // Insert before #END if present, otherwise append
+    int endIdx = out.lastIndexOf("#END");
+    if (endIdx >= 0)
+        out = out.substring(0, endIdx) + sstrs + out.substring(endIdx);
+    else
+        out += sstrs;
+
+    SD.remove(path);
+    File wf = SD.open(path, "w");
+    if (!wf) return false;
+    wf.print(out);
+    wf.close();
+    return true;
+}
+
+// ---------------------------------------------------------------------------
 // REST API handlers
 // ---------------------------------------------------------------------------
 
@@ -120,6 +167,21 @@ static void handleApiConfigGet() {
         buildFullConfigJson(sCtrl->params));
 }
 
+static void setSerialStringFields(SerialString& s, const char* val) {
+    const char* pipe = strchr(val, '|');
+    if (pipe) {
+        size_t nlen = min((size_t)(pipe - val), sizeof(s.name) - 1);
+        memcpy(s.name, val, nlen);
+        s.name[nlen] = '\0';
+        strncpy(s.str, pipe + 1, sizeof(s.str) - 1);
+        s.str[sizeof(s.str) - 1] = '\0';
+    } else {
+        s.name[0] = '\0';
+        strncpy(s.str, val, sizeof(s.str) - 1);
+        s.str[sizeof(s.str) - 1] = '\0';
+    }
+}
+
 static void handleApiConfigPost() {
     if (!sCtrl) { sServer.send(500, "text/plain", "no controller"); return; }
 
@@ -127,18 +189,46 @@ static void handleApiConfigPost() {
     String value = sServer.arg("value");
     if (key.isEmpty()) { sServer.send(400, "text/plain", "missing key"); return; }
 
+    // sstr_del_N — delete serial string at index N, shift remainder down
+    if (key.startsWith("sstr_del_")) {
+        int idx = key.substring(9).toInt();
+        if (idx < 0 || idx >= (int)sCtrl->params.serialcount) {
+            sServer.send(400, "text/plain", "index out of range"); return;
+        }
+        for (int j = idx; j < (int)sCtrl->params.serialcount - 1; j++)
+            sCtrl->params.Str[j] = sCtrl->params.Str[j + 1];
+        memset(&sCtrl->params.Str[sCtrl->params.serialcount - 1], 0, sizeof(SerialString));
+        sCtrl->params.serialcount--;
+        bool ok = rewriteSerialStrings();
+        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "deleted but SD write failed");
+        return;
+    }
+
+    // sstr_N — update (or append when N == serialcount) serial string at index N
+    if (key.startsWith("sstr_")) {
+        int idx = key.substring(5).toInt();
+        if (idx < 0 || idx > (int)sCtrl->params.serialcount ||
+            idx >= (int)sCtrl->params.getSerialStringCount()) {
+            sServer.send(400, "text/plain", "index out of range"); return;
+        }
+        setSerialStringFields(sCtrl->params.Str[idx], value.c_str());
+        if (idx == (int)sCtrl->params.serialcount)
+            sCtrl->params.serialcount++;
+        bool ok = rewriteSerialStrings();
+        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        return;
+    }
+
+    // Generic key=value — delegate to processConfig
     String cmd = key + "=" + value;
     if (!sCtrl->fConfig.processConfig(cmd.c_str())) {
         sServer.send(400, "text/plain", "unknown setting: " + key);
         return;
     }
-
     if (!updateConfigFile(key.c_str(), value.c_str())) {
-        // Applied to runtime but SD write failed — report partial success
         sServer.send(207, "text/plain", "applied but SD write failed");
         return;
     }
-
     sServer.send(200, "text/plain", "OK");
 }
 
@@ -150,13 +240,14 @@ static void handleHome() {
     sServer.send(200, "text/html", WEB_PAGE_HOME);
 }
 
-static void handleConfigGeneral()  { sServer.send(200, "text/html", WEB_PAGE_GENERAL);     }
-static void handleConfigWifi()     { sServer.send(200, "text/html", WEB_PAGE_WIFI);         }
-static void handleConfigXbee()     { sServer.send(200, "text/html", WEB_PAGE_XBEE);         }
-static void handleConfigAudio()    { sServer.send(200, "text/html", WEB_PAGE_AUDIO);        }
-static void handleConfigRcRadio()  { sServer.send(200, "text/html", WEB_PAGE_RC_RADIO);     }
-static void handleConfigDome()     { sServer.send(200, "text/html", WEB_PAGE_DOME);         }
-static void handleComingSoon()     { sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);  }
+static void handleConfigGeneral()       { sServer.send(200, "text/html", WEB_PAGE_GENERAL);        }
+static void handleConfigWifi()          { sServer.send(200, "text/html", WEB_PAGE_WIFI);            }
+static void handleConfigXbee()          { sServer.send(200, "text/html", WEB_PAGE_XBEE);            }
+static void handleConfigAudio()         { sServer.send(200, "text/html", WEB_PAGE_AUDIO);           }
+static void handleConfigRcRadio()       { sServer.send(200, "text/html", WEB_PAGE_RC_RADIO);        }
+static void handleConfigDome()          { sServer.send(200, "text/html", WEB_PAGE_DOME);            }
+static void handleConfigSerialStrings() { sServer.send(200, "text/html", WEB_PAGE_SERIAL_STRINGS);  }
+static void handleComingSoon()          { sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);     }
 
 // ---------------------------------------------------------------------------
 // AmidalaWiFiAP
@@ -194,7 +285,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     // Remaining config pages (stubs)
     sServer.on("/config/buttons",        HTTP_GET, handleComingSoon);
     sServer.on("/config/servos",         HTTP_GET, handleComingSoon);
-    sServer.on("/config/serial-strings", HTTP_GET, handleComingSoon);
+    sServer.on("/config/serial-strings", HTTP_GET, handleConfigSerialStrings);
     sServer.on("/sequences",            HTTP_GET, handleComingSoon);
     sServer.on("/monitor",              HTTP_GET, handleComingSoon);
     sServer.on("/update",               HTTP_GET, handleComingSoon);

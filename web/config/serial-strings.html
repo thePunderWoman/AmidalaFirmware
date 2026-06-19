@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serial Commands — AMIDALA</title>
+<link rel="stylesheet" href="/assets/common.css">
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:700px;margin:0 auto;padding:1rem}
+.ss-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.ss-idx{font-size:.7rem;color:var(--dim);min-width:1.8rem;text-align:right;flex-shrink:0}
+.ss-fields{flex:1;display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.ss-name{font-size:.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-name.empty{color:var(--dim);font-style:italic}
+.ss-val{font-size:.75rem;color:var(--gold);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-fields input{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box}
+.ss-fields input.mono{font-family:monospace;font-size:.75rem}
+.ss-acts{display:flex;gap:.1rem;flex-shrink:0}
+.be,.bs,.bc,.bd{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .4rem;opacity:.55;cursor:pointer}
+.be:hover,.bs:hover{opacity:1}
+.bc:hover,.bd:hover{opacity:1}
+.add-row{padding:.9rem .2rem}
+.btn-add{background:none;border:1px solid var(--dim);color:var(--gold);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer}
+.btn-add:hover{border-color:var(--gold)}
+#empty{color:var(--dim);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Serial Commands &#9670;</div>
+</div>
+<main id="main">
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script src="/assets/edit.js"></script>
+<script>
+var _d = [];      // [{n, s}, ...]
+var _ed = -1;     // index currently in edit mode, -1 = none
+var _isNew = false; // true while adding an unsaved entry
+
+function load() {
+  fetch('/api/config').then(function(r){return r.json();}).then(function(d){
+    _d = d.sstr || [];
+    render();
+  }).catch(function(){
+    document.getElementById('main').innerHTML='<div id="status">Failed to load</div>';
+  });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function render() {
+  var h = '';
+  if (_d.length === 0 && !_isNew) {
+    h += '<div id="empty">No serial strings configured yet.</div>';
+  }
+  for (var i = 0; i < _d.length; i++) {
+    var item = _d[i];
+    if (i === _ed) {
+      h += '<div class="ss-row" id="r'+i+'">' +
+        '<span class="ss-idx">'+(i+1)+'</span>' +
+        '<div class="ss-fields">' +
+          '<input type="text" id="ni'+i+'" value="'+esc(item.n)+'" maxlength="31" placeholder="Name (e.g. Leia Sequence)">' +
+          '<input type="text" id="si'+i+'" value="'+esc(item.s)+'" maxlength="31" placeholder="Serial string (e.g. :LD00)" class="mono"' +
+          ' onkeydown="if(event.key===\'Enter\')saveStr('+i+')">' +
+        '</div>' +
+        '<div class="ss-acts">' +
+          '<button class="bs" onclick="saveStr('+i+')" title="Save">&#10003;</button>' +
+          '<button class="bc" onclick="cancelEdit('+i+')" title="Cancel">&#10005;</button>' +
+        '</div>' +
+        '</div>';
+    } else {
+      var nameEmpty = !item.n;
+      h += '<div class="ss-row" id="r'+i+'">' +
+        '<span class="ss-idx">'+(i+1)+'</span>' +
+        '<div class="ss-fields">' +
+          '<div class="ss-name'+(nameEmpty?' empty':'')+'">'+esc(item.n||'(unnamed)')+'</div>' +
+          '<div class="ss-val">'+esc(item.s)+'</div>' +
+        '</div>' +
+        '<div class="ss-acts">' +
+          '<button class="be" onclick="startEdit('+i+')" title="Edit">&#9998;</button>' +
+          '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>' +
+        '</div>' +
+        '</div>';
+    }
+  }
+  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add String</button></div>';
+  document.getElementById('main').innerHTML = h;
+  if (_ed >= 0) {
+    var ni = document.getElementById('ni'+_ed);
+    if (ni) ni.focus();
+  }
+}
+
+function startEdit(i) {
+  if (_ed >= 0 && _isNew) { _d.splice(_ed, 1); _isNew = false; }
+  _ed = i;
+  render();
+}
+
+function cancelEdit(i) {
+  if (_isNew) { _d.splice(i, 1); _isNew = false; }
+  _ed = -1;
+  render();
+}
+
+function saveStr(i) {
+  var name = document.getElementById('ni'+i).value.trim();
+  var str  = document.getElementById('si'+i).value.trim();
+  if (!str) { showToast('Serial string cannot be empty', true); return; }
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(name+'|'+str)
+  }).then(function(r){
+    if (!r.ok) throw new Error(r.status);
+    _d[i] = {n: name, s: str};
+    _ed = -1; _isNew = false;
+    render();
+    showToast('Saved');
+  }).catch(function(){ showToast('Save failed', true); });
+}
+
+function delStr(i) {
+  var label = _d[i].n || _d[i].s || ('string ' + (i+1));
+  if (!confirm('Delete “'+label+'”?\nThis cannot be undone.')) return;
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'key=sstr_del_'+i+'&value='
+  }).then(function(r){
+    if (!r.ok) throw new Error(r.status);
+    _d.splice(i, 1);
+    if (_ed > i) _ed--;
+    else if (_ed === i) { _ed = -1; _isNew = false; }
+    render();
+    showToast('Deleted');
+  }).catch(function(){ showToast('Delete failed', true); });
+}
+
+function addStr() {
+  if (_ed >= 0 && _isNew) return;
+  if (_ed >= 0) { _ed = -1; render(); return; }
+  _d.push({n: '', s: ''});
+  _ed = _d.length - 1;
+  _isNew = true;
+  render();
+}
+
+load();
+</script>
+</body>
+</html>

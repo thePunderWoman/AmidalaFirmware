@@ -118,7 +118,7 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/config/buttons"><div class="icon">&#9711;</div><div class="name">Buttons &amp; Gestures</div></a>
   <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
   <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
-  <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Strings</div></a>
+  <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
   <a class="card" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
   <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
 </nav>
@@ -1779,6 +1779,386 @@ var SCHEMA = [
   {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'}
 ];
 buildPage(SCHEMA, '/api/config');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_SERIAL_STRINGS[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serial Commands — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:700px;margin:0 auto;padding:1rem}
+.ss-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.ss-idx{font-size:.7rem;color:var(--dim);min-width:1.8rem;text-align:right;flex-shrink:0}
+.ss-fields{flex:1;display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.ss-name{font-size:.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-name.empty{color:var(--dim);font-style:italic}
+.ss-val{font-size:.75rem;color:var(--gold);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-fields input{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box}
+.ss-fields input.mono{font-family:monospace;font-size:.75rem}
+.ss-acts{display:flex;gap:.1rem;flex-shrink:0}
+.be,.bs,.bc,.bd{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .4rem;opacity:.55;cursor:pointer}
+.be:hover,.bs:hover{opacity:1}
+.bc:hover,.bd:hover{opacity:1}
+.add-row{padding:.9rem .2rem}
+.btn-add{background:none;border:1px solid var(--dim);color:var(--gold);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer}
+.btn-add:hover{border-color:var(--gold)}
+#empty{color:var(--dim);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Serial Commands &#9670;</div>
+</div>
+<main id="main">
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var _d = [];      // [{n, s}, ...]
+var _ed = -1;     // index currently in edit mode, -1 = none
+var _isNew = false; // true while adding an unsaved entry
+
+function load() {
+  fetch('/api/config').then(function(r){return r.json();}).then(function(d){
+    _d = d.sstr || [];
+    render();
+  }).catch(function(){
+    document.getElementById('main').innerHTML='<div id="status">Failed to load</div>';
+  });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function render() {
+  var h = '';
+  if (_d.length === 0 && !_isNew) {
+    h += '<div id="empty">No serial strings configured yet.</div>';
+  }
+  for (var i = 0; i < _d.length; i++) {
+    var item = _d[i];
+    if (i === _ed) {
+      h += '<div class="ss-row" id="r'+i+'">' +
+        '<span class="ss-idx">'+(i+1)+'</span>' +
+        '<div class="ss-fields">' +
+          '<input type="text" id="ni'+i+'" value="'+esc(item.n)+'" maxlength="31" placeholder="Name (e.g. Leia Sequence)">' +
+          '<input type="text" id="si'+i+'" value="'+esc(item.s)+'" maxlength="31" placeholder="Serial string (e.g. :LD00)" class="mono"' +
+          ' onkeydown="if(event.key===\'Enter\')saveStr('+i+')">' +
+        '</div>' +
+        '<div class="ss-acts">' +
+          '<button class="bs" onclick="saveStr('+i+')" title="Save">&#10003;</button>' +
+          '<button class="bc" onclick="cancelEdit('+i+')" title="Cancel">&#10005;</button>' +
+        '</div>' +
+        '</div>';
+    } else {
+      var nameEmpty = !item.n;
+      h += '<div class="ss-row" id="r'+i+'">' +
+        '<span class="ss-idx">'+(i+1)+'</span>' +
+        '<div class="ss-fields">' +
+          '<div class="ss-name'+(nameEmpty?' empty':'')+'">'+esc(item.n||'(unnamed)')+'</div>' +
+          '<div class="ss-val">'+esc(item.s)+'</div>' +
+        '</div>' +
+        '<div class="ss-acts">' +
+          '<button class="be" onclick="startEdit('+i+')" title="Edit">&#9998;</button>' +
+          '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>' +
+        '</div>' +
+        '</div>';
+    }
+  }
+  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add String</button></div>';
+  document.getElementById('main').innerHTML = h;
+  if (_ed >= 0) {
+    var ni = document.getElementById('ni'+_ed);
+    if (ni) ni.focus();
+  }
+}
+
+function startEdit(i) {
+  if (_ed >= 0 && _isNew) { _d.splice(_ed, 1); _isNew = false; }
+  _ed = i;
+  render();
+}
+
+function cancelEdit(i) {
+  if (_isNew) { _d.splice(i, 1); _isNew = false; }
+  _ed = -1;
+  render();
+}
+
+function saveStr(i) {
+  var name = document.getElementById('ni'+i).value.trim();
+  var str  = document.getElementById('si'+i).value.trim();
+  if (!str) { showToast('Serial string cannot be empty', true); return; }
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(name+'|'+str)
+  }).then(function(r){
+    if (!r.ok) throw new Error(r.status);
+    _d[i] = {n: name, s: str};
+    _ed = -1; _isNew = false;
+    render();
+    showToast('Saved');
+  }).catch(function(){ showToast('Save failed', true); });
+}
+
+function delStr(i) {
+  var label = _d[i].n || _d[i].s || ('string ' + (i+1));
+  if (!confirm('Delete “'+label+'”?\nThis cannot be undone.')) return;
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'key=sstr_del_'+i+'&value='
+  }).then(function(r){
+    if (!r.ok) throw new Error(r.status);
+    _d.splice(i, 1);
+    if (_ed > i) _ed--;
+    else if (_ed === i) { _ed = -1; _isNew = false; }
+    render();
+    showToast('Deleted');
+  }).catch(function(){ showToast('Delete failed', true); });
+}
+
+function addStr() {
+  if (_ed >= 0 && _isNew) return;
+  if (_ed >= 0) { _ed = -1; render(); return; }
+  _d.push({n: '', s: ''});
+  _ed = _d.length - 1;
+  _isNew = true;
+  render();
+}
+
+load();
 </script>
 </body>
 </html>

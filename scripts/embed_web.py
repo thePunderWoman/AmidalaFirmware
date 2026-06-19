@@ -22,8 +22,9 @@ PAGES = [
     ("config/xbee.html",        "WEB_PAGE_XBEE"),
     ("config/audio.html",       "WEB_PAGE_AUDIO"),
     ("config/rc-radio.html",    "WEB_PAGE_RC_RADIO"),
-    ("config/dome.html",        "WEB_PAGE_DOME"),
-    ("config/coming-soon.html", "WEB_PAGE_COMING_SOON"),
+    ("config/dome.html",            "WEB_PAGE_DOME"),
+    ("config/serial-strings.html",  "WEB_PAGE_SERIAL_STRINGS"),
+    ("config/coming-soon.html",     "WEB_PAGE_COMING_SOON"),
 ]
 
 _LINK_RE   = re.compile(r'[ \t]*<link rel="stylesheet" href="/assets/common\.css">\n?')

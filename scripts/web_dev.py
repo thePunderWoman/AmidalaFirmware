@@ -82,6 +82,12 @@ _config = {
     "domercqpps":    1000,
     "domefront":     0,
     "domestall":     2000,
+    # Serial strings — list of {n: name, s: serial_string}
+    "sstr": [
+        {"n": "Leia Sequence",  "s": ":LD00"},
+        {"n": "Happy R2",       "s": ":001"},
+        {"n": "Dome Home",      "s": "*dome=home"},
+    ],
 }
 
 _info = {
@@ -135,7 +141,21 @@ class _Handler(SimpleHTTPRequestHandler):
         value  = params.get("value", "")
 
         print(f"  CONFIG  {key} = {value!r}")
-        if key in _config:
+
+        # sstr_del_N — delete serial string at index N
+        if key.startswith("sstr_del_"):
+            idx = int(key[9:])
+            if 0 <= idx < len(_config["sstr"]):
+                _config["sstr"].pop(idx)
+        # sstr_N — update or append serial string at index N
+        elif key.startswith("sstr_"):
+            idx = int(key[5:])
+            name, s = (value.split("|", 1) + [""])[:2] if "|" in value else ("", value)
+            if idx == len(_config["sstr"]):
+                _config["sstr"].append({"n": name, "s": s})
+            elif 0 <= idx < len(_config["sstr"]):
+                _config["sstr"][idx] = {"n": name, "s": s}
+        elif key in _config:
             try:
                 _config[key] = int(value)
             except ValueError:
