@@ -136,7 +136,7 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
   <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
   <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
-  <a class="card" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
+  <a class="card" id="nav-rc" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
   <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
 </nav>
 <div class="sh">&#9670;&#9670; Tools &#9670;&#9670;</div>
@@ -146,13 +146,23 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/update"><div class="icon">&#8679;</div><div class="name">Firmware Update</div></a>
 </nav>
 <script>
-fetch('/api/info').then(function(r){return r.json();}).then(function(d){
+Promise.all([
+  fetch('/api/info').then(function(r){return r.json();}),
+  fetch('/api/config').then(function(r){return r.json();})
+]).then(function(results){
+  var d = results[0], cfg = results[1];
   document.getElementById('fwv').textContent='v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
   document.getElementById('bi-dr').textContent=d.drive||'none';
   document.getElementById('bi-do').textContent=d.dome||'none';
   document.getElementById('bi-au').textContent=d.audio;
   document.getElementById('bi-wi').textContent=d.wifi_ssid;
   if(d.free_heap) document.getElementById('bi-hp').textContent=Math.round(d.free_heap/1024)+' KB';
+  // Gate RC Radio card — hide it when XBee remotes are configured
+  var xbeeActive = cfg.xbr && cfg.xbr !== '00000000' || cfg.xbl && cfg.xbl !== '00000000';
+  if(xbeeActive) {
+    var rc=document.getElementById('nav-rc');
+    if(rc) rc.style.display='none';
+  }
 }).catch(function(){document.getElementById('fwv').textContent='connection error';});
 
 // Emergency stop — always visible on every page
@@ -1287,6 +1297,15 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 .be:hover,.bs:hover,.bc:hover{opacity:1}
 .bc{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.sb-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.sb-dir{font-size:.82rem;color:var(--gold);min-width:5rem}
+.sb-meta{flex:1;font-size:.75rem;color:var(--dim)}
+.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem .2rem}
+.sb-form input,.sb-form select{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem}
+.sb-form input[type=text]{width:5.5rem}
+.sb-form input[type=number]{width:5rem}
+.sb-form button{background:none;border:1px solid var(--gold);color:var(--gold);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer}
+.sb-form button:hover{background:var(--gold);color:#000}
 </style>
 </head>
 <body>
@@ -1531,19 +1550,87 @@ var SCHEMA = [
   {section:'Sound Banks', when:VMUSIC}
 ];
 
+var _sbs = [];   // in-memory sound bank array
+
+function sbRender() {
+  var h = '';
+  _sbs.forEach(function(sb, i) {
+    h += '<div class="sb-row" data-i="'+i+'">'
+      + '<span class="sb-dir">'+sb.dir+'</span>'
+      + '<span class="sb-meta">'+sb.n+' file'+(sb.n!==1?'s':'')+' &middot; '+(sb.r?'random':'sequential')+'</span>'
+      + '<button class="be" onclick="sbEdit('+i+')">&#9998;</button>'
+      + '<button class="bc" onclick="sbDel('+i+')">&#10005;</button>'
+      + '</div>';
+  });
+  h += '<form class="sb-form" onsubmit="sbAdd(event)">'
+    + '<input id="sb-dir" type="text" maxlength="8" placeholder="DIR" required title="SD directory name, 1-8 chars">'
+    + '<input id="sb-n"   type="number" min="1" max="255" placeholder="# files" required>'
+    + '<select id="sb-r"><option value="r">Random</option><option value="s">Sequential</option></select>'
+    + '<button type="submit">Add</button>'
+    + '</form>';
+  document.getElementById('sb-area').innerHTML = h;
+}
+
+function sbSave(i, dir, n, r) {
+  return fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sb_'+i+'&value='+encodeURIComponent(dir+','+n+','+(r?'r':'s'))
+  });
+}
+
+function sbAdd(e) {
+  e.preventDefault();
+  var dir = document.getElementById('sb-dir').value.trim().toUpperCase();
+  var n   = parseInt(document.getElementById('sb-n').value, 10);
+  var r   = document.getElementById('sb-r').value === 'r';
+  sbSave(_sbs.length, dir, n, r).then(function(resp) {
+    if (!resp.ok) { showToast('Save failed', true); return; }
+    _sbs.push({dir:dir, n:n, r:r});
+    sbRender();
+    showToast('Sound bank added');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function sbEdit(i) {
+  var sb  = _sbs[i];
+  var dir = prompt('Directory name (1-8 chars):', sb.dir);
+  if (dir === null) return;
+  dir = dir.trim().toUpperCase();
+  var nStr = prompt('Number of files:', sb.n);
+  if (nStr === null) return;
+  var n = parseInt(nStr, 10);
+  var rStr = prompt('Playback mode (r=random / s=sequential):', sb.r ? 'r' : 's');
+  if (rStr === null) return;
+  var r = rStr.trim() === 'r';
+  sbSave(i, dir, n, r).then(function(resp) {
+    if (!resp.ok) { showToast('Save failed', true); return; }
+    _sbs[i] = {dir:dir, n:n, r:r};
+    sbRender();
+    showToast('Saved');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function sbDel(i) {
+  if (!confirm('Remove sound bank "'+_sbs[i].dir+'"?')) return;
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sb_del_'+i
+  }).then(function(resp) {
+    if (!resp.ok) { showToast('Delete failed', true); return; }
+    _sbs.splice(i, 1);
+    sbRender();
+    showToast('Removed');
+  }).catch(function(){ showToast('Network error', true); });
+}
+
 buildPage(SCHEMA, '/api/config', function(d) {
   if (d.audiohw !== 'vmusic') return;
-  var sbs = d.sbs || [];
-  var h = '';
-  if (sbs.length === 0) {
-    h = '<div class="row"><div class="row-label" style="color:var(--dim)">No sound banks configured — edit config.txt to add them.</div></div>';
-  } else {
-    sbs.forEach(function(sb) {
-      h += '<div class="row"><div class="row-label">' + sb.dir + '</div>'
-        + '<div class="rv">' + sb.n + ' file' + (sb.n !== 1 ? 's' : '') + (sb.r ? ' &middot; random' : '') + '</div></div>';
-    });
-  }
-  document.querySelector('main').insertAdjacentHTML('beforeend', h);
+  _sbs = (d.sbs || []).map(function(s){ return {dir:s.dir, n:s.n, r:s.r}; });
+  document.querySelector('main').insertAdjacentHTML('beforeend',
+    '<div id="sb-area"></div>');
+  sbRender();
 });
 </script>
 </body>
