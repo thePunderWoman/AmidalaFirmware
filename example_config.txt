@@ -167,63 +167,38 @@ sb=cant,1
 sb=leial,1
 
 # --- Serial String Definitions ---
-# Format: sstr=string_here
-# One indexed and read in the order they appear
+# Format: sstr=Name|string_here
+#   Name is a short human-readable label shown in the web UI and on controller
+#   displays.  The string after | is what gets sent over serial to child boards.
+#   Strings are 1-indexed and read in the order they appear.
 
-# 1: Sad (Moderate)
-sstr=<SS0>
-# 2: Scared (Moderate)
-sstr=<SC0>
-# 3: Mad (Moderate)
-sstr=<SM0>
-# 4: Very Mad (Strong)
-sstr=<SM1>
-# 5: Very Happy (Strong)
-sstr=<SH1>
-# 6: Overload
-sstr=<SE>
-# 7: Toggle Mute
-sstr=BD:VOL
-# 8: Vader
-sstr=BD:VADER
-# 9: Utility Arms
-sstr=BD:UARMS
-# 10: Toggle Musing
-sstr=BD:MUSE
-# 11: Reset All
-sstr=DM:RESET
-# 12: Pie Panels
-sstr=DM:PIES
-# 13: Low Panels
-sstr=DM:LOW
-# 14: All Panels
-sstr=DM:OPENALL
-# 15: Leia Sequence
-sstr=DM:LEIA
-# 16: Heart Sequence
-sstr=DM:HEART
-# 17: Hello There
-sstr=DM:HELLO
-# 18: Scream
-sstr=DM:SCREAM
-# 19: Panel flutter
-sstr=DM:FLUTTER
-# 20: Overload
-sstr=DM:OVERLOAD
-# 21: Body Panels
-sstr=BD:CBIDATADOOR
-# 22: Alarm
-sstr=DM:ALARM
-# 23: Cantina
-sstr=DM:CANTINA
-# 24: Bloom
-sstr=DM:BLOOM
-# 25: Random
-sstr=DM:RANDOM
-# 26: Disco
-sstr=DM:DISCO
-# 27: Rock March
-sstr=DM:ROCKMARCH
+sstr=Sad (Moderate)|<SS0>
+sstr=Scared (Moderate)|<SC0>
+sstr=Mad (Moderate)|<SM0>
+sstr=Very Mad (Strong)|<SM1>
+sstr=Very Happy (Strong)|<SH1>
+sstr=Overload|<SE>
+sstr=Toggle Mute|BD:VOL
+sstr=Vader|BD:VADER
+sstr=Utility Arms|BD:UARMS
+sstr=Toggle Musing|BD:MUSE
+sstr=Reset All|DM:RESET
+sstr=Pie Panels|DM:PIES
+sstr=Low Panels|DM:LOW
+sstr=All Panels|DM:OPENALL
+sstr=Leia Sequence|DM:LEIA
+sstr=Heart Sequence|DM:HEART
+sstr=Hello There|DM:HELLO
+sstr=Scream|DM:SCREAM
+sstr=Panel Flutter|DM:FLUTTER
+sstr=Overload Sequence|DM:OVERLOAD
+sstr=Body Panels|BD:CBIDATADOOR
+sstr=Alarm|DM:ALARM
+sstr=Cantina|DM:CANTINA
+sstr=Bloom|DM:BLOOM
+sstr=Random|DM:RANDOM
+sstr=Disco|DM:DISCO
+sstr=Rock March|DM:ROCKMARCH
 
 # --- Button Mappings ---
 # Two mappings are available per button:

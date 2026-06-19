@@ -151,6 +151,18 @@ void test_dome_page_schema_keys() {
     TEST_ASSERT_TRUE(contains(WEB_PAGE_DOME, "'domercaddr'"));
 }
 
+void test_serial_strings_page_uses_config_endpoint() {
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "/api/config"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "href=\"/\""));
+}
+
+void test_serial_strings_page_has_add_and_delete_ui() {
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "addStr"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "delStr"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "sstr_del_"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "confirm"));
+}
+
 // ---------------------------------------------------------------------------
 // buildFullConfigJson — JSON content
 // ---------------------------------------------------------------------------
@@ -300,6 +312,27 @@ void test_full_config_json_reflects_changed_serialbaud() {
     TEST_ASSERT_TRUE(contains(json.c_str(), "\"serialbaud\":115200"));
 }
 
+void test_full_config_json_sstr_empty_array() {
+    AmidalaParameters p = makeParams(); // serialcount == 0
+    String json = buildFullConfigJson(p);
+    TEST_ASSERT_TRUE(contains(json.c_str(), "\"sstr\":[]"));
+}
+
+void test_full_config_json_sstr_with_entries() {
+    AmidalaParameters p = makeParams();
+    p.serialcount = 2;
+    strncpy(p.Str[0].name, "Leia Sequence", sizeof(p.Str[0].name));
+    strncpy(p.Str[0].str,  ":LD00",         sizeof(p.Str[0].str));
+    strncpy(p.Str[1].name, "Happy R2",      sizeof(p.Str[1].name));
+    strncpy(p.Str[1].str,  ":001",          sizeof(p.Str[1].str));
+    String json = buildFullConfigJson(p);
+    const char* s = json.c_str();
+    TEST_ASSERT_TRUE(contains(s, "\"sstr\":["));
+    TEST_ASSERT_TRUE(contains(s, "\"n\":\"Leia Sequence\""));
+    TEST_ASSERT_TRUE(contains(s, "\"s\":\":LD00\""));
+    TEST_ASSERT_TRUE(contains(s, "\"n\":\"Happy R2\""));
+}
+
 // ---------------------------------------------------------------------------
 // buildInfoJson — JSON content
 // ---------------------------------------------------------------------------
@@ -368,6 +401,8 @@ int main(int /*argc*/, char** /*argv*/) {
     RUN_TEST(test_audio_page_schema_keys);
     RUN_TEST(test_rc_radio_page_schema_keys);
     RUN_TEST(test_dome_page_schema_keys);
+    RUN_TEST(test_serial_strings_page_uses_config_endpoint);
+    RUN_TEST(test_serial_strings_page_has_add_and_delete_ui);
 
     // buildFullConfigJson
     RUN_TEST(test_full_config_json_wraps_in_braces);
@@ -383,6 +418,8 @@ int main(int /*argc*/, char** /*argv*/) {
     RUN_TEST(test_full_config_json_bool_false_encodes_as_n);
     RUN_TEST(test_full_config_json_reflects_changed_volume);
     RUN_TEST(test_full_config_json_reflects_changed_serialbaud);
+    RUN_TEST(test_full_config_json_sstr_empty_array);
+    RUN_TEST(test_full_config_json_sstr_with_entries);
 
     // buildInfoJson
     RUN_TEST(test_info_json_contains_version_key);

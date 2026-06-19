@@ -217,7 +217,11 @@ void AmidalaConfig::showCurrentConfiguration() {
     fOutput->println(params.wifiSSID);
     fOutput->print(F("WiFi Password: "));
     fOutput->println(params.wifiPassword);
-    for (unsigned i = 0; i < params.getSerialStringCount(); i++) {
+    for (unsigned i = 0; i < params.serialcount; i++) {
+      fOutput->print(i + 1);
+      fOutput->print(F(": "));
+      fOutput->print(params.Str[i].name);
+      fOutput->print(F(" | "));
       fOutput->println(params.Str[i].str);
     }
     fOutput->println();
@@ -588,12 +592,24 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     }
     return false;
   } else if (startswith(cmd, "sstr=")) {
-    SerialString *a =
-        &params.Str[min((unsigned)params.serialcount, params.getSerialStringCount() - 1)];
-    strncpy(a->str, cmd, sizeof(a->str) - 1);
-    a->str[sizeof(a->str) - 1] = '\0';
-    if (params.serialcount < params.getSerialStringCount())
-      params.serialcount++;
+    if (params.serialcount >= params.getSerialStringCount())
+      return true; // silently ignore when full
+    SerialString *a = &params.Str[params.serialcount];
+    const char* val = cmd + 5; // skip "sstr="
+    const char* pipe = strchr(val, '|');
+    if (pipe) {
+      size_t nlen = (size_t)(pipe - val);
+      if (nlen >= sizeof(a->name)) nlen = sizeof(a->name) - 1;
+      memcpy(a->name, val, nlen);
+      a->name[nlen] = '\0';
+      strncpy(a->str, pipe + 1, sizeof(a->str) - 1);
+      a->str[sizeof(a->str) - 1] = '\0';
+    } else {
+      a->name[0] = '\0';
+      strncpy(a->str, val, sizeof(a->str) - 1);
+      a->str[sizeof(a->str) - 1] = '\0';
+    }
+    params.serialcount++;
   } else if (startswith(cmd, "g=")) {
     char gesture[MAX_GESTURE_LENGTH + 1];
     char *gesture_end = &gesture[sizeof(gesture) - 1];
