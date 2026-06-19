@@ -403,7 +403,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -437,20 +464,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -709,7 +742,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -743,20 +803,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -1009,7 +1075,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -1043,20 +1136,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -1308,7 +1407,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -1342,20 +1468,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -1368,19 +1500,26 @@ var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'}
 var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
 var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var HCR    = function(d) { return d.audiohw === 'hcr'; };
+var VMUSIC = function(d) { return d.audiohw === 'vmusic'; };
+
+var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
+var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
+var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
   {section:'Hardware'},
   {key:'audiohw',        label:'Audio Board',        readOnly:true},
   {section:'Volume'},
   {key:'volume',         label:'R2 Sounds Volume',   type:'number', min:0, max:100},
-  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100},
-  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100},
-  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl},
-  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl},
-  {section:'Startup Emote'},
+  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl,   when:HCR},
+  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl,   when:HCR},
+  {section:'Startup Emote', when:HCR},
   {key:'startupem',  label:'Emotion', type:'select', options:_emo},
   {key:'startuplvl', label:'Level',   type:'select', options:_lvl},
-  {section:'Ack Emote'},
+  {section:'Ack Emote', when:HCR},
   {key:'ackem',  label:'Emotion', type:'select', options:_emo},
   {key:'acklvl', label:'Level',   type:'select', options:_lvl},
   {section:'Sound Playback'},
@@ -1388,9 +1527,24 @@ var SCHEMA = [
   {key:'rndon',    label:'Random Sounds',    type:'bool'},
   {key:'mindelay', label:'Random Min Delay', type:'number', min:0, max:1000, note:'seconds'},
   {key:'maxdelay', label:'Random Max Delay', type:'number', min:0, max:1000, note:'seconds'},
-  {key:'ackon',    label:'Ack Sounds',       type:'bool'}
+  {key:'ackon',    label:'Ack Sounds',       type:'bool'},
+  {section:'Sound Banks', when:VMUSIC}
 ];
-buildPage(SCHEMA, '/api/config');
+
+buildPage(SCHEMA, '/api/config', function(d) {
+  if (d.audiohw !== 'vmusic') return;
+  var sbs = d.sbs || [];
+  var h = '';
+  if (sbs.length === 0) {
+    h = '<div class="row"><div class="row-label" style="color:var(--dim)">No sound banks configured — edit config.txt to add them.</div></div>';
+  } else {
+    sbs.forEach(function(sb) {
+      h += '<div class="row"><div class="row-label">' + sb.dir + '</div>'
+        + '<div class="rv">' + sb.n + ' file' + (sb.n !== 1 ? 's' : '') + (sb.r ? ' &middot; random' : '') + '</div></div>';
+    });
+  }
+  document.querySelector('main').insertAdjacentHTML('beforeend', h);
+});
 </script>
 </body>
 </html>
@@ -1508,6 +1662,7 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 .be:hover,.bs:hover,.bc:hover{opacity:1}
 .bc{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.info-banner{border:1px solid var(--border);background:#0d0d0d;color:var(--dim);padding:.7rem 1rem;font-size:.75rem;line-height:1.6;margin-bottom:.8rem}
 </style>
 </head>
 <body>
@@ -1628,7 +1783,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -1662,20 +1844,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -1700,7 +1888,17 @@ var SCHEMA = [
   {key:'j1adjv',label:'Vertical Adjust',     type:'number', min:0,   max:80},
   {key:'j1adjh',label:'Horizontal Adjust',   type:'number', min:0,   max:80}
 ];
-buildPage(SCHEMA, '/api/config');
+buildPage(SCHEMA, '/api/config', function(d) {
+  if (d.rcchn == 0) {
+    var banner = '<div class="info-banner">RC Radio is not configured (channel count = 0). '
+      + 'These settings have no effect until an RC receiver is connected and rcchn is set to 6 or more.</div>';
+    document.querySelector('main').insertAdjacentHTML('afterbegin', banner);
+  } else {
+    document.querySelector('main').insertAdjacentHTML('afterbegin',
+      '<div class="info-banner">These settings apply only when using an RC radio receiver (PPM/PWM input). '
+      + 'If your build uses XBee or a wired pocket remote, this page has no effect.</div>');
+  }
+});
 </script>
 </body>
 </html>
@@ -1938,7 +2136,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -1972,20 +2197,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -1994,6 +2225,8 @@ function buildPage(SCHEMA, endpoint) {
 }
 </script>
 <script>
+var RC = function(d) { return d.domehw === 'roboclaw'; };
+
 var SCHEMA = [
   {section:'Speed'},
   {key:'domespeed',     label:'Max Speed',         type:'number', min:0,  max:100},
@@ -2010,12 +2243,18 @@ var SCHEMA = [
   {key:'domeseekl', label:'Left Seek',              type:'number', min:1,  max:180, note:'degrees'},
   {key:'domeseekr', label:'Right Seek',             type:'number', min:1,  max:180, note:'degrees'},
   {key:'domefudge', label:'Position Fudge',         type:'number', min:1,  max:45,  note:'degrees'},
-  {section:'RoboClaw'},
+  {section:'RoboClaw', when:RC},
   {key:'domercaddr',label:'Packet Address',         type:'number', min:128,max:135},
   {key:'domercchan',label:'Motor Channel',          type:'select', options:[{v:'1',l:'M1'},{v:'2',l:'M2'}]},
   {key:'domercqpps',label:'QPPS',                  type:'number', min:1,  max:65535, note:'ticks/sec at max speed'},
   {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
-  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'}
+  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'},
+  {section:'Dome Commands'},
+  {type:'action', label:'Go Home',    cmd:'dome=home',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Calibrate',  cmd:'dome=calibrate', endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Face Front', cmd:'dome=front',     endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Random',     cmd:'dome=rand',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Stop',       cmd:'dome=stop',      endpoint:'/api/dome', btnLabel:'Send'}
 ];
 buildPage(SCHEMA, '/api/config');
 </script>
@@ -2261,7 +2500,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -2295,20 +2561,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -2554,6 +2826,13 @@ td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:p
 .rev-yes{color:var(--gold)}
 .rev-no{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+/* Used by buildRow for the pulse limits section */
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.bc{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -2561,8 +2840,9 @@ td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:p
   <a class="back" href="/">&#9664; Back</a>
   <div class="page-title">&#9670; Servos &#9670;</div>
 </div>
-<main id="main">
-  <div id="status">LOADING&#8230;</div>
+<main>
+  <div id="tbl-area"><div id="status">LOADING&#8230;</div></div>
+  <div id="pulse-area"></div>
 </main>
 <script>
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
@@ -2674,7 +2954,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -2708,20 +3015,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -2737,8 +3050,15 @@ function load() {
   fetch('/api/config').then(function(r){return r.json();}).then(function(d){
     _d = d.servos || [];
     render();
+    var pa = document.getElementById('pulse-area');
+    var minpulse = d.minpulse !== undefined ? String(d.minpulse) : '1000';
+    var maxpulse = d.maxpulse !== undefined ? String(d.maxpulse) : '2000';
+    pa.innerHTML =
+      '<div class="section-label" style="margin-top:.8rem">Global Pulse Limits</div>' +
+      buildRow({key:'minpulse', label:'Min Pulse Width', type:'number', min:500, max:1500, note:'µs'}, minpulse) +
+      buildRow({key:'maxpulse', label:'Max Pulse Width', type:'number', min:1500, max:2500, note:'µs'}, maxpulse);
   }).catch(function(){
-    document.getElementById('main').innerHTML='<div id="status">Failed to load</div>';
+    document.getElementById('tbl-area').innerHTML='<div id="status">Failed to load</div>';
   });
 }
 
@@ -2773,7 +3093,7 @@ function render() {
     }
   }
   h += '</tbody></table></div>';
-  document.getElementById('main').innerHTML = h;
+  document.getElementById('tbl-area').innerHTML = h;
   if (_ed >= 0) {
     var el = document.getElementById('emin');
     if (el) el.focus();
@@ -3071,7 +3391,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -3105,20 +3452,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');
@@ -3478,7 +3831,34 @@ function buildInput(s, val) {
   return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
 }
 
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
 function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
   var disp = dispValue(s, val);
   var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
@@ -3512,20 +3892,26 @@ function buildRow(s, val) {
   document.body.appendChild(b);
 })();
 
-function buildPage(SCHEMA, endpoint) {
+function buildPage(SCHEMA, endpoint, callback) {
   fetch(endpoint)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       var html = '';
+      var skip = false;
       SCHEMA.forEach(function(s) {
         if (s.section) {
-          html += '<div class="section-label">' + s.section + '</div>';
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
           return;
         }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
         var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
         html += buildRow(s, val);
       });
       document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
     })
     .catch(function() {
       var el = document.getElementById('status');

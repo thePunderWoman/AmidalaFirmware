@@ -82,6 +82,13 @@ _config = {
     "domercqpps":    1000,
     "domefront":     0,
     "domestall":     2000,
+    # Global servo pulse limits
+    "minpulse":      1000,
+    "maxpulse":      2000,
+    # Dome hardware type (compile-time constant)
+    "domehw":        "roboclaw",
+    # Sound banks (VMusic only; empty when using HCR)
+    "sbs": [],
     # Servos — list of {min, max, n, d, t, sp, r}
     "servos": [
         {"min":  0, "max": 180, "n": 90, "d": 4, "t":  0, "sp": 50, "r": 0},
@@ -179,6 +186,13 @@ class _Handler(SimpleHTTPRequestHandler):
             _monitor["seq"] += 1
             if len(_monitor["lines"]) > 32:
                 _monitor["lines"] = _monitor["lines"][-32:]
+            self._text("OK")
+            return
+        if path == "/api/dome":
+            cmd = params.get("cmd", "")
+            print(f"  DOME    {cmd!r}")
+            _monitor["lines"].append({"t": "dome=" + cmd, "c": "tx"})
+            _monitor["seq"] += 1
             self._text("OK")
             return
         if path != "/api/config":

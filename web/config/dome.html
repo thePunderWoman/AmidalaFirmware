@@ -34,6 +34,8 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 </main>
 <script src="/assets/edit.js"></script>
 <script>
+var RC = function(d) { return d.domehw === 'roboclaw'; };
+
 var SCHEMA = [
   {section:'Speed'},
   {key:'domespeed',     label:'Max Speed',         type:'number', min:0,  max:100},
@@ -50,12 +52,18 @@ var SCHEMA = [
   {key:'domeseekl', label:'Left Seek',              type:'number', min:1,  max:180, note:'degrees'},
   {key:'domeseekr', label:'Right Seek',             type:'number', min:1,  max:180, note:'degrees'},
   {key:'domefudge', label:'Position Fudge',         type:'number', min:1,  max:45,  note:'degrees'},
-  {section:'RoboClaw'},
+  {section:'RoboClaw', when:RC},
   {key:'domercaddr',label:'Packet Address',         type:'number', min:128,max:135},
   {key:'domercchan',label:'Motor Channel',          type:'select', options:[{v:'1',l:'M1'},{v:'2',l:'M2'}]},
   {key:'domercqpps',label:'QPPS',                  type:'number', min:1,  max:65535, note:'ticks/sec at max speed'},
   {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
-  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'}
+  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'},
+  {section:'Dome Commands'},
+  {type:'action', label:'Go Home',    cmd:'dome=home',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Calibrate',  cmd:'dome=calibrate', endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Face Front', cmd:'dome=front',     endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Random',     cmd:'dome=rand',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Stop',       cmd:'dome=stop',      endpoint:'/api/dome', btnLabel:'Send'}
 ];
 buildPage(SCHEMA, '/api/config');
 </script>

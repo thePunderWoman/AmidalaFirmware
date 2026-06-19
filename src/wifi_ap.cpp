@@ -322,6 +322,16 @@ static void handleApiEstop() {
     sServer.send(200, "text/plain", "OK");
 }
 
+static void handleApiDome() {
+    if (!sCtrl) { sServer.send(500, "text/plain", "no controller"); return; }
+    String cmd = sServer.arg("cmd");
+    if (cmd.isEmpty()) { sServer.send(400, "text/plain", "missing cmd"); return; }
+    String log = "dome=" + cmd;
+    monAppend(log.c_str(), 't');
+    sCtrl->processDomeCommand(cmd.c_str());
+    sServer.send(200, "text/plain", "OK");
+}
+
 static void handleApiMonitorGet() {
     String json = "{\"seq\":";
     json += String(sMonSeq);
@@ -459,6 +469,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     // REST API
     sServer.on("/api/info",   HTTP_GET,  handleApiInfo);
     sServer.on("/api/estop",  HTTP_POST, handleApiEstop);
+    sServer.on("/api/dome",   HTTP_POST, handleApiDome);
     sServer.on("/api/config", HTTP_GET,  handleApiConfigGet);
     sServer.on("/api/config", HTTP_POST, handleApiConfigPost);
 

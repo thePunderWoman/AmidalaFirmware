@@ -38,19 +38,26 @@ var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'}
 var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
 var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var HCR    = function(d) { return d.audiohw === 'hcr'; };
+var VMUSIC = function(d) { return d.audiohw === 'vmusic'; };
+
+var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
+var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
+var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
   {section:'Hardware'},
   {key:'audiohw',        label:'Audio Board',        readOnly:true},
   {section:'Volume'},
   {key:'volume',         label:'R2 Sounds Volume',   type:'number', min:0, max:100},
-  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100},
-  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100},
-  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl},
-  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl},
-  {section:'Startup Emote'},
+  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100, when:HCR},
+  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl,   when:HCR},
+  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl,   when:HCR},
+  {section:'Startup Emote', when:HCR},
   {key:'startupem',  label:'Emotion', type:'select', options:_emo},
   {key:'startuplvl', label:'Level',   type:'select', options:_lvl},
-  {section:'Ack Emote'},
+  {section:'Ack Emote', when:HCR},
   {key:'ackem',  label:'Emotion', type:'select', options:_emo},
   {key:'acklvl', label:'Level',   type:'select', options:_lvl},
   {section:'Sound Playback'},
@@ -58,9 +65,24 @@ var SCHEMA = [
   {key:'rndon',    label:'Random Sounds',    type:'bool'},
   {key:'mindelay', label:'Random Min Delay', type:'number', min:0, max:1000, note:'seconds'},
   {key:'maxdelay', label:'Random Max Delay', type:'number', min:0, max:1000, note:'seconds'},
-  {key:'ackon',    label:'Ack Sounds',       type:'bool'}
+  {key:'ackon',    label:'Ack Sounds',       type:'bool'},
+  {section:'Sound Banks', when:VMUSIC}
 ];
-buildPage(SCHEMA, '/api/config');
+
+buildPage(SCHEMA, '/api/config', function(d) {
+  if (d.audiohw !== 'vmusic') return;
+  var sbs = d.sbs || [];
+  var h = '';
+  if (sbs.length === 0) {
+    h = '<div class="row"><div class="row-label" style="color:var(--dim)">No sound banks configured — edit config.txt to add them.</div></div>';
+  } else {
+    sbs.forEach(function(sb) {
+      h += '<div class="row"><div class="row-label">' + sb.dir + '</div>'
+        + '<div class="rv">' + sb.n + ' file' + (sb.n !== 1 ? 's' : '') + (sb.r ? ' &middot; random' : '') + '</div></div>';
+    });
+  }
+  document.querySelector('main').insertAdjacentHTML('beforeend', h);
+});
 </script>
 </body>
 </html>

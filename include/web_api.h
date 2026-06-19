@@ -139,6 +139,35 @@ inline String buildFullConfigJson(const AmidalaParameters& p) {
     }
     json += "],";
 
+    // Global servo pulse width limits
+    json += "\"minpulse\":" + String(p.minpulse) + ",";
+    json += "\"maxpulse\":" + String(p.maxpulse) + ",";
+
+    // Dome hardware type (compile-time, exposed for UI gating)
+#if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
+    json += "\"domehw\":\"roboclaw\",";
+#elif DOME_DRIVE == DOME_DRIVE_SABER
+    json += "\"domehw\":\"saber\",";
+#elif DOME_DRIVE == DOME_DRIVE_PWM
+    json += "\"domehw\":\"pwm\",";
+#else
+    json += "\"domehw\":\"analog\",";
+#endif
+
+    // Sound banks — only meaningful for VMusic; always emitted so UI can gate on audiohw
+    json += "\"sbs\":[";
+    for (uint8_t i = 0; i < p.sbcount; i++) {
+        if (i > 0) json += ",";
+        json += "{\"dir\":\"";
+        json += String(p.SB[i].dir);
+        json += "\",\"n\":";
+        json += String(p.SB[i].numfiles);
+        json += ",\"r\":";
+        json += p.SB[i].random ? "true" : "false";
+        json += "}";
+    }
+    json += "],";
+
     // Serial strings — abbreviated keys {n, s} to save flash
     json += "\"sstr\":[";
     for (uint8_t i = 0; i < p.serialcount && i < MAX_SERIAL_STRINGS; i++) {

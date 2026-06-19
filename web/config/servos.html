@@ -26,6 +26,13 @@ td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:p
 .rev-yes{color:var(--gold)}
 .rev-no{color:var(--dim)}
 #status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+/* Used by buildRow for the pulse limits section */
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.bc{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -33,8 +40,9 @@ td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:p
   <a class="back" href="/">&#9664; Back</a>
   <div class="page-title">&#9670; Servos &#9670;</div>
 </div>
-<main id="main">
-  <div id="status">LOADING&#8230;</div>
+<main>
+  <div id="tbl-area"><div id="status">LOADING&#8230;</div></div>
+  <div id="pulse-area"></div>
 </main>
 <script src="/assets/edit.js"></script>
 <script>
@@ -45,8 +53,15 @@ function load() {
   fetch('/api/config').then(function(r){return r.json();}).then(function(d){
     _d = d.servos || [];
     render();
+    var pa = document.getElementById('pulse-area');
+    var minpulse = d.minpulse !== undefined ? String(d.minpulse) : '1000';
+    var maxpulse = d.maxpulse !== undefined ? String(d.maxpulse) : '2000';
+    pa.innerHTML =
+      '<div class="section-label" style="margin-top:.8rem">Global Pulse Limits</div>' +
+      buildRow({key:'minpulse', label:'Min Pulse Width', type:'number', min:500, max:1500, note:'µs'}, minpulse) +
+      buildRow({key:'maxpulse', label:'Max Pulse Width', type:'number', min:1500, max:2500, note:'µs'}, maxpulse);
   }).catch(function(){
-    document.getElementById('main').innerHTML='<div id="status">Failed to load</div>';
+    document.getElementById('tbl-area').innerHTML='<div id="status">Failed to load</div>';
   });
 }
 
@@ -81,7 +96,7 @@ function render() {
     }
   }
   h += '</tbody></table></div>';
-  document.getElementById('main').innerHTML = h;
+  document.getElementById('tbl-area').innerHTML = h;
   if (_ed >= 0) {
     var el = document.getElementById('emin');
     if (el) el.focus();
