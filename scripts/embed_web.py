@@ -18,6 +18,11 @@ import re
 PAGES = [
     ("index.html",              "WEB_PAGE_HOME"),
     ("config/general.html",     "WEB_PAGE_GENERAL"),
+    ("config/wifi.html",        "WEB_PAGE_WIFI"),
+    ("config/xbee.html",        "WEB_PAGE_XBEE"),
+    ("config/audio.html",       "WEB_PAGE_AUDIO"),
+    ("config/rc-radio.html",    "WEB_PAGE_RC_RADIO"),
+    ("config/dome.html",        "WEB_PAGE_DOME"),
     ("config/coming-soon.html", "WEB_PAGE_COMING_SOON"),
 ]
 
