@@ -120,6 +120,36 @@ static void handleApiConfigGeneral() {
         buildGeneralConfigJson(sCtrl->params));
 }
 
+static void handleApiConfigWifi() {
+    if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
+    sServer.send(200, "application/json",
+        buildWifiConfigJson(sCtrl->params));
+}
+
+static void handleApiConfigXbee() {
+    if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
+    sServer.send(200, "application/json",
+        buildXbeeConfigJson(sCtrl->params));
+}
+
+static void handleApiConfigAudio() {
+    if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
+    sServer.send(200, "application/json",
+        buildAudioConfigJson(sCtrl->params));
+}
+
+static void handleApiConfigRcRadio() {
+    if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
+    sServer.send(200, "application/json",
+        buildRcRadioConfigJson(sCtrl->params));
+}
+
+static void handleApiConfigDome() {
+    if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
+    sServer.send(200, "application/json",
+        buildDomeConfigJson(sCtrl->params));
+}
+
 static void handleApiConfigPost() {
     if (!sCtrl) { sServer.send(500, "text/plain", "no controller"); return; }
 
@@ -150,13 +180,13 @@ static void handleHome() {
     sServer.send(200, "text/html", WEB_PAGE_HOME);
 }
 
-static void handleConfigGeneral() {
-    sServer.send(200, "text/html", WEB_PAGE_GENERAL);
-}
-
-static void handleComingSoon() {
-    sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);
-}
+static void handleConfigGeneral()  { sServer.send(200, "text/html", WEB_PAGE_GENERAL);     }
+static void handleConfigWifi()     { sServer.send(200, "text/html", WEB_PAGE_WIFI);         }
+static void handleConfigXbee()     { sServer.send(200, "text/html", WEB_PAGE_XBEE);         }
+static void handleConfigAudio()    { sServer.send(200, "text/html", WEB_PAGE_AUDIO);        }
+static void handleConfigRcRadio()  { sServer.send(200, "text/html", WEB_PAGE_RC_RADIO);     }
+static void handleConfigDome()     { sServer.send(200, "text/html", WEB_PAGE_DOME);         }
+static void handleComingSoon()     { sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);  }
 
 // ---------------------------------------------------------------------------
 // AmidalaWiFiAP
@@ -183,26 +213,31 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     }
 
     // Pages
-    sServer.on("/",              HTTP_GET,  handleHome);
-    sServer.on("/index.html",    HTTP_GET,  handleHome);
-    sServer.on("/config/general",HTTP_GET,  handleConfigGeneral);
-    // Remaining config pages (stubs — to be implemented)
-    sServer.on("/config/audio",         HTTP_GET, handleComingSoon);
-    sServer.on("/config/dome",          HTTP_GET, handleComingSoon);
-    sServer.on("/config/buttons",       HTTP_GET, handleComingSoon);
-    sServer.on("/config/servos",        HTTP_GET, handleComingSoon);
-    sServer.on("/config/xbee",          HTTP_GET, handleComingSoon);
-    sServer.on("/config/serial-strings",HTTP_GET, handleComingSoon);
-    sServer.on("/config/rc-radio",      HTTP_GET, handleComingSoon);
-    sServer.on("/config/wifi",          HTTP_GET, handleComingSoon);
+    sServer.on("/",                      HTTP_GET, handleHome);
+    sServer.on("/index.html",            HTTP_GET, handleHome);
+    sServer.on("/config/general",        HTTP_GET, handleConfigGeneral);
+    sServer.on("/config/wifi",           HTTP_GET, handleConfigWifi);
+    sServer.on("/config/xbee",           HTTP_GET, handleConfigXbee);
+    sServer.on("/config/audio",          HTTP_GET, handleConfigAudio);
+    sServer.on("/config/rc-radio",       HTTP_GET, handleConfigRcRadio);
+    sServer.on("/config/dome",           HTTP_GET, handleConfigDome);
+    // Remaining config pages (stubs)
+    sServer.on("/config/buttons",        HTTP_GET, handleComingSoon);
+    sServer.on("/config/servos",         HTTP_GET, handleComingSoon);
+    sServer.on("/config/serial-strings", HTTP_GET, handleComingSoon);
     sServer.on("/sequences",            HTTP_GET, handleComingSoon);
     sServer.on("/monitor",              HTTP_GET, handleComingSoon);
     sServer.on("/update",               HTTP_GET, handleComingSoon);
 
     // REST API
-    sServer.on("/api/info",            HTTP_GET,  handleApiInfo);
-    sServer.on("/api/config/general",  HTTP_GET,  handleApiConfigGeneral);
-    sServer.on("/api/config",          HTTP_POST, handleApiConfigPost);
+    sServer.on("/api/info",              HTTP_GET,  handleApiInfo);
+    sServer.on("/api/config/general",   HTTP_GET,  handleApiConfigGeneral);
+    sServer.on("/api/config/wifi",      HTTP_GET,  handleApiConfigWifi);
+    sServer.on("/api/config/xbee",      HTTP_GET,  handleApiConfigXbee);
+    sServer.on("/api/config/audio",     HTTP_GET,  handleApiConfigAudio);
+    sServer.on("/api/config/rc-radio",  HTTP_GET,  handleApiConfigRcRadio);
+    sServer.on("/api/config/dome",      HTTP_GET,  handleApiConfigDome);
+    sServer.on("/api/config",           HTTP_POST, handleApiConfigPost);
 
     // Catch-all: any other URL redirects home (supports captive-portal flow)
     sServer.onNotFound(handleHome);

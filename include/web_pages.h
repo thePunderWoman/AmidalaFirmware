@@ -51,6 +51,35 @@ button {
 .hidden {
   display: none !important;
 }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
 </style>
 <style>
 header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--border)}
@@ -161,6 +190,35 @@ button {
 .hidden {
   display: none !important;
 }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
 </style>
 <style>
 .page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
@@ -190,9 +248,21 @@ main{max-width:660px;margin:0 auto;padding:1rem}
   <div id="status">LOADING&#8230;</div>
 </main>
 <script>
-/* Amidala web UI — edit-in-place widget.
-   Embed script inlines this into config sub-pages.
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
 
 function startEdit(btn) {
   var row = btn.closest('.row');
@@ -228,70 +298,1486 @@ async function doSave(btn) {
     });
     if (r.ok) {
       var dv = row.querySelector('.rv');
-      dv.textContent = row.dataset.type === 'bool' ? (val === 'y' ? 'On' : 'Off') : val;
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
       doCancel(row.querySelector('.bc'));
+      showToast('Saved');
     } else {
-      alert('Save failed: ' + await r.text());
+      showToast('Save failed: ' + await r.text(), true);
     }
   } catch(e) {
-    alert('Network error');
+    showToast('Network error', true);
   }
   btn.textContent = prev;
   btn.disabled = false;
 }
-</script>
-<script>
-var SCHEMA=[
-  {section:'Sound'},
-  {key:'volume',    label:'Volume',            type:'number', min:0,   max:100},
-  {key:'startup',   label:'Startup Sound',     type:'bool'},
-  {key:'rndon',     label:'Random Sounds',     type:'bool'},
-  {key:'mindelay',  label:'Random Min Delay',  type:'number', min:0,   max:1000, note:'seconds'},
-  {key:'maxdelay',  label:'Random Max Delay',  type:'number', min:0,   max:1000, note:'seconds'},
-  {key:'ackon',     label:'Ack Sounds',        type:'bool'},
-  {section:'Drive'},
-  {key:'goslow',    label:'Start in Slow Mode',type:'bool'},
-  {key:'mix12',     label:'Channel Mixing',    type:'bool'},
-  {key:'auto',      label:'Autocorrect Gestures', type:'bool'},
-  {section:'Serial'},
-  {key:'serialbaud', label:'Baud Rate',         type:'number', min:300, max:115200},
-  {key:'serialdelim',label:'Delimiter (ASCII)', type:'number', min:0,   max:255},
-  {key:'serialeol',  label:'EOL (ASCII)',        type:'number', min:0,   max:255},
-  {section:'I²C'},
-  {key:'myi2c',     label:"This Board's Address", type:'number', min:0, max:100}
-];
 
-function buildRow(s,val){
-  var disp=s.type==='bool'?(val==='y'?'On':'Off'):String(val);
-  var inp=s.type==='bool'
-    ?('<select><option value="y"'+(val==='y'?' selected':'')+'>On</option>'
-      +'<option value="n"'+(val==='n'?' selected':'')+'>Off</option></select>')
-    :('<input type="number" value="'+val+'" min="'+(s.min||0)+'" max="'+(s.max||9999)+'">');
-  var note=s.note?'<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">'+s.note+'</span>':'';
-  return '<div class="row" data-key="'+s.key+'" data-type="'+(s.type||'text')+'">'
-    +'<div class="row-label">'+s.label+'</div>'
-    +'<div class="rv">'+disp+'</div>'
-    +'<div class="ri" hidden><div style="display:flex;align-items:center">'+inp+note+'</div></div>'
-    +'<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    +'<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
-    +'<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
-    +'</div>';
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
 }
 
-fetch('/api/config/general').then(function(r){return r.json();}).then(function(d){
-  var html='';
-  SCHEMA.forEach(function(s){
-    if(s.section){
-      html+='<div class="section-label">'+s.section+'</div>';
-      return;
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var SCHEMA = [
+  {section:'Sound'},
+  {key:'volume',     label:'Volume',             type:'number', min:0,   max:100},
+  {key:'startup',    label:'Startup Sound',      type:'bool'},
+  {key:'rndon',      label:'Random Sounds',      type:'bool'},
+  {key:'mindelay',   label:'Random Min Delay',   type:'number', min:0,   max:1000, note:'seconds'},
+  {key:'maxdelay',   label:'Random Max Delay',   type:'number', min:0,   max:1000, note:'seconds'},
+  {key:'ackon',      label:'Ack Sounds',         type:'bool'},
+  {section:'Drive'},
+  {key:'goslow',     label:'Start in Slow Mode', type:'bool'},
+  {key:'mix12',      label:'Channel Mixing',     type:'bool'},
+  {key:'auto',       label:'Autocorrect Gestures', type:'bool'},
+  {section:'Serial'},
+  {key:'serialbaud', label:'Baud Rate',          type:'number', min:300, max:115200},
+  {key:'serialdelim',label:'Delimiter (ASCII)',  type:'number', min:0,   max:255},
+  {key:'serialeol',  label:'EOL (ASCII)',         type:'number', min:0,   max:255},
+  {section:'I²C'},
+  {key:'myi2c',      label:"This Board's Address", type:'number', min:0, max:100}
+];
+buildPage(SCHEMA, '/api/config/general');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_WIFI[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WiFi — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; WiFi &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
     }
-    var val=(d[s.key]!==undefined)?String(d[s.key]):'?';
-    html+=buildRow(s,val);
-  });
-  document.querySelector('main').innerHTML=html;
-}).catch(function(){
-  document.getElementById('status').textContent='Failed to load settings.';
-});
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var SCHEMA = [
+  {section:'Access Point'},
+  {key:'wifion',       label:'Enable WiFi AP', type:'bool'},
+  {key:'wifissid',     label:'SSID',           type:'text',     maxlength:32, note:'max 32 chars'},
+  {key:'wifipassword', label:'Password',       type:'password', maxlength:64, note:'min 8 chars'}
+];
+buildPage(SCHEMA, '/api/config/wifi');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_XBEE[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XBee — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; XBee &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var SCHEMA = [
+  {section:'Remote Addresses (32-bit hex)'},
+  {key:'xbr', label:'Drive Remote', type:'hex', note:'lower 32 bits of XBee address'},
+  {key:'xbl', label:'Dome Remote',  type:'hex', note:'lower 32 bits of XBee address'}
+];
+buildPage(SCHEMA, '/api/config/xbee');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_AUDIO[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audio — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Audio &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
+var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
+var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var SCHEMA = [
+  {section:'Hardware'},
+  {key:'audiohw',        label:'Audio Board',        readOnly:true},
+  {section:'Volume'},
+  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100},
+  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100},
+  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl},
+  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl},
+  {section:'Startup Emote'},
+  {key:'startupem',  label:'Emotion', type:'select', options:_emo},
+  {key:'startuplvl', label:'Level',   type:'select', options:_lvl},
+  {section:'Ack Emote'},
+  {key:'ackem',  label:'Emotion', type:'select', options:_emo},
+  {key:'acklvl', label:'Level',   type:'select', options:_lvl}
+];
+buildPage(SCHEMA, '/api/config/audio');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_RC_RADIO[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RC Radio — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; RC Radio &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var SCHEMA = [
+  {section:'Radio'},
+  {key:'rcchn', label:'Channel Count',       type:'number', min:6,   max:8},
+  {key:'rcd',   label:'Deadzone',            type:'number', min:1,   max:50},
+  {key:'rcj',   label:'Jitter Filter',       type:'number', min:1,   max:40},
+  {key:'fst',   label:'Failsafe Timeout',    type:'number', min:1000,max:3000, note:'ms'},
+  {section:'Right Joystick Calibration'},
+  {key:'rvrmin',label:'Min Reference',       type:'number', min:0,   max:100},
+  {key:'rvrmax',label:'Max Reference',       type:'number', min:900, max:1023},
+  {section:'Left Joystick Calibration'},
+  {key:'rvlmin',label:'Min Reference',       type:'number', min:0,   max:100},
+  {key:'rvlmax',label:'Max Reference',       type:'number', min:900, max:1023},
+  {section:'Joystick Adjustment'},
+  {key:'j1adjv',label:'Vertical Adjust',     type:'number', min:0,   max:80},
+  {key:'j1adjh',label:'Horizontal Adjust',   type:'number', min:0,   max:80}
+];
+buildPage(SCHEMA, '/api/config/rc-radio');
+</script>
+</body>
+</html>
+)html";
+
+static const char WEB_PAGE_DOME[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dome Drive — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Dome Drive &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+function buildRow(s, val) {
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs hidden" onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc hidden" onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+function buildPage(SCHEMA, endpoint) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var SCHEMA = [
+  {section:'Speed'},
+  {key:'domespeed',     label:'Max Speed',         type:'number', min:0,  max:100},
+  {key:'domespeedhome', label:'Home Speed',         type:'number', min:1,  max:100},
+  {key:'domespeedseek', label:'Seek Speed',         type:'number', min:1,  max:100},
+  {key:'domespeedmin',  label:'Min Speed',          type:'number', min:0,  max:30},
+  {key:'domedecelzone', label:'Decel Zone',         type:'number', min:5,  max:90, note:'degrees'},
+  {section:'Position'},
+  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees'},
+  {key:'domeflip',  label:'Invert Direction',       type:'bool'},
+  {key:'domeimu',   label:'IMU Assist',             type:'bool'},
+  {key:'domech6',   label:'Channel 6 Mode',         type:'bool'},
+  {section:'Seek Range'},
+  {key:'domeseekl', label:'Left Seek',              type:'number', min:1,  max:180, note:'degrees'},
+  {key:'domeseekr', label:'Right Seek',             type:'number', min:1,  max:180, note:'degrees'},
+  {key:'domefudge', label:'Position Fudge',         type:'number', min:1,  max:45,  note:'degrees'},
+  {section:'RoboClaw'},
+  {key:'domercaddr',label:'Packet Address',         type:'number', min:128,max:135},
+  {key:'domercchan',label:'Motor Channel',          type:'select', options:[{v:'1',l:'M1'},{v:'2',l:'M2'}]},
+  {key:'domercqpps',label:'QPPS',                  type:'number', min:1,  max:65535, note:'ticks/sec at max speed'},
+  {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
+  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'}
+];
+buildPage(SCHEMA, '/api/config/dome');
 </script>
 </body>
 </html>
@@ -345,6 +1831,35 @@ button {
 
 .hidden {
   display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
 }
 </style>
 <style>

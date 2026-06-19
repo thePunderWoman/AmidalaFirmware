@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dome Drive — AMIDALA</title>
+<link rel="stylesheet" href="/assets/common.css">
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Dome Drive &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script src="/assets/edit.js"></script>
+<script>
+var SCHEMA = [
+  {section:'Speed'},
+  {key:'domespeed',     label:'Max Speed',         type:'number', min:0,  max:100},
+  {key:'domespeedhome', label:'Home Speed',         type:'number', min:1,  max:100},
+  {key:'domespeedseek', label:'Seek Speed',         type:'number', min:1,  max:100},
+  {key:'domespeedmin',  label:'Min Speed',          type:'number', min:0,  max:30},
+  {key:'domedecelzone', label:'Decel Zone',         type:'number', min:5,  max:90, note:'degrees'},
+  {section:'Position'},
+  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees'},
+  {key:'domeflip',  label:'Invert Direction',       type:'bool'},
+  {key:'domeimu',   label:'IMU Assist',             type:'bool'},
+  {key:'domech6',   label:'Channel 6 Mode',         type:'bool'},
+  {section:'Seek Range'},
+  {key:'domeseekl', label:'Left Seek',              type:'number', min:1,  max:180, note:'degrees'},
+  {key:'domeseekr', label:'Right Seek',             type:'number', min:1,  max:180, note:'degrees'},
+  {key:'domefudge', label:'Position Fudge',         type:'number', min:1,  max:45,  note:'degrees'},
+  {section:'RoboClaw'},
+  {key:'domercaddr',label:'Packet Address',         type:'number', min:128,max:135},
+  {key:'domercchan',label:'Motor Channel',          type:'select', options:[{v:'1',l:'M1'},{v:'2',l:'M2'}]},
+  {key:'domercqpps',label:'QPPS',                  type:'number', min:1,  max:65535, note:'ticks/sec at max speed'},
+  {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
+  {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'}
+];
+buildPage(SCHEMA, '/api/config/dome');
+</script>
+</body>
+</html>

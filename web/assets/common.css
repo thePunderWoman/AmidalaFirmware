@@ -40,3 +40,32 @@ button {
 .hidden {
   display: none !important;
 }
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}

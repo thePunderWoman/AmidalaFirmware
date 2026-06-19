@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>General Settings — AMIDALA</title>
+<title>Audio — AMIDALA</title>
 <link rel="stylesheet" href="/assets/common.css">
 <style>
 .page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
@@ -27,33 +27,33 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 <body>
 <div class="page-header">
   <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; General Settings &#9670;</div>
+  <div class="page-title">&#9670; Audio &#9670;</div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
 </main>
 <script src="/assets/edit.js"></script>
 <script>
+var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
+var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
+var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
+var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
-  {section:'Sound'},
-  {key:'volume',     label:'Volume',             type:'number', min:0,   max:100},
-  {key:'startup',    label:'Startup Sound',      type:'bool'},
-  {key:'rndon',      label:'Random Sounds',      type:'bool'},
-  {key:'mindelay',   label:'Random Min Delay',   type:'number', min:0,   max:1000, note:'seconds'},
-  {key:'maxdelay',   label:'Random Max Delay',   type:'number', min:0,   max:1000, note:'seconds'},
-  {key:'ackon',      label:'Ack Sounds',         type:'bool'},
-  {section:'Drive'},
-  {key:'goslow',     label:'Start in Slow Mode', type:'bool'},
-  {key:'mix12',      label:'Channel Mixing',     type:'bool'},
-  {key:'auto',       label:'Autocorrect Gestures', type:'bool'},
-  {section:'Serial'},
-  {key:'serialbaud', label:'Baud Rate',          type:'number', min:300, max:115200},
-  {key:'serialdelim',label:'Delimiter (ASCII)',  type:'number', min:0,   max:255},
-  {key:'serialeol',  label:'EOL (ASCII)',         type:'number', min:0,   max:255},
-  {section:'I²C'},
-  {key:'myi2c',      label:"This Board's Address", type:'number', min:0, max:100}
+  {section:'Hardware'},
+  {key:'audiohw',        label:'Audio Board',        readOnly:true},
+  {section:'Volume'},
+  {key:'volumeChA',      label:'Channel A Volume',   type:'number', min:0, max:100},
+  {key:'volumeChB',      label:'Channel B Volume',   type:'number', min:0, max:100},
+  {key:'volumewheel',    label:'Volume Wheel',       type:'select', options:_whl},
+  {key:'altvolumewheel', label:'Alt+Wheel',          type:'select', options:_awl},
+  {section:'Startup Emote'},
+  {key:'startupem',  label:'Emotion', type:'select', options:_emo},
+  {key:'startuplvl', label:'Level',   type:'select', options:_lvl},
+  {section:'Ack Emote'},
+  {key:'ackem',  label:'Emotion', type:'select', options:_emo},
+  {key:'acklvl', label:'Level',   type:'select', options:_lvl}
 ];
-buildPage(SCHEMA, '/api/config/general');
+buildPage(SCHEMA, '/api/config/audio');
 </script>
 </body>
 </html>

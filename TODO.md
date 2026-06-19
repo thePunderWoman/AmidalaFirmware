@@ -20,19 +20,18 @@
   - [x] Drive settings (slow mode, channel mixing, autocorrect)
   - [x] Serial settings (baud, delimiter, EOL)
   - [x] I²C address
-- [ ] Audio (`/config/audio`)
-  - [ ] Audio hardware display (compile-time, read-only)
-  - [ ] Per-channel volume (volumeChA, volumeChB)
-  - [ ] Volume wheel assignment (volumewheel, altvolumewheel)
-  - [ ] Startup emote (startupem, startuplvl)
-  - [ ] Ack emote (ackem, acklvl)
+- [x] Audio (`/config/audio`)
+  - [x] Audio hardware display (compile-time, read-only)
+  - [x] Per-channel volume (volumeChA, volumeChB)
+  - [x] Volume wheel assignment (volumewheel, altvolumewheel)
+  - [x] Startup emote (startupem, startuplvl)
+  - [x] Ack emote (ackem, acklvl)
   - [ ] Sound banks list
-- [ ] Dome drive (`/config/dome`)
-  - [ ] Dome drive type display (compile-time, read-only)
-  - [ ] Speed settings (domespeed, domespeedhome, domespeedseek, domespeedmin)
-  - [ ] Position settings (domehome, domefudge, domemode, domeflip)
-  - [ ] Seek range (domeseekmin, domeseekmax, domeseekl, domeseekr)
-  - [ ] RoboClaw-specific (domercaddr, domercchan, domercqpps, domefront, domestall)
+- [x] Dome drive (`/config/dome`)
+  - [x] Speed settings (domespeed, domespeedhome, domespeedseek, domespeedmin)
+  - [x] Position settings (domehome, domefudge, domeflip, domeimu, domech6)
+  - [x] Seek range (domeseekl, domeseekr, domefudge)
+  - [x] RoboClaw-specific (domercaddr, domercchan, domercqpps, domefront, domestall)
   - [ ] Dome commands (home, calibrate, stop, front, random toggle)
 - [ ] Buttons & Gestures (`/config/buttons`)
   - [ ] Button mapping table (b=, lb=, ab=)
@@ -43,18 +42,17 @@
 - [ ] Servos (`/config/servos`)
   - [ ] Per-channel min/max/neutral/deadzone/trim/speed/reversed
   - [ ] Global pulse limits (minpulse, maxpulse)
-- [ ] XBee (`/config/xbee`)
-  - [ ] Drive remote address (xbr)
-  - [ ] Dome remote address (xbl)
+- [x] XBee (`/config/xbee`)
+  - [x] Drive remote address (xbr)
+  - [x] Dome remote address (xbl)
 - [ ] Serial strings (`/config/serial-strings`)
   - [ ] Numbered list of sstr= entries, editable and reorderable
-- [ ] RC Radio (`/config/rc-radio`)
-  - [ ] Channel count (rcchn), deadzone (rcd), jitter (rcj)
-  - [ ] Joystick calibration (rvrmin, rvrmax, rvlmin, rvlmax, j1adjv, j1adjh)
-  - [ ] Failsafe timeout (fst)
-- [ ] WiFi (`/config/wifi`)
-  - [ ] SSID (wifiSSID), password (wifiPassword), enable (wifion)
-  - [ ] Show current IP address
+- [x] RC Radio (`/config/rc-radio`)
+  - [x] Channel count (rcchn), deadzone (rcd), jitter (rcj)
+  - [x] Joystick calibration (rvrmin, rvrmax, rvlmin, rvlmax, j1adjv, j1adjh)
+  - [x] Failsafe timeout (fst)
+- [x] WiFi (`/config/wifi`)
+  - [x] SSID (wifiSSID), password (wifiPassword), enable (wifion)
 
 ## Tools
 - [ ] Sequences (`/sequences`) — mobile-friendly touch-triggered list of serial strings
@@ -66,8 +64,8 @@
 - [x] Touch-friendly tap targets
 - [x] Star Wars color theme (black + #ffe81f gold)
 - [x] Edit-in-place pattern: display → edit icon → input + save/cancel
-- [ ] Consistent page header with back-navigation on all sub-pages (only general done)
-- [ ] Toast / status feedback after save (currently uses default browser alert on error)
+- [x] Consistent page header with back-navigation on all sub-pages
+- [x] Toast / status feedback after save (replaces browser alert)
 
 ## Testing
 - [x] Unit tests for JSON API builders (`buildGeneralConfigJson`, `buildInfoJson`)

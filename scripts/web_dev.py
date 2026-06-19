@@ -36,6 +36,62 @@ _general = {
     "myi2c":       0,
 }
 
+_wifi = {
+    "wifion":       "y",
+    "wifissid":     "amidala",
+    "wifipassword": "Astromech",
+}
+
+_xbee = {
+    "xbr": "00000000",
+    "xbl": "00000000",
+}
+
+_audio = {
+    "audiohw":        "hcr",
+    "volumeChA":      50,
+    "volumeChB":      50,
+    "volumewheel":    0,
+    "altvolumewheel": 0,
+    "startupem":      0,
+    "startuplvl":     0,
+    "ackem":          0,
+    "acklvl":         0,
+}
+
+_rc_radio = {
+    "rcchn":  6,
+    "rcd":    30,
+    "rcj":    5,
+    "fst":    1000,
+    "rvrmin": 0,
+    "rvrmax": 1023,
+    "rvlmin": 0,
+    "rvlmax": 1023,
+    "j1adjv": 0,
+    "j1adjh": 0,
+}
+
+_dome = {
+    "domespeed":     80,
+    "domespeedhome": 50,
+    "domespeedseek": 50,
+    "domespeedmin":  10,
+    "domedecelzone": 20,
+    "domehome":      0,
+    "domeflip":      "n",
+    "domeimu":       "y",
+    "domech6":       "n",
+    "domeseekl":     90,
+    "domeseekr":     90,
+    "domefudge":     5,
+    "domercaddr":    128,
+    "domercchan":    1,
+    "domercqpps":    1000,
+    "domefront":     0,
+    "domestall":     2000,
+}
+
 _info = {
     "firmware": "Amidala RC",
     "version":  "1.3",
@@ -56,11 +112,17 @@ class _Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
 
-        if path == "/api/info":
-            self._json(_info)
-            return
-        if path == "/api/config/general":
-            self._json(_general)
+        _api = {
+            "/api/info":             _info,
+            "/api/config/general":   _general,
+            "/api/config/wifi":      _wifi,
+            "/api/config/xbee":      _xbee,
+            "/api/config/audio":     _audio,
+            "/api/config/rc-radio":  _rc_radio,
+            "/api/config/dome":      _dome,
+        }
+        if path in _api:
+            self._json(_api[path])
             return
 
         # Map extension-less paths to .html (e.g. /config/general → general.html)
