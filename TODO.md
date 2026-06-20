@@ -61,7 +61,8 @@
 ## Droid Control
 - [x] Dome (`/droid-control#dome`) — STOP, Go Home, angle presets, relative moves (±45°/±90°), Random/Abs-Stick toggles
 - [x] Sequences (`/droid-control#sequences`) — grid of serial command buttons + HCR audio (musing toggle, 4 emotions × 2 levels); `/api/serial` and `/api/hcr` endpoints
-- [ ] Gadgets (`/droid-control#gadgets`) — coming soon placeholder; needs gadget configuration page first
+- [x] Gadgets (`/droid-control#gadgets`) — touch-grid of commands grouped by gadget; "no gadgets" empty state links to config
+- [x] Gadgets config (`/config/gadgets`) — per-gadget type dropdown + serial command checkboxes; `gadget=` lines in config.txt; `POST /api/config gadget_N_type` / `gadget_N_sstr`
 
 ## Tools
 - [x] Serial monitor (`/monitor`) — polls `/api/monitor`, color-coded TX/RX, pause/clear

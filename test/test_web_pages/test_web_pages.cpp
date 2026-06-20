@@ -41,6 +41,7 @@ void test_home_page_has_all_config_nav_links() {
     TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/servos"));
     TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/xbee"));
     TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/serial-strings"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/gadgets"));
     TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/rc-radio"));
     TEST_ASSERT_TRUE(contains(WEB_PAGE_HOME, "/config/wifi"));
 }

@@ -126,6 +126,17 @@ _config = {
         {"seq": "258", "t": 5, "x": 3, "y": 0},  # 258 → Dome Home serial
         {"seq": "14",  "t": 9, "x": 0, "y": 0},  # 14  → dome random toggle
     ],
+    # Gadget config — 7 entries, one per gadget (index matches GADGETS array)
+    # type: 0=disabled, 1=enabled, 2=uppity_spinner; sstr: 1-based serial string indices
+    "gadgets_cfg": [
+        {"type": 2, "sstr": []},        # 0: Periscope — Uppity Spinner
+        {"type": 1, "sstr": [1, 2]},    # 1: Lifeform Scanner — sstr 1 (Leia) + 2 (Happy R2)
+        {"type": 0, "sstr": []},        # 2: Lightsaber Launcher — disabled
+        {"type": 0, "sstr": []},        # 3: Bubble Gun — disabled
+        {"type": 0, "sstr": []},        # 4: Zapper Arm — disabled
+        {"type": 0, "sstr": []},        # 5: Gripper — disabled
+        {"type": 0, "sstr": []},        # 6: Data Probe — disabled
+    ],
 }
 
 _monitor = {
@@ -259,6 +270,25 @@ class _Handler(SimpleHTTPRequestHandler):
             return
         if path != "/api/config":
             self._text("Not Found", 404)
+            return
+
+        # gadget_N_type — set gadget type
+        if key.startswith("gadget_") and key.endswith("_type"):
+            idx = int(key[7:-5])
+            if 0 <= idx < len(_config["gadgets_cfg"]):
+                _config["gadgets_cfg"][idx]["type"] = int(value)
+                print(f"  GADGET  [{idx}] type={value}")
+            self._text("OK")
+            return
+
+        # gadget_N_sstr — set gadget serial string list
+        if key.startswith("gadget_") and key.endswith("_sstr"):
+            idx = int(key[7:-5])
+            if 0 <= idx < len(_config["gadgets_cfg"]):
+                parts = [int(x) for x in value.split(",") if x.strip().isdigit() and int(x) > 0]
+                _config["gadgets_cfg"][idx]["sstr"] = parts
+                print(f"  GADGET  [{idx}] sstr={parts}")
+            self._text("OK")
             return
 
         print(f"  CONFIG  {key} = {value!r}")
