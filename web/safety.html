@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Safety — AMIDALA</title>
+<link rel="stylesheet" href="/assets/common.css">
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+main{max-width:660px;margin:0 auto;padding:1rem}
+.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
+.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
+.row-label{flex:1;font-size:.82rem;color:#ccc}
+.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
+.ri{min-width:90px}
+.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
+.ri select option{background:#111}
+.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
+.be:hover,.bs:hover,.bc:hover{opacity:1}
+.bc{color:var(--dim)}
+#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.info-banner{border:1px solid var(--border);background:#0d0d0d;color:var(--dim);padding:.7rem 1rem;font-size:.75rem;line-height:1.6;margin-bottom:.8rem}
+.note-row{padding:.3rem .2rem .6rem;color:var(--dim);font-size:.72rem;line-height:1.5;border-bottom:1px solid #0f0f0f}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Safety &#9670;</div>
+</div>
+<main>
+  <div id="status">LOADING&#8230;</div>
+</main>
+<script src="/assets/edit.js"></script>
+<script>
+var SCHEMA = [
+  {section:'Controller Failsafe'},
+  {key:'fst', label:'Failsafe Timeout', type:'number', min:1000, max:3000, note:'ms'},
+  {section:'Dome Obstruction Protection'},
+  {key:'domestall', label:'Stall Timeout', type:'number', min:100, max:5000, note:'ms'},
+];
+
+buildPage(SCHEMA, '/api/config', function() {
+  var main = document.querySelector('main');
+
+  main.insertAdjacentHTML('afterbegin',
+    '<div class="info-banner">Settings that protect the droid and bystanders. '
+    + 'Changes take effect immediately on save.</div>');
+
+  var notes = {
+    fst: 'Drive motors stop this many milliseconds after the last controller packet is received. '
+       + 'Shorter values cut power faster when the remote disconnects or signal drops (1000–3000 ms).',
+    domestall: 'If the dome motor runs but the encoder detects no movement for this long, '
+             + 'the driver cuts power to protect against obstructions or mechanical jams (100–5000 ms).'
+  };
+
+  Object.keys(notes).forEach(function(k) {
+    var row = main.querySelector('[data-key="' + k + '"]');
+    if (row) {
+      var n = document.createElement('div');
+      n.className = 'note-row';
+      n.textContent = notes[k];
+      row.after(n);
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -28,6 +28,7 @@ PAGES = [
     ("config/servos.html",          "WEB_PAGE_SERVOS"),
     ("config/controllers.html",     "WEB_PAGE_CONTROLLERS"),
     ("droid-control.html",             "WEB_PAGE_DROID_CONTROL"),
+    ("safety.html",                 "WEB_PAGE_SAFETY"),
     ("monitor.html",                "WEB_PAGE_MONITOR"),
     ("update.html",                 "WEB_PAGE_UPDATE"),
     ("config/coming-soon.html",     "WEB_PAGE_COMING_SOON"),
