@@ -3118,9 +3118,15 @@ button {
 .gadget-sel{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem}
 .sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid #1a1a1a}
 .sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
-.sstr-checks{display:flex;flex-wrap:wrap;gap:.35rem .9rem}
-.check-lbl{display:flex;align-items:center;gap:.35rem;font-size:.8rem;cursor:pointer;padding:.2rem 0}
-.check-lbl input[type=checkbox]{accent-color:var(--gold);width:.9rem;height:.9rem}
+.sstr-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
+.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:#0e0e0e;border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
+.sstr-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
+.sstr-rm:hover{color:#ff5555}
+.sstr-add-row{display:flex;gap:.4rem;align-items:center}
+.sstr-add-row select{flex:1;background:#111;border:1px solid var(--dim);color:var(--fg);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0}
+.sstr-add-btn{background:var(--bg);border:1px solid var(--border);color:var(--gold);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px}
+.sstr-add-btn:hover{background:#0e0e0e}
+.sstr-empty{font-size:.75rem;color:var(--dim);margin-bottom:.4rem}
 .no-sstr{font-size:.75rem;color:var(--dim)}
 .no-sstr a{color:var(--fg)}
 </style>
@@ -3379,14 +3385,14 @@ function load() {
 }
 
 function render() {
-  var gCfg  = _cfg.gadgets_cfg || [];
-  var sstr  = _cfg.sstr || [];
+  var gCfg = _cfg.gadgets_cfg || [];
+  var sstr = _cfg.sstr || [];
   var h = '';
 
   h += '<div class="info-note">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &#8250; Gadgets</a> and are excluded from the Sequences tab.</div>';
 
   GADGETS.forEach(function(g) {
-    var cfg  = gCfg[g.id] || {type: 0, sstr: []};
+    var cfg      = gCfg[g.id] || {type: 0, sstr: []};
     var assigned = cfg.sstr || [];
 
     h += '<div class="gadget-row">';
@@ -3402,21 +3408,38 @@ function render() {
     if (g.serial && cfg.type > 0) {
       h += '<div class="sstr-section">';
       h += '<div class="sstr-label">Serial Commands</div>';
+
+      if (assigned.length > 0) {
+        h += '<div class="sstr-tags">';
+        assigned.forEach(function(idx) {
+          var s = sstr[idx - 1];
+          if (!s) return;
+          h += '<div class="sstr-tag"><span>' + s.n + '</span>';
+          h += '<button class="sstr-rm" title="Remove" onclick="removeSstr(' + g.id + ',' + idx + ')">&#10005;</button>';
+          h += '</div>';
+        });
+        h += '</div>';
+      } else {
+        h += '<div class="sstr-empty">No commands assigned yet.</div>';
+      }
+
       if (sstr.length === 0) {
         h += '<div class="no-sstr">No serial commands configured. <a href="/config/serial-strings">Add some.</a></div>';
       } else {
-        h += '<div class="sstr-checks">';
+        h += '<div class="sstr-add-row">';
+        h += '<select id="gadget-' + g.id + '-pick" class="gadget-sel">';
+        h += '<option value="">&#8212; add command &#8212;</option>';
         sstr.forEach(function(s, i) {
-          var idx     = i + 1;
-          var checked = assigned.indexOf(idx) >= 0;
-          h += '<label class="check-lbl">';
-          h += '<input type="checkbox" name="gadget-' + g.id + '-sstr-' + idx + '"';
-          h += (checked ? ' checked' : '') + ' onchange="saveSstr(' + g.id + ')">';
-          h += s.n;
-          h += '</label>';
+          var idx = i + 1;
+          if (assigned.indexOf(idx) < 0) {
+            h += '<option value="' + idx + '">' + s.n + '</option>';
+          }
         });
+        h += '</select>';
+        h += '<button class="sstr-add-btn" onclick="addSstr(' + g.id + ')">&#43; Add</button>';
         h += '</div>';
       }
+
       h += '</div>';
     }
 
@@ -3448,15 +3471,20 @@ function saveType(gadgetId, type) {
   apiPost('gadget_' + gadgetId + '_type', type, render);
 }
 
-function saveSstr(gadgetId) {
-  var sstr  = _cfg.sstr || [];
-  var idxs  = [];
-  sstr.forEach(function(_, i) {
-    var idx = i + 1;
-    var cb  = document.querySelector('input[name="gadget-' + gadgetId + '-sstr-' + idx + '"]');
-    if (cb && cb.checked) idxs.push(idx);
-  });
-  apiPost('gadget_' + gadgetId + '_sstr', idxs.length ? idxs.join(',') : '0', null);
+function addSstr(gadgetId) {
+  var sel = document.getElementById('gadget-' + gadgetId + '-pick');
+  if (!sel || !sel.value) { showToast('Select a command first', true); return; }
+  var newIdx   = parseInt(sel.value, 10);
+  var gCfg     = _cfg.gadgets_cfg || [];
+  var assigned = ((gCfg[gadgetId] || {}).sstr || []).slice();
+  if (assigned.indexOf(newIdx) < 0) assigned.push(newIdx);
+  apiPost('gadget_' + gadgetId + '_sstr', assigned.join(','), render);
+}
+
+function removeSstr(gadgetId, removeIdx) {
+  var gCfg     = _cfg.gadgets_cfg || [];
+  var assigned = ((gCfg[gadgetId] || {}).sstr || []).filter(function(i) { return i !== removeIdx; });
+  apiPost('gadget_' + gadgetId + '_sstr', assigned.length ? assigned.join(',') : '0', render);
 }
 
 load();
