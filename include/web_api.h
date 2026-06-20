@@ -252,3 +252,14 @@ inline String buildFullConfigJson(const AmidalaParameters& p) {
     json += "}";
     return json;
 }
+
+// Overload that appends gadget configuration (JSON array string built by caller).
+inline String buildFullConfigJson(const AmidalaParameters& p, const String& gadgetsCfgJson) {
+    String j = buildFullConfigJson(p);
+    // Insert gadgets_cfg before the closing brace
+    j = j.substring(0, j.length() - 1);
+    j += ",\"gadgets_cfg\":";
+    j += gadgetsCfgJson;
+    j += "}";
+    return j;
+}

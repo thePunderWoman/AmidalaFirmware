@@ -24,6 +24,7 @@ PAGES = [
     ("config/rc-radio.html",    "WEB_PAGE_RC_RADIO"),
     ("config/dome.html",            "WEB_PAGE_DOME"),
     ("config/serial-strings.html",  "WEB_PAGE_SERIAL_STRINGS"),
+    ("config/gadgets.html",         "WEB_PAGE_GADGETS"),
     ("config/servos.html",          "WEB_PAGE_SERVOS"),
     ("config/controllers.html",     "WEB_PAGE_CONTROLLERS"),
     ("droid-control.html",             "WEB_PAGE_DROID_CONTROL"),

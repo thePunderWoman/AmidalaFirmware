@@ -47,6 +47,106 @@ static void monAppend(const char* text, char cls = 'i') {
 #include "config_file.h"
 
 // ---------------------------------------------------------------------------
+// Gadget configuration
+// ---------------------------------------------------------------------------
+
+static const uint8_t GADGET_COUNT   = 7;
+static const uint8_t GADGET_DISABLED = 0;
+static const uint8_t GADGET_ENABLED  = 1;
+static const uint8_t GADGET_UPPITY   = 2;  // Uppity Spinner (periscope)
+
+struct GadgetCfg {
+    uint8_t type;
+    uint8_t sstr[16];   // 1-based serial string indices (0 = empty slot)
+    uint8_t sstrCnt;
+};
+static GadgetCfg sGadgets[GADGET_COUNT];
+
+static void parseGadgetLine(const String& val) {
+    int c = val.indexOf(',');
+    if (c < 0) return;
+    int idx = val.substring(0, c).toInt();
+    if (idx < 0 || idx >= GADGET_COUNT) return;
+    String rest = val.substring(c + 1);
+    c = rest.indexOf(',');
+    uint8_t type;
+    String sstrPart;
+    if (c < 0) { type = (uint8_t)rest.toInt(); sstrPart = ""; }
+    else        { type = (uint8_t)rest.substring(0, c).toInt(); sstrPart = rest.substring(c + 1); }
+    sGadgets[idx].type    = type;
+    sGadgets[idx].sstrCnt = 0;
+    int pos = 0;
+    while (pos <= (int)sstrPart.length() && sGadgets[idx].sstrCnt < 16) {
+        int next = sstrPart.indexOf(',', pos);
+        String part = (next < 0) ? sstrPart.substring(pos) : sstrPart.substring(pos, next);
+        part.trim();
+        if (part.length() > 0) {
+            uint8_t si = (uint8_t)part.toInt();
+            if (si > 0) sGadgets[idx].sstr[sGadgets[idx].sstrCnt++] = si;
+        }
+        if (next < 0) break;
+        pos = next + 1;
+    }
+}
+
+static void loadGadgetConfig() {
+    memset(sGadgets, 0, sizeof(sGadgets));
+    File f = SD.open("/config.txt", "r");
+    if (!f) return;
+    while (f.available()) {
+        String line = f.readStringUntil('\n');
+        line.trim();
+        if (line.startsWith("gadget="))
+            parseGadgetLine(line.substring(7));
+    }
+    f.close();
+}
+
+static bool rewriteGadgetConfig() {
+    String path = "/config.txt";
+    File f = SD.open(path, "r");
+    if (!f) return false;
+    String out;
+    while (f.available()) {
+        String line = f.readStringUntil('\n');
+        line.trim();
+        if (!line.startsWith("gadget=")) { out += line; out += "\n"; }
+    }
+    f.close();
+    for (uint8_t i = 0; i < GADGET_COUNT; i++) {
+        if (sGadgets[i].type == GADGET_DISABLED) continue;
+        out += "gadget=";
+        out += String(i); out += ","; out += String(sGadgets[i].type);
+        for (uint8_t j = 0; j < sGadgets[i].sstrCnt; j++) {
+            out += ","; out += String(sGadgets[i].sstr[j]);
+        }
+        out += "\n";
+    }
+    SD.remove(path);
+    File wf = SD.open(path, "w");
+    if (!wf) return false;
+    wf.print(out);
+    wf.close();
+    return true;
+}
+
+static String buildGadgetsCfgJson() {
+    String j = "[";
+    for (uint8_t i = 0; i < GADGET_COUNT; i++) {
+        if (i > 0) j += ",";
+        j += "{\"type\":"; j += String(sGadgets[i].type);
+        j += ",\"sstr\":[";
+        for (uint8_t k = 0; k < sGadgets[i].sstrCnt; k++) {
+            if (k > 0) j += ",";
+            j += String(sGadgets[i].sstr[k]);
+        }
+        j += "]}";
+    }
+    j += "]";
+    return j;
+}
+
+// ---------------------------------------------------------------------------
 // Serial-string config file helpers
 // ---------------------------------------------------------------------------
 
@@ -351,7 +451,7 @@ static void handleApiInfo() {
 static void handleApiConfigGet() {
     if (!sCtrl) { sServer.send(500, "application/json", "{}"); return; }
     sServer.send(200, "application/json",
-        buildFullConfigJson(sCtrl->params));
+        buildFullConfigJson(sCtrl->params, buildGadgetsCfgJson()));
 }
 
 static void setSerialStringFields(SerialString& s, const char* val) {
@@ -548,6 +648,40 @@ static void handleApiConfigPost() {
         return;
     }
 
+    // gadget_N_type — set gadget N's hardware type
+    if (key.startsWith("gadget_") && key.endsWith("_type")) {
+        int idx = key.substring(7, key.length() - 5).toInt();
+        if (idx >= 0 && idx < GADGET_COUNT) {
+            sGadgets[idx].type = (uint8_t)value.toInt();
+            rewriteGadgetConfig();
+            sServer.send(200, "text/plain", "OK");
+            return;
+        }
+    }
+
+    // gadget_N_sstr — set gadget N's serial string list (comma-separated 1-based indices)
+    if (key.startsWith("gadget_") && key.endsWith("_sstr")) {
+        int idx = key.substring(7, key.length() - 5).toInt();
+        if (idx >= 0 && idx < GADGET_COUNT) {
+            sGadgets[idx].sstrCnt = 0;
+            int pos = 0;
+            while (pos <= (int)value.length() && sGadgets[idx].sstrCnt < 16) {
+                int next = value.indexOf(',', pos);
+                String part = (next < 0) ? value.substring(pos) : value.substring(pos, next);
+                part.trim();
+                if (part.length() > 0) {
+                    uint8_t si = (uint8_t)part.toInt();
+                    if (si > 0) sGadgets[idx].sstr[sGadgets[idx].sstrCnt++] = si;
+                }
+                if (next < 0) break;
+                pos = next + 1;
+            }
+            rewriteGadgetConfig();
+            sServer.send(200, "text/plain", "OK");
+            return;
+        }
+    }
+
     // Generic key=value — delegate to processConfig
     String cmd = key + "=" + value;
     if (!sCtrl->fConfig.processConfig(cmd.c_str())) {
@@ -694,6 +828,7 @@ static void handleConfigControllers()   { sServer.send(200, "text/html", WEB_PAG
 static void handleMonitor()             { sServer.send(200, "text/html", WEB_PAGE_MONITOR);         }
 static void handleUpdatePage()          { sServer.send(200, "text/html", WEB_PAGE_UPDATE);          }
 static void handleDroidControl()        { sServer.send(200, "text/html", WEB_PAGE_DROID_CONTROL);   }
+static void handleConfigGadgets()       { sServer.send(200, "text/html", WEB_PAGE_GADGETS);         }
 static void handleComingSoon()          { sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);     }
 
 // ---------------------------------------------------------------------------
@@ -702,6 +837,7 @@ static void handleComingSoon()          { sServer.send(200, "text/html", WEB_PAG
 
 void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaController* ctrl) {
     sCtrl = ctrl;
+    loadGadgetConfig();
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, password);
@@ -733,6 +869,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     sServer.on("/config/buttons",        HTTP_GET, handleConfigControllers);  // legacy alias
     sServer.on("/config/servos",         HTTP_GET, handleConfigServos);
     sServer.on("/config/serial-strings", HTTP_GET, handleConfigSerialStrings);
+    sServer.on("/config/gadgets",        HTTP_GET, handleConfigGadgets);
     sServer.on("/droid-control",        HTTP_GET, handleDroidControl);
     sServer.on("/monitor",              HTTP_GET,  handleMonitor);
     sServer.on("/api/monitor",          HTTP_GET,  handleApiMonitorGet);

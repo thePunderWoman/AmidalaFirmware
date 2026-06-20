@@ -137,6 +137,7 @@ header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--
   <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
   <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
   <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
+  <a class="card" href="/config/gadgets"><div class="icon">&#9881;</div><div class="name">Gadgets</div></a>
   <a class="card" id="nav-rc" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
   <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
 </nav>
@@ -3008,6 +3009,490 @@ load();
 </html>
 )html";
 
+static const char WEB_PAGE_GADGETS[] = R"html(<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gadgets — AMIDALA</title>
+<style>
+/* Amidala web UI — shared styles.
+   Embed script inlines this into every page's <style> block.
+   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold:   #ffe81f;
+  --red:    #c00;
+  --bg:     #000;
+  --card:   #0a0a0a;
+  --dim:    #555;
+  --border: #ffe81f22;
+}
+
+body {
+  background: var(--bg);
+  color: var(--gold);
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  padding: .55rem 1.4rem;
+  font-size: .78rem;
+  letter-spacing: .08em;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
+  z-index: 9999;
+}
+.toast-err {
+  border-color: var(--red);
+  color: var(--red);
+}
+@keyframes _tfi {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+}
+@keyframes _tfo {
+  from { opacity: 1 }
+  to   { opacity: 0 }
+}
+
+#estop {
+  position: fixed;
+  top: .5rem;
+  right: .7rem;
+  background: #900;
+  color: #fff;
+  border: 1px solid #c44;
+  padding: .28rem .75rem;
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  z-index: 9998;
+}
+#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+</style>
+<style>
+.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
+.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+.back:hover{color:var(--gold)}
+.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
+.info-note{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--dim);line-height:1.5}
+.info-note a{color:var(--fg)}
+.gadget-row{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.gadget-top{display:flex;align-items:center;gap:.75rem}
+.gadget-name{flex:1;font-size:.85rem}
+.gadget-sel{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem}
+.sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid #1a1a1a}
+.sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
+.sstr-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
+.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:#0e0e0e;border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
+.sstr-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
+.sstr-rm:hover{color:#ff5555}
+.sstr-add-row{display:flex;gap:.4rem;align-items:center}
+.sstr-add-row select{flex:1;background:#111;border:1px solid var(--dim);color:var(--fg);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0}
+.sstr-add-btn{background:var(--bg);border:1px solid var(--border);color:var(--gold);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px}
+.sstr-add-btn:hover{background:#0e0e0e}
+.sstr-empty{font-size:.75rem;color:var(--dim);margin-bottom:.4rem}
+.no-sstr{font-size:.75rem;color:var(--dim)}
+.no-sstr a{color:var(--fg)}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <a class="back" href="/">&#9664; Back</a>
+  <div class="page-title">&#9670; Gadgets &#9670;</div>
+</div>
+<div id="main"><div id="status">LOADING&#8230;</div></div>
+<script>
+/* Amidala web UI — edit-in-place widget + shared config page helpers.
+   Embed script inlines this into every config sub-page.
+   In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ------------------------------------------------------------------ toast ---
+
+function showToast(msg, isErr) {
+  var t = document.createElement('div');
+  t.className = 'toast' + (isErr ? ' toast-err' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
+}
+
+// -------------------------------------------------------- edit-in-place -----
+
+function startEdit(btn) {
+  var row = btn.closest('.row');
+  var inp = row.querySelector('input,select');
+  inp.dataset.orig = inp.value;
+  row.querySelector('.rv').hidden = true;
+  row.querySelector('.ri').hidden = false;
+  btn.hidden = true;
+  row.querySelector('.bs').hidden = false;
+  row.querySelector('.bc').hidden = false;
+}
+
+function doCancel(btn) {
+  var row = btn.closest('.row');
+  var inp = row.querySelector('input,select');
+  if (inp && inp.dataset.orig !== undefined) inp.value = inp.dataset.orig;
+  row.querySelector('.rv').hidden = false;
+  row.querySelector('.ri').hidden = true;
+  row.querySelector('.be').hidden = false;
+  row.querySelector('.bs').hidden = true;
+  btn.hidden = true;
+}
+
+async function doSave(btn) {
+  var row = btn.closest('.row');
+  var key = row.dataset.key;
+  var inp = row.querySelector('input,select');
+  var val = inp.value;
+  var prev = btn.textContent;
+  btn.textContent = '...';
+  btn.disabled = true;
+  try {
+    var r = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(val)
+    });
+    if (r.ok) {
+      var dv = row.querySelector('.rv');
+      var rt = row.dataset.type;
+      if (rt === 'bool' || rt === 'select') {
+        var sel = row.querySelector('select');
+        dv.textContent = sel.options[sel.selectedIndex].text;
+      } else if (rt === 'password') {
+        dv.textContent = '••••••••';
+      } else {
+        dv.textContent = val;
+      }
+      doCancel(row.querySelector('.bc'));
+      showToast('Saved');
+    } else {
+      showToast('Save failed: ' + await r.text(), true);
+    }
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+// ------------------------------------------------ schema-driven row builder --
+
+function dispValue(s, val) {
+  if (s.type === 'bool') return val === 'y' ? 'On' : 'Off';
+  if (s.type === 'select') {
+    var found = (s.options || []).find(function(op) { return op.v === String(val); });
+    return found ? found.l : val;
+  }
+  if (s.type === 'password') return '••••••••';
+  return String(val);
+}
+
+function buildInput(s, val) {
+  if (s.type === 'bool') {
+    return '<select>'
+      + '<option value="y"' + (val === 'y' ? ' selected' : '') + '>On</option>'
+      + '<option value="n"' + (val === 'n' ? ' selected' : '') + '>Off</option>'
+      + '</select>';
+  }
+  if (s.type === 'select') {
+    var opts = (s.options || []).map(function(op) {
+      return '<option value="' + op.v + '"' + (String(val) === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    }).join('');
+    return '<select>' + opts + '</select>';
+  }
+  if (s.type === 'number') {
+    return '<input type="number" value="' + val + '" min="' + (s.min || 0) + '" max="' + (s.max || 9999) + '">';
+  }
+  if (s.type === 'password') {
+    return '<input type="password" value="' + val + '" maxlength="' + (s.maxlength || 64) + '">';
+  }
+  return '<input type="text" value="' + val + '"' + (s.maxlength ? ' maxlength="' + s.maxlength + '"' : '') + '>';
+}
+
+async function doAction(btn) {
+  var cmd      = btn.dataset.cmd;
+  var endpoint = btn.dataset.endpoint || '/api/monitor';
+  var prev = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    var r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'cmd=' + encodeURIComponent(cmd)
+    });
+    showToast(r.ok ? 'Sent' : 'Failed', !r.ok);
+  } catch(e) {
+    showToast('Network error', true);
+  }
+  btn.textContent = prev;
+  btn.disabled = false;
+}
+
+function buildRow(s, val) {
+  if (s.type === 'action') {
+    return '<div class="row">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + (s.btnLabel || 'Send') + '</button>'
+      + '</div>';
+  }
+  var disp = dispValue(s, val);
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  if (s.readOnly) {
+    return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+      + '<div class="row-label">' + s.label + '</div>'
+      + '<div class="rv">' + disp + '</div>'
+      + '</div>';
+  }
+  return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
+    + '<div class="row-label">' + s.label + '</div>'
+    + '<div class="rv">' + disp + '</div>'
+    + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
+    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '</div>';
+}
+
+// --------------------------------------------------- emergency stop button ---
+
+(function() {
+  var b = document.createElement('button');
+  b.id = 'estop';
+  b.textContent = 'E-Stop';
+  b.title = 'Emergency Stop — halts all motors';
+  b.onclick = function() {
+    fetch('/api/estop', { method: 'POST' })
+      .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
+      .catch(function() { showToast('Stop failed', true); });
+  };
+  document.body.appendChild(b);
+})();
+
+// ------------------------------------------------- hash-based tab nav --------
+// initHashTabs(defaultTab, onSwitch)
+//   Reads location.hash to pick the active tab on load, then listens for
+//   hashchange (browser back/forward) and re-activates accordingly.
+//   Expects .tab elements with data-tab="<id>" attributes on the page.
+//   onSwitch(tabId) is called whenever the active tab changes.
+//
+// showHashTab(t)
+//   Call from tab button onclick. Pushes a history entry then lets the
+//   hashchange handler do the actual switch (single code path for all sources).
+
+function initHashTabs(defaultTab, onSwitch) {
+  function activate(raw) {
+    var requested = ((raw || '').replace(/^#/, ''));
+    var tabs = document.querySelectorAll('.tab');
+    var matched = false;
+    tabs.forEach(function(el) { if (el.dataset.tab === requested) matched = true; });
+    var t = matched ? requested : defaultTab;
+    tabs.forEach(function(el) { el.classList.toggle('active', el.dataset.tab === t); });
+    if (onSwitch) onSwitch(t);
+  }
+  window.addEventListener('hashchange', function() { activate(location.hash); });
+  activate(location.hash);
+}
+
+function showHashTab(t) {
+  location.hash = '#' + t;
+}
+
+function buildPage(SCHEMA, endpoint, callback) {
+  fetch(endpoint)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var html = '';
+      var skip = false;
+      SCHEMA.forEach(function(s) {
+        if (s.section) {
+          skip = s.when ? !s.when(d) : false;
+          if (!skip) html += '<div class="section-label">' + s.section + '</div>';
+          return;
+        }
+        if (skip) return;
+        if (s.when && !s.when(d)) return;
+        if (s.type === 'action') { html += buildRow(s, ''); return; }
+        var val = (d[s.key] !== undefined) ? String(d[s.key]) : '?';
+        html += buildRow(s, val);
+      });
+      document.querySelector('main').innerHTML = html;
+      if (callback) callback(d);
+    })
+    .catch(function() {
+      var el = document.getElementById('status');
+      if (el) el.textContent = 'Failed to load settings.';
+    });
+}
+</script>
+<script>
+var _cfg = null;
+
+var GADGETS = [
+  {id:0, name:'Periscope',           opts:[{v:0,l:'Disabled'},{v:2,l:'Uppity Spinner'}], serial:false},
+  {id:1, name:'Lifeform Scanner',    opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:2, name:'Lightsaber Launcher', opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:3, name:'Bubble Gun',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:4, name:'Zapper Arm',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:5, name:'Gripper',             opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:6, name:'Data Probe',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+];
+
+function load() {
+  fetch('/api/config')
+    .then(function(r) { return r.json(); })
+    .then(function(d) { _cfg = d; render(); })
+    .catch(function() { document.getElementById('status').textContent = 'Failed to load.'; });
+}
+
+function render() {
+  var gCfg = _cfg.gadgets_cfg || [];
+  var sstr = _cfg.sstr || [];
+  var h = '';
+
+  h += '<div class="info-note">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &#8250; Gadgets</a> and are excluded from the Sequences tab.</div>';
+
+  GADGETS.forEach(function(g) {
+    var cfg      = gCfg[g.id] || {type: 0, sstr: []};
+    var assigned = cfg.sstr || [];
+
+    h += '<div class="gadget-row">';
+    h += '<div class="gadget-top">';
+    h += '<div class="gadget-name">' + g.name + '</div>';
+    h += '<select name="gadget-' + g.id + '-type" class="gadget-sel" onchange="saveType(' + g.id + ',this.value)">';
+    g.opts.forEach(function(op) {
+      h += '<option value="' + op.v + '"' + (cfg.type === op.v ? ' selected' : '') + '>' + op.l + '</option>';
+    });
+    h += '</select>';
+    h += '</div>';
+
+    if (g.serial && cfg.type > 0) {
+      h += '<div class="sstr-section">';
+      h += '<div class="sstr-label">Serial Commands</div>';
+
+      if (assigned.length > 0) {
+        h += '<div class="sstr-tags">';
+        assigned.forEach(function(idx) {
+          var s = sstr[idx - 1];
+          if (!s) return;
+          h += '<div class="sstr-tag"><span>' + s.n + '</span>';
+          h += '<button class="sstr-rm" title="Remove" onclick="removeSstr(' + g.id + ',' + idx + ')">&#10005;</button>';
+          h += '</div>';
+        });
+        h += '</div>';
+      } else {
+        h += '<div class="sstr-empty">No commands assigned yet.</div>';
+      }
+
+      if (sstr.length === 0) {
+        h += '<div class="no-sstr">No serial commands configured. <a href="/config/serial-strings">Add some.</a></div>';
+      } else {
+        h += '<div class="sstr-add-row">';
+        h += '<select id="gadget-' + g.id + '-pick" class="gadget-sel">';
+        h += '<option value="">&#8212; add command &#8212;</option>';
+        sstr.forEach(function(s, i) {
+          var idx = i + 1;
+          if (assigned.indexOf(idx) < 0) {
+            h += '<option value="' + idx + '">' + s.n + '</option>';
+          }
+        });
+        h += '</select>';
+        h += '<button class="sstr-add-btn" onclick="addSstr(' + g.id + ')">&#43; Add</button>';
+        h += '</div>';
+      }
+
+      h += '</div>';
+    }
+
+    h += '</div>';
+  });
+
+  document.getElementById('main').innerHTML = h;
+}
+
+function apiPost(key, value, cb) {
+  fetch('/api/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(value)
+  }).then(function(r) {
+    if (r.ok) {
+      showToast('Saved');
+      fetch('/api/config').then(function(r2) { return r2.json(); }).then(function(d) {
+        _cfg = d;
+        if (cb) cb();
+      });
+    } else {
+      showToast('Failed', true);
+    }
+  }).catch(function() { showToast('Network error', true); });
+}
+
+function saveType(gadgetId, type) {
+  apiPost('gadget_' + gadgetId + '_type', type, render);
+}
+
+function addSstr(gadgetId) {
+  var sel = document.getElementById('gadget-' + gadgetId + '-pick');
+  if (!sel || !sel.value) { showToast('Select a command first', true); return; }
+  var newIdx   = parseInt(sel.value, 10);
+  var gCfg     = _cfg.gadgets_cfg || [];
+  var assigned = ((gCfg[gadgetId] || {}).sstr || []).slice();
+  if (assigned.indexOf(newIdx) < 0) assigned.push(newIdx);
+  apiPost('gadget_' + gadgetId + '_sstr', assigned.join(','), render);
+}
+
+function removeSstr(gadgetId, removeIdx) {
+  var gCfg     = _cfg.gadgets_cfg || [];
+  var assigned = ((gCfg[gadgetId] || {}).sstr || []).filter(function(i) { return i !== removeIdx; });
+  apiPost('gadget_' + gadgetId + '_sstr', assigned.length ? assigned.join(',') : '0', render);
+}
+
+load();
+</script>
+</body>
+</html>
+)html";
+
 static const char WEB_PAGE_SERVOS[] = R"html(<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -4508,9 +4993,15 @@ function buildPage(SCHEMA, endpoint, callback) {
 var _cfg = null;
 var _tab = 'dome';
 
-var ANGLES = [0,45,90,135,180,225,270,315];
-/* Happy/Sad/Mad/Scared only — Overload has no level so it's handled separately */
-var HCR_EMOS = ['Happy','Sad','Mad','Scared'];
+var ANGLES    = [0,45,90,135,180,225,270,315];
+var HCR_EMOS  = ['Happy','Sad','Mad','Scared'];
+var GADGET_NAMES = ['Periscope','Lifeform Scanner','Lightsaber Launcher','Bubble Gun','Zapper Arm','Gripper','Data Probe'];
+
+function isGadgetSstr(oneBasedIdx) {
+  return (_cfg.gadgets_cfg || []).some(function(g) {
+    return g && g.type > 0 && (g.sstr || []).indexOf(oneBasedIdx) >= 0;
+  });
+}
 
 function load() {
   fetch('/api/config')
@@ -4617,11 +5108,15 @@ function renderSequences() {
   var h = '<div class="ctrl-section">';
 
   h += '<div class="sec-hdr" style="margin-top:0">Serial Commands</div>';
-  if (sstr.length === 0) {
+  var unassigned = sstr.filter(function(_, i) { return !isGadgetSstr(i + 1); });
+  if (unassigned.length === 0 && sstr.length === 0) {
     h += '<div class="empty-note">No serial commands configured. <a href="/config/serial-strings">Add some in Serial Commands.</a></div>';
+  } else if (unassigned.length === 0) {
+    h += '<div class="empty-note">All serial commands are assigned to gadgets. See <a href="/droid-control#gadgets">Gadgets</a>.</div>';
   } else {
     h += '<div class="cmd-grid">';
     sstr.forEach(function(s, i) {
+      if (isGadgetSstr(i + 1)) return;
       h += '<button class="grid-btn" onclick="serialPost(' + (i + 1) + ')">' + s.n + '</button>';
     });
     h += '</div>';
@@ -4645,15 +5140,39 @@ function renderSequences() {
 /* ---- gadgets tab ---- */
 
 function renderGadgets() {
-  document.getElementById('main').innerHTML =
-    '<div class="coming-soon">' +
-    '<div class="cs-icon">&#9881;</div>' +
-    '<div class="cs-title">Coming Soon</div>' +
-    '<div class="cs-text">Gadget control will allow triggering dome accessories ' +
-    'like the periscope, life form scanner, zapper, data probe, gripper, and bubble gun.' +
-    '<br><br>A gadgets configuration page will let you specify which accessories ' +
-    'are installed in your build.</div>' +
-    '</div>';
+  var gCfg = _cfg.gadgets_cfg || [];
+  var sstr = _cfg.sstr || [];
+  var hasEnabled = gCfg.some(function(g) { return g && g.type > 0; });
+
+  if (!hasEnabled) {
+    document.getElementById('main').innerHTML =
+      '<div class="coming-soon">' +
+      '<div class="cs-icon">&#9881;</div>' +
+      '<div class="cs-title">No Gadgets Configured</div>' +
+      '<div class="cs-text">Configure which accessories are installed in your build on the ' +
+      '<a href="/config/gadgets">Gadgets config page</a>.</div>' +
+      '</div>';
+    return;
+  }
+
+  var h = '<div class="ctrl-section">';
+  gCfg.forEach(function(g, i) {
+    if (!g || g.type === 0) return;
+    h += '<div class="sec-hdr">' + GADGET_NAMES[i] + '</div>';
+    var slots = (g.sstr || []).filter(function(idx) { return idx > 0 && idx <= sstr.length; });
+    if (slots.length === 0) {
+      h += '<div style="padding:.3rem 0 .6rem;color:var(--dim);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a></div>';
+    } else {
+      h += '<div class="cmd-grid">';
+      slots.forEach(function(idx) {
+        var s = sstr[idx - 1];
+        if (s) h += '<button class="grid-btn" onclick="serialPost(' + idx + ')">' + s.n + '</button>';
+      });
+      h += '</div>';
+    }
+  });
+  h += '</div>';
+  document.getElementById('main').innerHTML = h;
 }
 
 load();

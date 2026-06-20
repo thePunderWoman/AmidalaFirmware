@@ -57,9 +57,15 @@
 var _cfg = null;
 var _tab = 'dome';
 
-var ANGLES = [0,45,90,135,180,225,270,315];
-/* Happy/Sad/Mad/Scared only — Overload has no level so it's handled separately */
-var HCR_EMOS = ['Happy','Sad','Mad','Scared'];
+var ANGLES    = [0,45,90,135,180,225,270,315];
+var HCR_EMOS  = ['Happy','Sad','Mad','Scared'];
+var GADGET_NAMES = ['Periscope','Lifeform Scanner','Lightsaber Launcher','Bubble Gun','Zapper Arm','Gripper','Data Probe'];
+
+function isGadgetSstr(oneBasedIdx) {
+  return (_cfg.gadgets_cfg || []).some(function(g) {
+    return g && g.type > 0 && (g.sstr || []).indexOf(oneBasedIdx) >= 0;
+  });
+}
 
 function load() {
   fetch('/api/config')
@@ -166,11 +172,15 @@ function renderSequences() {
   var h = '<div class="ctrl-section">';
 
   h += '<div class="sec-hdr" style="margin-top:0">Serial Commands</div>';
-  if (sstr.length === 0) {
+  var unassigned = sstr.filter(function(_, i) { return !isGadgetSstr(i + 1); });
+  if (unassigned.length === 0 && sstr.length === 0) {
     h += '<div class="empty-note">No serial commands configured. <a href="/config/serial-strings">Add some in Serial Commands.</a></div>';
+  } else if (unassigned.length === 0) {
+    h += '<div class="empty-note">All serial commands are assigned to gadgets. See <a href="/droid-control#gadgets">Gadgets</a>.</div>';
   } else {
     h += '<div class="cmd-grid">';
     sstr.forEach(function(s, i) {
+      if (isGadgetSstr(i + 1)) return;
       h += '<button class="grid-btn" onclick="serialPost(' + (i + 1) + ')">' + s.n + '</button>';
     });
     h += '</div>';
@@ -194,15 +204,39 @@ function renderSequences() {
 /* ---- gadgets tab ---- */
 
 function renderGadgets() {
-  document.getElementById('main').innerHTML =
-    '<div class="coming-soon">' +
-    '<div class="cs-icon">&#9881;</div>' +
-    '<div class="cs-title">Coming Soon</div>' +
-    '<div class="cs-text">Gadget control will allow triggering dome accessories ' +
-    'like the periscope, life form scanner, zapper, data probe, gripper, and bubble gun.' +
-    '<br><br>A gadgets configuration page will let you specify which accessories ' +
-    'are installed in your build.</div>' +
-    '</div>';
+  var gCfg = _cfg.gadgets_cfg || [];
+  var sstr = _cfg.sstr || [];
+  var hasEnabled = gCfg.some(function(g) { return g && g.type > 0; });
+
+  if (!hasEnabled) {
+    document.getElementById('main').innerHTML =
+      '<div class="coming-soon">' +
+      '<div class="cs-icon">&#9881;</div>' +
+      '<div class="cs-title">No Gadgets Configured</div>' +
+      '<div class="cs-text">Configure which accessories are installed in your build on the ' +
+      '<a href="/config/gadgets">Gadgets config page</a>.</div>' +
+      '</div>';
+    return;
+  }
+
+  var h = '<div class="ctrl-section">';
+  gCfg.forEach(function(g, i) {
+    if (!g || g.type === 0) return;
+    h += '<div class="sec-hdr">' + GADGET_NAMES[i] + '</div>';
+    var slots = (g.sstr || []).filter(function(idx) { return idx > 0 && idx <= sstr.length; });
+    if (slots.length === 0) {
+      h += '<div style="padding:.3rem 0 .6rem;color:var(--dim);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a></div>';
+    } else {
+      h += '<div class="cmd-grid">';
+      slots.forEach(function(idx) {
+        var s = sstr[idx - 1];
+        if (s) h += '<button class="grid-btn" onclick="serialPost(' + idx + ')">' + s.n + '</button>';
+      });
+      h += '</div>';
+    }
+  });
+  h += '</div>';
+  document.getElementById('main').innerHTML = h;
 }
 
 load();
