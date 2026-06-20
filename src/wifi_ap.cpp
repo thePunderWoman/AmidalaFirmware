@@ -829,6 +829,7 @@ static void handleMonitor()             { sServer.send(200, "text/html", WEB_PAG
 static void handleUpdatePage()          { sServer.send(200, "text/html", WEB_PAGE_UPDATE);          }
 static void handleDroidControl()        { sServer.send(200, "text/html", WEB_PAGE_DROID_CONTROL);   }
 static void handleConfigGadgets()       { sServer.send(200, "text/html", WEB_PAGE_GADGETS);         }
+static void handleSafety()             { sServer.send(200, "text/html", WEB_PAGE_SAFETY);           }
 static void handleComingSoon()          { sServer.send(200, "text/html", WEB_PAGE_COMING_SOON);     }
 
 // ---------------------------------------------------------------------------
@@ -871,6 +872,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     sServer.on("/config/serial-strings", HTTP_GET, handleConfigSerialStrings);
     sServer.on("/config/gadgets",        HTTP_GET, handleConfigGadgets);
     sServer.on("/droid-control",        HTTP_GET, handleDroidControl);
+    sServer.on("/safety",               HTTP_GET,  handleSafety);
     sServer.on("/monitor",              HTTP_GET,  handleMonitor);
     sServer.on("/api/monitor",          HTTP_GET,  handleApiMonitorGet);
     sServer.on("/api/monitor",          HTTP_POST, handleApiMonitorPost);

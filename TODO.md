@@ -67,7 +67,7 @@
 ## Tools
 - [x] Serial monitor (`/monitor`) — polls `/api/monitor`, color-coded TX/RX, pause/clear
 - [x] Firmware update (`/update`) — OTA flash over WiFi, progress bar, version confirmation after restart
-- [ ] Safety (`/safety`) - safety settings
+- [x] Safety (`/safety`) — failsafe timeout (`fst`, 1000–3000 ms) + dome stall timeout (`domestall`, 100–5000 ms); placeholder for future safety settings
 
 ## Design / UX
 - [x] Responsive grid layout (works on phone)
