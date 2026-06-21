@@ -4,39 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Audio — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/common.css">
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-.sb-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.sb-dir{font-size:.82rem;color:var(--gold);min-width:5rem}
-.sb-meta{flex:1;font-size:.75rem;color:var(--dim)}
-.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem .2rem}
-.sb-form input,.sb-form select{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem}
+.sb-row{display:flex;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.sb-dir{font-size:.82rem;color:var(--accent);min-width:5rem}
+.sb-meta{flex:1;font-size:.75rem;color:var(--muted)}
+.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem 0}
+.sb-form input,.sb-form select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;border-radius:4px}
+.sb-form input:focus,.sb-form select:focus{outline:none;border-color:var(--accent)}
 .sb-form input[type=text]{width:5.5rem}
 .sb-form input[type=number]{width:5rem}
-.sb-form button{background:none;border:1px solid var(--gold);color:var(--gold);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer}
-.sb-form button:hover{background:var(--gold);color:#000}
+.sb-form button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer;border-radius:4px;transition:border-color .15s,color .15s}
+.sb-form button:hover{border-color:var(--accent);color:var(--accent)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Audio &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Audio</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -50,10 +39,6 @@ var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only
 var HCR    = function(d) { return d.audiohw === 'hcr'; };
 var VMUSIC = function(d) { return d.audiohw === 'vmusic'; };
 
-var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
-var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
-var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
-var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
   {section:'Hardware'},
   {key:'audiohw',        label:'Audio Board',        readOnly:true},
@@ -78,7 +63,7 @@ var SCHEMA = [
   {section:'Sound Banks', when:VMUSIC}
 ];
 
-var _sbs = [];   // in-memory sound bank array
+var _sbs = [];
 
 function sbRender() {
   var h = '';

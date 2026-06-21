@@ -4,89 +4,275 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AMIDALA</title>
-<link rel="stylesheet" href="/assets/common.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--border)}
-.logo{font-size:clamp(1.6rem,6vw,2.8rem);letter-spacing:.4em;text-transform:uppercase}
-.subtitle{color:var(--dim);font-size:.72rem;letter-spacing:.18em;margin-top:.35rem}
-.build-strip{display:flex;flex-wrap:wrap;justify-content:center;border-bottom:1px solid var(--border)}
-.bi{padding:.8rem 1.4rem;text-align:center;border-right:1px solid var(--border)}
-.bi:last-child{border-right:none}
-.bi .lbl{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.15em}
-.bi .val{font-size:.9rem;margin-top:.2rem}
-.sh{text-align:center;color:var(--dim);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;padding:1.4rem 1rem .7rem}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);max-width:840px;margin:0 auto 1.5rem}
-.card{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:1.4rem 1rem;text-align:center;min-height:90px;transition:background .1s;-webkit-tap-highlight-color:transparent}
-.card:hover,.card:focus{background:#0e0e0e;outline:none}
-.card:active{background:#141414}
-.card .icon{font-size:1.5rem;margin-bottom:.5rem;line-height:1}
-.card .name{font-size:.72rem;letter-spacing:.04em;line-height:1.35}
+:root {
+  --accent:       #8f2d3b;
+  --bg:           #e9edf1;
+  --surface:      #ffffff;
+  --border:       #dce3e9;
+  --text:         #2b333b;
+  --muted:        #707b85;
+  --danger:       #a8323a;
+  --danger-soft:  rgba(168,50,58,.08);
+  --tex:          rgba(43,51,59,.07);
+  --glow:         rgba(143,45,59,.10);
+  --tile-min:     124px;
+  --tile-pad:     22px 20px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size:auto, 14px 14px, 23px 23px;
+  background-position:center top, 0 0, 7px 11px;
+  color:var(--text);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  min-height:100vh;
+  padding:24px 22px 80px;
+}
+.hub{max-width:1000px;margin:0 auto;}
+
+/* E-Stop button */
+.estop-row{display:flex;justify-content:flex-end;align-items:center;gap:8px;min-height:30px;}
+#theme-toggle{background:none;border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--muted);cursor:pointer;font-size:.85rem;line-height:1;transition:border-color .15s,color .15s;}
+#theme-toggle:hover{border-color:var(--accent);color:var(--accent);}
+#estop{
+  display:inline-flex;align-items:center;gap:9px;
+  background:var(--danger-soft);border:1px solid var(--danger);border-radius:6px;
+  padding:8px 14px;font:600 11px/1 ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;color:var(--danger);cursor:pointer;transition:background .15s,color .15s;
+}
+#estop:hover{background:var(--danger);color:#fff;}
+#estop .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;}
+
+/* Header */
+header{text-align:center;margin-top:8px;}
+.scar{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px;}
+.scar-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;}
+.scar-line{width:3px;height:16px;border-radius:2px;background:var(--accent);display:inline-block;}
+h1{margin:0;font:600 46px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.34em;color:var(--text);text-indent:.34em;}
+.build-meta{margin:16px 0 0;font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.26em;color:var(--muted);}
+
+/* Build strip */
+.strip{margin:34px 0 8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:20px 0;}
+.strip-inner{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 0;}
+.bi{flex:1 1 150px;min-width:120px;text-align:center;padding:0 8px;border-right:1px solid var(--border);}
+.bi:last-child{border-right:none;}
+.bi .lbl{font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;color:var(--muted);}
+.bi .val{margin-top:7px;font:500 15px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--text);display:flex;align-items:center;justify-content:center;gap:7px;}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;flex-shrink:0;}
+
+/* Section heading */
+.sh{display:flex;align-items:center;justify-content:center;gap:14px;margin:46px 0 20px;}
+.sh-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.8;display:inline-block;}
+.sh-label{font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.34em;color:var(--muted);}
+
+/* Card grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(156px,1fr));gap:14px;}
+.card{
+  display:flex;flex-direction:column;justify-content:space-between;gap:14px;
+  padding:var(--tile-pad);min-height:var(--tile-min);
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  text-decoration:none;transition:border-color .18s,box-shadow .18s,transform .18s;
+}
+.card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgba(30,45,55,.10);transform:translateY(-2px);}
+.card .name{font:600 21px/1.16 'Cormorant Garamond',Georgia,serif;color:var(--text);}
+.card .sub{margin-top:6px;font:500 10.5px/1.4 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+
+/* Footer */
+footer{margin-top:48px;text-align:center;font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;color:var(--muted);opacity:.7;}
+footer a{color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;opacity:.7;transition:opacity .15s;}
+footer a:hover{opacity:1;}
+
+/* E-Stop overlay */
+#estop-overlay{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;align-items:center;justify-content:center;background:var(--danger-soft);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#estop-overlay.active{display:flex;}
+.estop-card{background:var(--surface);border:1px solid var(--danger);border-radius:14px;padding:38px 44px;text-align:center;box-shadow:0 24px 60px rgba(30,45,55,.18);}
+.estop-title-row{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:16px;}
+.estop-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block;}
+.estop-label{font:600 13px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.28em;color:var(--danger);}
+.estop-heading{font:600 30px/1.1 'Cormorant Garamond',Georgia,serif;color:var(--text);margin-bottom:8px;}
+.estop-body{margin:0 0 22px;font:400 13px/1.5 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);}
+.estop-resume{background:var(--accent);border:none;border-radius:7px;padding:12px 26px;font:600 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;color:#fff;cursor:pointer;}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:#cf6470;--bg:#0f1216;--surface:#161b21;--surface2:#1c232a;
+    --border:#283139;--text:#e7ecf0;--muted:#828e98;--danger:#d05b63;
+    --danger-soft:rgba(208,91,99,.14);--tex:rgba(231,236,240,.06);--glow:rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:#cf6470;--bg:#0f1216;--surface:#161b21;--surface2:#1c232a;
+  --border:#283139;--text:#e7ecf0;--muted:#828e98;--danger:#d05b63;
+  --danger-soft:rgba(208,91,99,.14);--tex:rgba(231,236,240,.06);--glow:rgba(207,100,112,.17);
+}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
-<header>
-  <div class="logo">&#9670; AMIDALA &#9670;</div>
-  <div class="subtitle" id="fwv">&#8212;</div>
-</header>
-<div class="build-strip">
-  <div class="bi"><div class="lbl">Drive</div><div class="val" id="bi-dr">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Dome</div><div class="val" id="bi-do">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Audio</div><div class="val" id="bi-au">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Network</div><div class="val" id="bi-wi">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Free Heap</div><div class="val" id="bi-hp">&#8212;</div></div>
+<div class="hub">
+
+  <div class="estop-row">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light mode"></button>
+    <button id="estop" onclick="toggleEstop()"><span class="dot"></span>E-STOP</button>
+  </div>
+
+  <header>
+    <div class="scar">
+      <span class="scar-dot"></span><span class="scar-line"></span><span class="scar-dot"></span>
+    </div>
+    <h1>AMIDALA</h1>
+    <p class="build-meta" id="build-meta">&#8212;</p>
+  </header>
+
+  <div class="strip">
+    <div class="strip-inner">
+      <div class="bi"><div class="lbl">DRIVE</div><div class="val" id="bi-dr">&#8212;</div></div>
+      <div class="bi"><div class="lbl">DOME</div><div class="val" id="bi-do">&#8212;</div></div>
+      <div class="bi"><div class="lbl">AUDIO</div><div class="val" id="bi-au">&#8212;</div></div>
+      <div class="bi"><div class="lbl">NETWORK</div><div class="val" id="bi-wi">&#8212;</div></div>
+      <div class="bi"><div class="lbl">FREE HEAP</div><div class="val" id="bi-hp">&#8212;</div></div>
+    </div>
+  </div>
+
+  <div class="sh"><span class="sh-dot"></span><span class="sh-label">CONFIGURATION</span><span class="sh-dot"></span></div>
+  <nav class="grid">
+    <a class="card" href="/config/general">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.1" fill="var(--surface)"/><circle cx="15" cy="12" r="2.1" fill="var(--surface)"/><circle cx="8" cy="17" r="2.1" fill="var(--surface)"/></svg>
+      <div><div class="name">General</div><div class="sub">Drive · serial · I&#178;C</div></div>
+    </a>
+    <a class="card" href="/config/audio">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="10" x2="4" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="19" y1="10" x2="19" y2="14"/></svg>
+      <div><div class="name">Audio</div><div class="sub">HCR · volume · emotes</div></div>
+    </a>
+    <a class="card" href="/config/dome">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16 A7 7 0 0 1 19 16"/><line x1="4" y1="16" x2="20" y2="16"/><line x1="12" y1="9" x2="12" y2="6"/><circle cx="12" cy="5" r="1.2" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Dome Drive</div><div class="sub">RoboClaw · seek</div></div>
+    </a>
+    <a class="card" href="/config/controllers">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="3"/><line x1="8" y1="10.5" x2="8" y2="14.5"/><line x1="6" y1="12.5" x2="10" y2="12.5"/><circle cx="16" cy="12.5" r="1.5" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Controllers</div><div class="sub">Buttons · gestures</div></div>
+    </a>
+    <a class="card" href="/config/servos">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="2.2"/><line x1="12" y1="13" x2="18" y2="8"/><path d="M11 5 A8 8 0 0 1 19.5 10.5"/></svg>
+      <div><div class="name">Servos</div><div class="sub">Channels · limits</div></div>
+    </a>
+    <a class="card" href="/config/xbee">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="12" cy="12" r="1.6" fill="var(--accent)" stroke="none"/><line x1="9" y1="6" x2="9" y2="3"/><line x1="15" y1="6" x2="15" y2="3"/><line x1="9" y1="18" x2="9" y2="21"/><line x1="15" y1="18" x2="15" y2="21"/></svg>
+      <div><div class="name">XBee</div><div class="sub">Remote addresses</div></div>
+    </a>
+    <a class="card" href="/config/serial-strings">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10 l2.6 2 -2.6 2"/><line x1="12.5" y1="15" x2="16" y2="15"/></svg>
+      <div><div class="name">Serial Commands</div><div class="sub">Strings · macros</div></div>
+    </a>
+    <a class="card" href="/config/gadgets">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+      <div><div class="name">Gadgets</div><div class="sub">Periscope · scanner</div></div>
+    </a>
+    <a class="card" id="nav-rc" href="/config/rc-radio">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><line x1="8" y1="8" x2="6" y2="4"/><circle cx="9" cy="13.5" r="1.7"/><circle cx="15" cy="13.5" r="1.7"/></svg>
+      <div><div class="name">RC Radio</div><div class="sub">Channels · calibration</div></div>
+    </a>
+    <a class="card" href="/config/wifi">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5 a10 10 0 0 1 14 0"/><path d="M8 13.5 a6 6 0 0 1 8 0"/><circle cx="12" cy="16.8" r="1.2" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">WiFi</div><div class="sub">Access point</div></div>
+    </a>
+  </nav>
+
+  <div class="sh" style="margin-top:50px;"><span class="sh-dot"></span><span class="sh-label">TOOLS</span><span class="sh-dot"></span></div>
+  <nav class="grid">
+    <a class="card" href="/droid-control">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2.5" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21.5" y2="12"/><circle cx="12" cy="12" r="1.6" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Droid Control</div><div class="sub">Dome · sequences</div></div>
+    </a>
+    <a class="card" href="/monitor">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="13" rx="2"/><line x1="6.5" y1="9" x2="12" y2="9"/><line x1="6.5" y1="12" x2="15" y2="12"/><line x1="6.5" y1="15" x2="10" y2="15"/></svg>
+      <div><div class="name">Serial Monitor</div><div class="sub">Live log</div></div>
+    </a>
+    <a class="card" href="/update">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><line x1="12" y1="9" x2="12" y2="3"/><path d="M9 6 l3 -3 3 3"/></svg>
+      <div><div class="name">Firmware Update</div><div class="sub" id="fw-sub">OTA</div></div>
+    </a>
+    <a class="card" href="/safety">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="16.6" r="0.9" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Safety</div><div class="sub">Failsafe · limits</div></div>
+    </a>
+    <a class="card" href="/diagnostics">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 H8 L10 7 L14 17 L16 12 H21"/></svg>
+      <div><div class="name">Droid Status</div><div class="sub">I/O · sensors</div></div>
+    </a>
+  </nav>
+
+  <footer><span id="footer">SERVED LOCALLY</span> &nbsp;·&nbsp; <a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a></footer>
 </div>
-<div class="sh">&#9670;&#9670; Configuration &#9670;&#9670;</div>
-<nav class="grid">
-  <a class="card" href="/config/general"><div class="icon">&#9881;</div><div class="name">General</div></a>
-  <a class="card" href="/config/audio"><div class="icon">&#9834;</div><div class="name">Audio</div></a>
-  <a class="card" href="/config/dome"><div class="icon">&#8853;</div><div class="name">Dome Drive</div></a>
-  <a class="card" href="/config/controllers"><div class="icon">&#9711;</div><div class="name">Controllers</div></a>
-  <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
-  <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
-  <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
-  <a class="card" href="/config/gadgets"><div class="icon">&#9881;</div><div class="name">Gadgets</div></a>
-  <a class="card" id="nav-rc" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
-  <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
-</nav>
-<div class="sh">&#9670;&#9670; Tools &#9670;&#9670;</div>
-<nav class="grid">
-  <a class="card" href="/droid-control"><div class="icon">&#9654;</div><div class="name">Droid Control</div></a>
-  <a class="card" href="/monitor"><div class="icon">&#9680;</div><div class="name">Serial Monitor</div></a>
-  <a class="card" href="/update"><div class="icon">&#8679;</div><div class="name">Firmware Update</div></a>
-  <a class="card" href="/safety"><div class="icon">&#9888;</div><div class="name">Safety</div></a>
-  <a class="card" href="/diagnostics"><div class="icon">&#9679;</div><div class="name">Droid Status</div></a>
-</nav>
+
+<div id="estop-overlay">
+  <div class="estop-card">
+    <div class="estop-title-row">
+      <span class="estop-dot"></span>
+      <span class="estop-label">EMERGENCY STOP</span>
+      <span class="estop-dot"></span>
+    </div>
+    <div class="estop-heading">All motors halted</div>
+    <p class="estop-body">Drive and dome power cut. Clear the area before resuming.</p>
+    <button class="estop-resume" onclick="toggleEstop()">RESUME CONTROL</button>
+  </div>
+</div>
+
 <script>
+(function() {
+  var t = document.documentElement.dataset.theme || 'light';
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+})();
+
+function toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
+
+function toggleEstop() {
+  var active = document.getElementById('estop-overlay').classList.toggle('active');
+  if (active) fetch('/api/estop', {method:'POST'}).catch(function(){});
+}
+
 Promise.all([
   fetch('/api/info').then(function(r){return r.json();}),
   fetch('/api/config').then(function(r){return r.json();})
-]).then(function(results){
-  var d = results[0], cfg = results[1];
-  document.getElementById('fwv').textContent='v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
-  document.getElementById('bi-dr').textContent=d.drive||'none';
-  document.getElementById('bi-do').textContent=d.dome||'none';
-  document.getElementById('bi-au').textContent=d.audio;
-  document.getElementById('bi-wi').textContent=d.wifi_ssid;
-  if(d.free_heap) document.getElementById('bi-hp').textContent=Math.round(d.free_heap/1024)+' KB';
-  // Gate RC Radio card — hide it when XBee remotes are configured
-  var xbeeActive = cfg.xbr && cfg.xbr !== '00000000' || cfg.xbl && cfg.xbl !== '00000000';
-  if(xbeeActive) {
-    var rc=document.getElementById('nav-rc');
-    if(rc) rc.style.display='none';
+]).then(function(res) {
+  var d = res[0], cfg = res[1];
+  document.getElementById('build-meta').textContent =
+    'v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
+  document.getElementById('bi-dr').textContent = d.drive || 'none';
+  document.getElementById('bi-do').textContent = d.dome  || 'none';
+  document.getElementById('bi-au').textContent = d.audio || '—';
+  document.getElementById('bi-wi').innerHTML =
+    '<span class="online-dot"></span>'+d.wifi_ssid;
+  if (d.free_heap)
+    document.getElementById('bi-hp').textContent = Math.round(d.free_heap/1024)+' KB';
+  if (d.version)
+    document.getElementById('fw-sub').textContent = 'OTA · v'+d.version;
+  if (d.wifi_ip)
+    document.getElementById('footer').textContent = 'SERVED LOCALLY · '+d.wifi_ip;
+  var xbeeActive = (cfg.xbr && cfg.xbr!=='00000000') || (cfg.xbl && cfg.xbl!=='00000000');
+  if (xbeeActive) {
+    var rc = document.getElementById('nav-rc');
+    if (rc) rc.style.display = 'none';
   }
-}).catch(function(){document.getElementById('fwv').textContent='connection error';});
-
-// Emergency stop — always visible on every page
-(function(){
-  var b=document.createElement('button');
-  b.id='estop'; b.textContent='E-Stop'; b.title='Emergency Stop — halts all motors';
-  b.onclick=function(){
-    fetch('/api/estop',{method:'POST'})
-      .then(function(r){if(!r.ok)alert('Stop failed');})
-      .catch(function(){alert('Stop failed');});
-  };
-  document.body.appendChild(b);
-})();
+}).catch(function(){
+  document.getElementById('build-meta').textContent = 'connection error';
+});
 </script>
 </body>
 </html>

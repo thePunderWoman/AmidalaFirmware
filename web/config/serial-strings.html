@@ -4,50 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Serial Commands — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/common.css">
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:700px;margin:0 auto;padding:1rem}
-.ss-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.ss-idx{font-size:.7rem;color:var(--dim);min-width:1.8rem;text-align:right;flex-shrink:0}
+.ss-row{display:flex;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.ss-idx{font-size:.7rem;color:var(--muted);min-width:1.8rem;text-align:right;flex-shrink:0}
 .ss-fields{flex:1;display:flex;flex-direction:column;gap:.3rem;min-width:0}
-.ss-name{font-size:.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ss-name.empty{color:var(--dim);font-style:italic}
-.ss-val{font-size:.75rem;color:var(--gold);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ss-fields input{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box}
-.ss-fields input.mono{font-family:monospace;font-size:.75rem}
+.ss-name{font-size:.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-name.empty{color:var(--muted);font-style:italic}
+.ss-val{font-size:.75rem;color:var(--accent);font-family:ui-monospace,'SF Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-fields input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box;border-radius:4px}
+.ss-fields input:focus{outline:none;border-color:var(--accent)}
+.ss-fields input.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.75rem}
 .ss-acts{display:flex;gap:.1rem;flex-shrink:0}
-.be,.bs,.bc,.bd{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .4rem;opacity:.55;cursor:pointer}
-.be:hover,.bs:hover{opacity:1}
+.be,.bs,.bc,.bd{background:none;border:none;color:var(--muted);font-size:1rem;padding:.2rem .4rem;opacity:.7;cursor:pointer}
+.be:hover,.bs:hover{opacity:1;color:var(--accent)}
 .bc:hover,.bd:hover{opacity:1}
-.add-row{padding:.9rem .2rem}
-.btn-add{background:none;border:1px solid var(--dim);color:var(--gold);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer}
-.btn-add:hover{border-color:var(--gold)}
-#empty{color:var(--dim);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.add-row{padding:.9rem 0}
+.btn-add{background:none;border:1px solid var(--border);color:var(--text);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer;border-radius:4px;transition:border-color .15s,color .15s}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+#empty{color:var(--muted);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Serial Commands &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Serial Commands</span><span class="dot"></span></div>
 </div>
 <main id="main">
   <div id="status">LOADING&#8230;</div>
 </main>
 <script src="/assets/edit.js"></script>
 <script>
-var _d = [];      // [{n, s}, ...]
-var _ed = -1;     // index currently in edit mode, -1 = none
-var _isNew = false; // true while adding an unsaved entry
+var _d = [];
+var _ed = -1;
+var _isNew = false;
 
 function load() {
   fetch('/api/config').then(function(r){return r.json();}).then(function(d){
     var allSstr = d.sstr || [];
-    // sstr_user_cnt tells us how many are user-defined vs builtin-injected.
     var userCnt = (d.sstr_user_cnt !== undefined) ? d.sstr_user_cnt : allSstr.length;
     _d = allSstr.slice(0, userCnt);
     render();
@@ -63,99 +61,105 @@ function esc(s) {
 function render() {
   var h = '';
   if (_d.length === 0 && !_isNew) {
-    h += '<div id="empty">No serial strings configured yet.</div>';
+    h += '<div id="empty">No serial commands yet.</div>';
+  } else {
+    _d.forEach(function(row, i) {
+      if (i === _ed && !_isNew) {
+        h += '<div class="ss-row">'
+          + '<div class="ss-idx">'+(i+1)+'</div>'
+          + '<div class="ss-fields">'
+          + '<input type="text" id="ed-name" value="'+esc(row.n)+'" placeholder="Name">'
+          + '<input type="text" id="ed-val"  value="'+esc(row.s)+'" placeholder="Serial string" class="mono">'
+          + '</div>'
+          + '<div class="ss-acts">'
+          + '<button class="bs" onclick="saveEdit('+i+')" title="Save">&#10003;</button>'
+          + '<button class="bc" onclick="cancelEdit()" title="Cancel">&#10005;</button>'
+          + '</div>'
+          + '</div>';
+      } else {
+        h += '<div class="ss-row">'
+          + '<div class="ss-idx">'+(i+1)+'</div>'
+          + '<div class="ss-fields">'
+          + '<div class="ss-name'+(row.n?'':' empty')+'">'+(row.n || '(unnamed)')+'</div>'
+          + '<div class="ss-val">'+esc(row.s)+'</div>'
+          + '</div>'
+          + '<div class="ss-acts">'
+          + '<button class="be" onclick="startRowEdit('+i+')" title="Edit">&#9998;</button>'
+          + '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>'
+          + '</div>'
+          + '</div>';
+      }
+    });
   }
-  for (var i = 0; i < _d.length; i++) {
-    var item = _d[i];
-    if (i === _ed) {
-      h += '<div class="ss-row" id="r'+i+'">' +
-        '<span class="ss-idx">'+(i+1)+'</span>' +
-        '<div class="ss-fields">' +
-          '<input type="text" id="ni'+i+'" value="'+esc(item.n)+'" maxlength="31" placeholder="Name (e.g. Leia Sequence)">' +
-          '<input type="text" id="si'+i+'" value="'+esc(item.s)+'" maxlength="31" placeholder="Serial string (e.g. :LD00)" class="mono"' +
-          ' onkeydown="if(event.key===\'Enter\')saveStr('+i+')">' +
-        '</div>' +
-        '<div class="ss-acts">' +
-          '<button class="bs" onclick="saveStr('+i+')" title="Save">&#10003;</button>' +
-          '<button class="bc" onclick="cancelEdit('+i+')" title="Cancel">&#10005;</button>' +
-        '</div>' +
-        '</div>';
-    } else {
-      var nameEmpty = !item.n;
-      h += '<div class="ss-row" id="r'+i+'">' +
-        '<span class="ss-idx">'+(i+1)+'</span>' +
-        '<div class="ss-fields">' +
-          '<div class="ss-name'+(nameEmpty?' empty':'')+'">'+esc(item.n||'(unnamed)')+'</div>' +
-          '<div class="ss-val">'+esc(item.s)+'</div>' +
-        '</div>' +
-        '<div class="ss-acts">' +
-          '<button class="be" onclick="startEdit('+i+')" title="Edit">&#9998;</button>' +
-          '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>' +
-        '</div>' +
-        '</div>';
-    }
+  if (_isNew) {
+    h += '<div class="ss-row">'
+      + '<div class="ss-idx">'+ (_d.length+1)+'</div>'
+      + '<div class="ss-fields">'
+      + '<input type="text" id="ed-name" value="" placeholder="Name">'
+      + '<input type="text" id="ed-val"  value="" placeholder="Serial string" class="mono">'
+      + '</div>'
+      + '<div class="ss-acts">'
+      + '<button class="bs" onclick="saveNew()" title="Save">&#10003;</button>'
+      + '<button class="bc" onclick="cancelEdit()" title="Cancel">&#10005;</button>'
+      + '</div>'
+      + '</div>';
   }
-  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add String</button></div>';
+  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add Command</button></div>';
   document.getElementById('main').innerHTML = h;
-  if (_ed >= 0) {
-    var ni = document.getElementById('ni'+_ed);
-    if (ni) ni.focus();
+  if (_ed >= 0 || _isNew) {
+    var el = document.getElementById('ed-name');
+    if (el) el.focus();
   }
 }
 
-function startEdit(i) {
-  if (_ed >= 0 && _isNew) { _d.splice(_ed, 1); _isNew = false; }
-  _ed = i;
-  render();
-}
+function startRowEdit(i) { _ed = i; _isNew = false; render(); }
+function cancelEdit()    { _ed = -1; _isNew = false; render(); }
+function addStr()        { if (_isNew) return; _ed = -1; _isNew = true; render(); }
 
-function cancelEdit(i) {
-  if (_isNew) { _d.splice(i, 1); _isNew = false; }
-  _ed = -1;
-  render();
-}
-
-function saveStr(i) {
-  var name = document.getElementById('ni'+i).value.trim();
-  var str  = document.getElementById('si'+i).value.trim();
-  if (!str) { showToast('Serial string cannot be empty', true); return; }
+function saveEdit(i) {
+  var n = (document.getElementById('ed-name').value || '').trim();
+  var s = (document.getElementById('ed-val').value  || '').trim();
+  if (!n || !s) { showToast('Name and string required', true); return; }
   fetch('/api/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'key=sstr_'+i+'&value='+encodeURIComponent(name+'|'+str)
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'\x00'+s)
   }).then(function(r){
-    if (!r.ok) throw new Error(r.status);
-    _d[i] = {n: name, s: str};
-    _ed = -1; _isNew = false;
+    if (!r.ok) { showToast('Save failed', true); return; }
+    _d[i] = {n:n, s:s};
+    _ed = -1;
     render();
     showToast('Saved');
-  }).catch(function(){ showToast('Save failed', true); });
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function saveNew() {
+  var n = (document.getElementById('ed-name').value || '').trim();
+  var s = (document.getElementById('ed-val').value  || '').trim();
+  if (!n || !s) { showToast('Name and string required', true); return; }
+  fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_add&value='+encodeURIComponent(n+'\x00'+s)
+  }).then(function(r){
+    if (!r.ok) { showToast('Save failed', true); return; }
+    _d.push({n:n, s:s});
+    _isNew = false;
+    render();
+    showToast('Added');
+  }).catch(function(){ showToast('Network error', true); });
 }
 
 function delStr(i) {
-  var label = _d[i].n || _d[i].s || ('string ' + (i+1));
-  if (!confirm('Delete “'+label+'”?\nThis cannot be undone.')) return;
+  if (!confirm('Delete "'+_d[i].n+'"?')) return;
   fetch('/api/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'key=sstr_del_'+i+'&value='
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_del_'+i
   }).then(function(r){
-    if (!r.ok) throw new Error(r.status);
+    if (!r.ok) { showToast('Delete failed', true); return; }
     _d.splice(i, 1);
-    if (_ed > i) _ed--;
-    else if (_ed === i) { _ed = -1; _isNew = false; }
+    if (_ed >= i) _ed = -1;
     render();
     showToast('Deleted');
-  }).catch(function(){ showToast('Delete failed', true); });
-}
-
-function addStr() {
-  if (_ed >= 0 && _isNew) return;
-  if (_ed >= 0) { _ed = -1; render(); return; }
-  _d.push({n: '', s: ''});
-  _ed = _d.length - 1;
-  _isNew = true;
-  render();
+  }).catch(function(){ showToast('Network error', true); });
 }
 
 load();
