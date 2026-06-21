@@ -9,177 +9,275 @@ static const char WEB_PAGE_HOME[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Amidala web UI — shared styles.
-   Embed script inlines this into every page's <style> block.
-   In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:       #8f2d3b;
+  --bg:           #e9edf1;
+  --surface:      #ffffff;
+  --border:       #dce3e9;
+  --text:         #2b333b;
+  --muted:        #707b85;
+  --danger:       #a8323a;
+  --danger-soft:  rgba(168,50,58,.08);
+  --tex:          rgba(43,51,59,.07);
+  --glow:         rgba(143,45,59,.10);
+  --tile-min:     124px;
+  --tile-pad:     22px 20px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size:auto, 14px 14px, 23px 23px;
+  background-position:center top, 0 0, 7px 11px;
+  color:var(--text);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  min-height:100vh;
+  padding:24px 22px 80px;
+}
+.hub{max-width:1000px;margin:0 auto;}
 
-body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
-  min-height: 100vh;
-  font-size: 15px;
+/* E-Stop button */
+.estop-row{display:flex;justify-content:flex-end;align-items:center;gap:8px;min-height:30px;}
+#theme-toggle{background:none;border:1px solid var(--border);border-radius:4px;padding:5px 9px;color:var(--muted);cursor:pointer;font-size:.85rem;line-height:1;transition:border-color .15s,color .15s;}
+#theme-toggle:hover{border-color:var(--accent);color:var(--accent);}
+#estop{
+  display:inline-flex;align-items:center;gap:9px;
+  background:var(--danger-soft);border:1px solid var(--danger);border-radius:6px;
+  padding:8px 14px;font:600 11px/1 ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.2em;color:var(--danger);cursor:pointer;transition:background .15s,color .15s;
 }
+#estop:hover{background:var(--danger);color:#fff;}
+#estop .dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;}
 
-a {
-  color: var(--gold);
-  text-decoration: none;
-}
+/* Header */
+header{text-align:center;margin-top:8px;}
+.scar{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:20px;}
+.scar-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;}
+.scar-line{width:3px;height:16px;border-radius:2px;background:var(--accent);display:inline-block;}
+h1{margin:0;font:600 46px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.34em;color:var(--text);text-indent:.34em;}
+.build-meta{margin:16px 0 0;font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.26em;color:var(--muted);}
 
-button {
-  cursor: pointer;
-  font-family: inherit;
-}
+/* Build strip */
+.strip{margin:34px 0 8px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:20px 0;}
+.strip-inner{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 0;}
+.bi{flex:1 1 150px;min-width:120px;text-align:center;padding:0 8px;border-right:1px solid var(--border);}
+.bi:last-child{border-right:none;}
+.bi .lbl{font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;color:var(--muted);}
+.bi .val{margin-top:7px;font:500 15px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--text);display:flex;align-items:center;justify-content:center;gap:7px;}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;flex-shrink:0;}
 
-.hidden {
-  display: none !important;
-}
+/* Section heading */
+.sh{display:flex;align-items:center;justify-content:center;gap:14px;margin:46px 0 20px;}
+.sh-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.8;display:inline-block;}
+.sh-label{font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.34em;color:var(--muted);}
 
-.toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+/* Card grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(156px,1fr));gap:14px;}
+.card{
+  display:flex;flex-direction:column;justify-content:space-between;gap:14px;
+  padding:var(--tile-pad);min-height:var(--tile-min);
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  text-decoration:none;transition:border-color .18s,box-shadow .18s,transform .18s;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
-@keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
-}
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+.card:hover{border-color:var(--accent);box-shadow:0 8px 22px rgba(30,45,55,.10);transform:translateY(-2px);}
+.card .name{font:600 21px/1.16 'Cormorant Garamond',Georgia,serif;color:var(--text);}
+.card .sub{margin-top:6px;font:500 10.5px/1.4 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
 
-#estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+/* Footer */
+footer{margin-top:48px;text-align:center;font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;color:var(--muted);opacity:.7;}
+footer a{color:inherit;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px;opacity:.7;transition:opacity .15s;}
+footer a:hover{opacity:1;}
+
+/* E-Stop overlay */
+#estop-overlay{display:none;position:fixed;inset:0;z-index:50;flex-direction:column;align-items:center;justify-content:center;background:var(--danger-soft);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#estop-overlay.active{display:flex;}
+.estop-card{background:var(--surface);border:1px solid var(--danger);border-radius:14px;padding:38px 44px;text-align:center;box-shadow:0 24px 60px rgba(30,45,55,.18);}
+.estop-title-row{display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:16px;}
+.estop-dot{width:8px;height:8px;border-radius:50%;background:var(--danger);display:inline-block;}
+.estop-label{font:600 13px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.28em;color:var(--danger);}
+.estop-heading{font:600 30px/1.1 'Cormorant Garamond',Georgia,serif;color:var(--text);margin-bottom:8px;}
+.estop-body{margin:0 0 22px;font:400 13px/1.5 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);}
+.estop-resume{background:var(--accent);border:none;border-radius:7px;padding:12px 26px;font:600 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;color:#fff;cursor:pointer;}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:#cf6470;--bg:#0f1216;--surface:#161b21;--surface2:#1c232a;
+    --border:#283139;--text:#e7ecf0;--muted:#828e98;--danger:#d05b63;
+    --danger-soft:rgba(208,91,99,.14);--tex:rgba(231,236,240,.06);--glow:rgba(207,100,112,.17);
+  }
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+:root[data-theme="dark"] {
+  --accent:#cf6470;--bg:#0f1216;--surface:#161b21;--surface2:#1c232a;
+  --border:#283139;--text:#e7ecf0;--muted:#828e98;--danger:#d05b63;
+  --danger-soft:rgba(208,91,99,.14);--tex:rgba(231,236,240,.06);--glow:rgba(207,100,112,.17);
+}
 </style>
-<style>
-header{text-align:center;padding:2rem 1rem 1.5rem;border-bottom:1px solid var(--border)}
-.logo{font-size:clamp(1.6rem,6vw,2.8rem);letter-spacing:.4em;text-transform:uppercase}
-.subtitle{color:var(--dim);font-size:.72rem;letter-spacing:.18em;margin-top:.35rem}
-.build-strip{display:flex;flex-wrap:wrap;justify-content:center;border-bottom:1px solid var(--border)}
-.bi{padding:.8rem 1.4rem;text-align:center;border-right:1px solid var(--border)}
-.bi:last-child{border-right:none}
-.bi .lbl{font-size:.58rem;color:var(--dim);text-transform:uppercase;letter-spacing:.15em}
-.bi .val{font-size:.9rem;margin-top:.2rem}
-.sh{text-align:center;color:var(--dim);font-size:.62rem;letter-spacing:.3em;text-transform:uppercase;padding:1.4rem 1rem .7rem}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);max-width:840px;margin:0 auto 1.5rem}
-.card{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:1.4rem 1rem;text-align:center;min-height:90px;transition:background .1s;-webkit-tap-highlight-color:transparent}
-.card:hover,.card:focus{background:#0e0e0e;outline:none}
-.card:active{background:#141414}
-.card .icon{font-size:1.5rem;margin-bottom:.5rem;line-height:1}
-.card .name{font-size:.72rem;letter-spacing:.04em;line-height:1.35}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
-<header>
-  <div class="logo">&#9670; AMIDALA &#9670;</div>
-  <div class="subtitle" id="fwv">&#8212;</div>
-</header>
-<div class="build-strip">
-  <div class="bi"><div class="lbl">Drive</div><div class="val" id="bi-dr">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Dome</div><div class="val" id="bi-do">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Audio</div><div class="val" id="bi-au">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Network</div><div class="val" id="bi-wi">&#8212;</div></div>
-  <div class="bi"><div class="lbl">Free Heap</div><div class="val" id="bi-hp">&#8212;</div></div>
+<div class="hub">
+
+  <div class="estop-row">
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark / light mode"></button>
+    <button id="estop" onclick="toggleEstop()"><span class="dot"></span>E-STOP</button>
+  </div>
+
+  <header>
+    <div class="scar">
+      <span class="scar-dot"></span><span class="scar-line"></span><span class="scar-dot"></span>
+    </div>
+    <h1>AMIDALA</h1>
+    <p class="build-meta" id="build-meta">&#8212;</p>
+  </header>
+
+  <div class="strip">
+    <div class="strip-inner">
+      <div class="bi"><div class="lbl">DRIVE</div><div class="val" id="bi-dr">&#8212;</div></div>
+      <div class="bi"><div class="lbl">DOME</div><div class="val" id="bi-do">&#8212;</div></div>
+      <div class="bi"><div class="lbl">AUDIO</div><div class="val" id="bi-au">&#8212;</div></div>
+      <div class="bi"><div class="lbl">NETWORK</div><div class="val" id="bi-wi">&#8212;</div></div>
+      <div class="bi"><div class="lbl">FREE HEAP</div><div class="val" id="bi-hp">&#8212;</div></div>
+    </div>
+  </div>
+
+  <div class="sh"><span class="sh-dot"></span><span class="sh-label">CONFIGURATION</span><span class="sh-dot"></span></div>
+  <nav class="grid">
+    <a class="card" href="/config/general">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="9" cy="7" r="2.1" fill="var(--surface)"/><circle cx="15" cy="12" r="2.1" fill="var(--surface)"/><circle cx="8" cy="17" r="2.1" fill="var(--surface)"/></svg>
+      <div><div class="name">General</div><div class="sub">Drive · serial · I&#178;C</div></div>
+    </a>
+    <a class="card" href="/config/audio">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="10" x2="4" y2="14"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="14" y1="8" x2="14" y2="16"/><line x1="19" y1="10" x2="19" y2="14"/></svg>
+      <div><div class="name">Audio</div><div class="sub">HCR · volume · emotes</div></div>
+    </a>
+    <a class="card" href="/config/dome">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16 A7 7 0 0 1 19 16"/><line x1="4" y1="16" x2="20" y2="16"/><line x1="12" y1="9" x2="12" y2="6"/><circle cx="12" cy="5" r="1.2" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Dome Drive</div><div class="sub">RoboClaw · seek</div></div>
+    </a>
+    <a class="card" href="/config/controllers">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="3"/><line x1="8" y1="10.5" x2="8" y2="14.5"/><line x1="6" y1="12.5" x2="10" y2="12.5"/><circle cx="16" cy="12.5" r="1.5" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Controllers</div><div class="sub">Buttons · gestures</div></div>
+    </a>
+    <a class="card" href="/config/servos">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="2.2"/><line x1="12" y1="13" x2="18" y2="8"/><path d="M11 5 A8 8 0 0 1 19.5 10.5"/></svg>
+      <div><div class="name">Servos</div><div class="sub">Channels · limits</div></div>
+    </a>
+    <a class="card" href="/config/xbee">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/><circle cx="12" cy="12" r="1.6" fill="var(--accent)" stroke="none"/><line x1="9" y1="6" x2="9" y2="3"/><line x1="15" y1="6" x2="15" y2="3"/><line x1="9" y1="18" x2="9" y2="21"/><line x1="15" y1="18" x2="15" y2="21"/></svg>
+      <div><div class="name">XBee</div><div class="sub">Remote addresses</div></div>
+    </a>
+    <a class="card" href="/config/serial-strings">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10 l2.6 2 -2.6 2"/><line x1="12.5" y1="15" x2="16" y2="15"/></svg>
+      <div><div class="name">Serial Commands</div><div class="sub">Strings · macros</div></div>
+    </a>
+    <a class="card" href="/config/gadgets">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+      <div><div class="name">Gadgets</div><div class="sub">Periscope · scanner</div></div>
+    </a>
+    <a class="card" id="nav-rc" href="/config/rc-radio">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="11" rx="2"/><line x1="8" y1="8" x2="6" y2="4"/><circle cx="9" cy="13.5" r="1.7"/><circle cx="15" cy="13.5" r="1.7"/></svg>
+      <div><div class="name">RC Radio</div><div class="sub">Channels · calibration</div></div>
+    </a>
+    <a class="card" href="/config/wifi">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10.5 a10 10 0 0 1 14 0"/><path d="M8 13.5 a6 6 0 0 1 8 0"/><circle cx="12" cy="16.8" r="1.2" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">WiFi</div><div class="sub">Access point</div></div>
+    </a>
+  </nav>
+
+  <div class="sh" style="margin-top:50px;"><span class="sh-dot"></span><span class="sh-label">TOOLS</span><span class="sh-dot"></span></div>
+  <nav class="grid">
+    <a class="card" href="/droid-control">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><line x1="12" y1="2.5" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21.5" y2="12"/><circle cx="12" cy="12" r="1.6" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Droid Control</div><div class="sub">Dome · sequences</div></div>
+    </a>
+    <a class="card" href="/monitor">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="13" rx="2"/><line x1="6.5" y1="9" x2="12" y2="9"/><line x1="6.5" y1="12" x2="15" y2="12"/><line x1="6.5" y1="15" x2="10" y2="15"/></svg>
+      <div><div class="name">Serial Monitor</div><div class="sub">Live log</div></div>
+    </a>
+    <a class="card" href="/update">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><line x1="12" y1="9" x2="12" y2="3"/><path d="M9 6 l3 -3 3 3"/></svg>
+      <div><div class="name">Firmware Update</div><div class="sub" id="fw-sub">OTA</div></div>
+    </a>
+    <a class="card" href="/safety">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L21 19 H3 Z"/><line x1="12" y1="10" x2="12" y2="14"/><circle cx="12" cy="16.6" r="0.9" fill="var(--accent)" stroke="none"/></svg>
+      <div><div class="name">Safety</div><div class="sub">Failsafe · limits</div></div>
+    </a>
+    <a class="card" href="/diagnostics">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 H8 L10 7 L14 17 L16 12 H21"/></svg>
+      <div><div class="name">Droid Status</div><div class="sub">I/O · sensors</div></div>
+    </a>
+  </nav>
+
+  <footer><span id="footer">SERVED LOCALLY</span> &nbsp;·&nbsp; <a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a></footer>
 </div>
-<div class="sh">&#9670;&#9670; Configuration &#9670;&#9670;</div>
-<nav class="grid">
-  <a class="card" href="/config/general"><div class="icon">&#9881;</div><div class="name">General</div></a>
-  <a class="card" href="/config/audio"><div class="icon">&#9834;</div><div class="name">Audio</div></a>
-  <a class="card" href="/config/dome"><div class="icon">&#8853;</div><div class="name">Dome Drive</div></a>
-  <a class="card" href="/config/controllers"><div class="icon">&#9711;</div><div class="name">Controllers</div></a>
-  <a class="card" href="/config/servos"><div class="icon">&#9699;</div><div class="name">Servos</div></a>
-  <a class="card" href="/config/xbee"><div class="icon">&#9702;</div><div class="name">XBee</div></a>
-  <a class="card" href="/config/serial-strings"><div class="icon">&#9166;</div><div class="name">Serial Commands</div></a>
-  <a class="card" href="/config/gadgets"><div class="icon">&#9881;</div><div class="name">Gadgets</div></a>
-  <a class="card" id="nav-rc" href="/config/rc-radio"><div class="icon">&#9526;</div><div class="name">RC Radio</div></a>
-  <a class="card" href="/config/wifi"><div class="icon">&#10047;</div><div class="name">WiFi</div></a>
-</nav>
-<div class="sh">&#9670;&#9670; Tools &#9670;&#9670;</div>
-<nav class="grid">
-  <a class="card" href="/droid-control"><div class="icon">&#9654;</div><div class="name">Droid Control</div></a>
-  <a class="card" href="/monitor"><div class="icon">&#9680;</div><div class="name">Serial Monitor</div></a>
-  <a class="card" href="/update"><div class="icon">&#8679;</div><div class="name">Firmware Update</div></a>
-  <a class="card" href="/safety"><div class="icon">&#9888;</div><div class="name">Safety</div></a>
-  <a class="card" href="/diagnostics"><div class="icon">&#9679;</div><div class="name">Droid Status</div></a>
-</nav>
+
+<div id="estop-overlay">
+  <div class="estop-card">
+    <div class="estop-title-row">
+      <span class="estop-dot"></span>
+      <span class="estop-label">EMERGENCY STOP</span>
+      <span class="estop-dot"></span>
+    </div>
+    <div class="estop-heading">All motors halted</div>
+    <p class="estop-body">Drive and dome power cut. Clear the area before resuming.</p>
+    <button class="estop-resume" onclick="toggleEstop()">RESUME CONTROL</button>
+  </div>
+</div>
+
 <script>
+(function() {
+  var t = document.documentElement.dataset.theme || 'light';
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+})();
+
+function toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
+
+function toggleEstop() {
+  var active = document.getElementById('estop-overlay').classList.toggle('active');
+  if (active) fetch('/api/estop', {method:'POST'}).catch(function(){});
+}
+
 Promise.all([
   fetch('/api/info').then(function(r){return r.json();}),
   fetch('/api/config').then(function(r){return r.json();})
-]).then(function(results){
-  var d = results[0], cfg = results[1];
-  document.getElementById('fwv').textContent='v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
-  document.getElementById('bi-dr').textContent=d.drive||'none';
-  document.getElementById('bi-do').textContent=d.dome||'none';
-  document.getElementById('bi-au').textContent=d.audio;
-  document.getElementById('bi-wi').textContent=d.wifi_ssid;
-  if(d.free_heap) document.getElementById('bi-hp').textContent=Math.round(d.free_heap/1024)+' KB';
-  // Gate RC Radio card — hide it when XBee remotes are configured
-  var xbeeActive = cfg.xbr && cfg.xbr !== '00000000' || cfg.xbl && cfg.xbl !== '00000000';
-  if(xbeeActive) {
-    var rc=document.getElementById('nav-rc');
-    if(rc) rc.style.display='none';
+]).then(function(res) {
+  var d = res[0], cfg = res[1];
+  document.getElementById('build-meta').textContent =
+    'v'+d.version+' · '+d.mcu+' · r'+d.board_rev+' · '+d.date;
+  document.getElementById('bi-dr').textContent = d.drive || 'none';
+  document.getElementById('bi-do').textContent = d.dome  || 'none';
+  document.getElementById('bi-au').textContent = d.audio || '—';
+  document.getElementById('bi-wi').innerHTML =
+    '<span class="online-dot"></span>'+d.wifi_ssid;
+  if (d.free_heap)
+    document.getElementById('bi-hp').textContent = Math.round(d.free_heap/1024)+' KB';
+  if (d.version)
+    document.getElementById('fw-sub').textContent = 'OTA · v'+d.version;
+  if (d.wifi_ip)
+    document.getElementById('footer').textContent = 'SERVED LOCALLY · '+d.wifi_ip;
+  var xbeeActive = (cfg.xbr && cfg.xbr!=='00000000') || (cfg.xbl && cfg.xbl!=='00000000');
+  if (xbeeActive) {
+    var rc = document.getElementById('nav-rc');
+    if (rc) rc.style.display = 'none';
   }
-}).catch(function(){document.getElementById('fwv').textContent='connection error';});
-
-// Emergency stop — always visible on every page
-(function(){
-  var b=document.createElement('button');
-  b.id='estop'; b.textContent='E-Stop'; b.title='Emergency Stop — halts all motors';
-  b.onclick=function(){
-    fetch('/api/estop',{method:'POST'})
-      .then(function(r){if(!r.ok)alert('Stop failed');})
-      .catch(function(){alert('Stop failed');});
-  };
-  document.body.appendChild(b);
-})();
+}).catch(function(){
+  document.getElementById('build-meta').textContent = 'connection error';
+});
 </script>
 </body>
 </html>
@@ -192,118 +290,293 @@ static const char WEB_PAGE_GENERAL[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>General Settings — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-<style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; General Settings &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">General Settings</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -312,6 +585,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -353,7 +636,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -438,16 +721,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -458,37 +743,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -562,118 +865,293 @@ static const char WEB_PAGE_WIFI[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WiFi — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-<style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; WiFi &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">WiFi</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -682,6 +1160,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -723,7 +1211,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -808,16 +1296,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -828,37 +1318,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -925,118 +1433,293 @@ static const char WEB_PAGE_XBEE[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>XBee — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-<style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; XBee &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">XBee</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -1045,6 +1728,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -1086,7 +1779,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -1171,16 +1864,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -1191,37 +1886,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -1287,127 +2000,305 @@ static const char WEB_PAGE_AUDIO[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Audio — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-.sb-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.sb-dir{font-size:.82rem;color:var(--gold);min-width:5rem}
-.sb-meta{flex:1;font-size:.75rem;color:var(--dim)}
-.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem .2rem}
-.sb-form input,.sb-form select{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem}
+.sb-row{display:flex;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.sb-dir{font-size:.82rem;color:var(--accent);min-width:5rem}
+.sb-meta{flex:1;font-size:.75rem;color:var(--muted)}
+.sb-form{display:flex;flex-wrap:wrap;gap:.4rem;padding:.8rem 0}
+.sb-form input,.sb-form select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;border-radius:4px}
+.sb-form input:focus,.sb-form select:focus{outline:none;border-color:var(--accent)}
 .sb-form input[type=text]{width:5.5rem}
 .sb-form input[type=number]{width:5rem}
-.sb-form button{background:none;border:1px solid var(--gold);color:var(--gold);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer}
-.sb-form button:hover{background:var(--gold);color:#000}
+.sb-form button{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .8rem;font-size:.75rem;letter-spacing:.08em;cursor:pointer;border-radius:4px;transition:border-color .15s,color .15s}
+.sb-form button:hover{border-color:var(--accent);color:var(--accent)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Audio &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Audio</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -1416,6 +2307,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -1457,7 +2358,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -1542,16 +2443,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -1562,37 +2465,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -1647,10 +2568,6 @@ var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only
 var HCR    = function(d) { return d.audiohw === 'hcr'; };
 var VMUSIC = function(d) { return d.audiohw === 'vmusic'; };
 
-var _emo = [{v:'0',l:'Happy'},{v:'1',l:'Sad'},{v:'2',l:'Mad'},{v:'3',l:'Scared'},{v:'4',l:'Overload'}];
-var _lvl = [{v:'0',l:'Moderate'},{v:'1',l:'Strong'}];
-var _whl = [{v:'0',l:'Global (all)'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
-var _awl = [{v:'0',l:'Same as wheel'},{v:'1',l:'Voice only'},{v:'2',l:'Ch A only'},{v:'3',l:'Ch B only'}];
 var SCHEMA = [
   {section:'Hardware'},
   {key:'audiohw',        label:'Audio Board',        readOnly:true},
@@ -1675,7 +2592,7 @@ var SCHEMA = [
   {section:'Sound Banks', when:VMUSIC}
 ];
 
-var _sbs = [];   // in-memory sound bank array
+var _sbs = [];
 
 function sbRender() {
   var h = '';
@@ -1769,119 +2686,293 @@ static const char WEB_PAGE_RC_RADIO[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RC Radio — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-<style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-.info-banner{border:1px solid var(--border);background:#0d0d0d;color:var(--dim);padding:.7rem 1rem;font-size:.75rem;line-height:1.6;margin-bottom:.8rem}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; RC Radio &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">RC Radio</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -1890,6 +2981,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -1931,7 +3032,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -2016,16 +3117,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -2036,37 +3139,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -2153,118 +3274,293 @@ static const char WEB_PAGE_DOME[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dome Drive — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
-<style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-</style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Dome Drive &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Dome Drive</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -2273,6 +3569,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -2314,7 +3620,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -2399,16 +3705,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -2419,37 +3727,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -2541,124 +3867,312 @@ static const char WEB_PAGE_SERIAL_STRINGS[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Serial Commands — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:700px;margin:0 auto;padding:1rem}
-.ss-row{display:flex;align-items:center;padding:.6rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.ss-idx{font-size:.7rem;color:var(--dim);min-width:1.8rem;text-align:right;flex-shrink:0}
+.ss-row{display:flex;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.ss-idx{font-size:.7rem;color:var(--muted);min-width:1.8rem;text-align:right;flex-shrink:0}
 .ss-fields{flex:1;display:flex;flex-direction:column;gap:.3rem;min-width:0}
-.ss-name{font-size:.82rem;color:#ccc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ss-name.empty{color:var(--dim);font-style:italic}
-.ss-val{font-size:.75rem;color:var(--gold);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ss-fields input{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box}
-.ss-fields input.mono{font-family:monospace;font-size:.75rem}
+.ss-name{font-size:.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-name.empty{color:var(--muted);font-style:italic}
+.ss-val{font-size:.75rem;color:var(--accent);font-family:ui-monospace,'SF Mono',Menlo,monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-fields input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.82rem;box-sizing:border-box;border-radius:4px}
+.ss-fields input:focus{outline:none;border-color:var(--accent)}
+.ss-fields input.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.75rem}
 .ss-acts{display:flex;gap:.1rem;flex-shrink:0}
-.be,.bs,.bc,.bd{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .4rem;opacity:.55;cursor:pointer}
-.be:hover,.bs:hover{opacity:1}
+.be,.bs,.bc,.bd{background:none;border:none;color:var(--muted);font-size:1rem;padding:.2rem .4rem;opacity:.7;cursor:pointer}
+.be:hover,.bs:hover{opacity:1;color:var(--accent)}
 .bc:hover,.bd:hover{opacity:1}
-.add-row{padding:.9rem .2rem}
-.btn-add{background:none;border:1px solid var(--dim);color:var(--gold);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer}
-.btn-add:hover{border-color:var(--gold)}
-#empty{color:var(--dim);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.add-row{padding:.9rem 0}
+.btn-add{background:none;border:1px solid var(--border);color:var(--text);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer;border-radius:4px;transition:border-color .15s,color .15s}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+#empty{color:var(--muted);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Serial Commands &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Serial Commands</span><span class="dot"></span></div>
 </div>
 <main id="main">
   <div id="status">LOADING&#8230;</div>
@@ -2667,6 +4181,16 @@ main{max-width:700px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -2708,7 +4232,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -2793,16 +4317,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -2813,37 +4339,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -2891,14 +4435,13 @@ function buildPage(SCHEMA, endpoint, callback) {
 }
 </script>
 <script>
-var _d = [];      // [{n, s}, ...]
-var _ed = -1;     // index currently in edit mode, -1 = none
-var _isNew = false; // true while adding an unsaved entry
+var _d = [];
+var _ed = -1;
+var _isNew = false;
 
 function load() {
   fetch('/api/config').then(function(r){return r.json();}).then(function(d){
     var allSstr = d.sstr || [];
-    // sstr_user_cnt tells us how many are user-defined vs builtin-injected.
     var userCnt = (d.sstr_user_cnt !== undefined) ? d.sstr_user_cnt : allSstr.length;
     _d = allSstr.slice(0, userCnt);
     render();
@@ -2914,99 +4457,105 @@ function esc(s) {
 function render() {
   var h = '';
   if (_d.length === 0 && !_isNew) {
-    h += '<div id="empty">No serial strings configured yet.</div>';
+    h += '<div id="empty">No serial commands yet.</div>';
+  } else {
+    _d.forEach(function(row, i) {
+      if (i === _ed && !_isNew) {
+        h += '<div class="ss-row">'
+          + '<div class="ss-idx">'+(i+1)+'</div>'
+          + '<div class="ss-fields">'
+          + '<input type="text" id="ed-name" value="'+esc(row.n)+'" placeholder="Name">'
+          + '<input type="text" id="ed-val"  value="'+esc(row.s)+'" placeholder="Serial string" class="mono">'
+          + '</div>'
+          + '<div class="ss-acts">'
+          + '<button class="bs" onclick="saveEdit('+i+')" title="Save">&#10003;</button>'
+          + '<button class="bc" onclick="cancelEdit()" title="Cancel">&#10005;</button>'
+          + '</div>'
+          + '</div>';
+      } else {
+        h += '<div class="ss-row">'
+          + '<div class="ss-idx">'+(i+1)+'</div>'
+          + '<div class="ss-fields">'
+          + '<div class="ss-name'+(row.n?'':' empty')+'">'+(row.n || '(unnamed)')+'</div>'
+          + '<div class="ss-val">'+esc(row.s)+'</div>'
+          + '</div>'
+          + '<div class="ss-acts">'
+          + '<button class="be" onclick="startRowEdit('+i+')" title="Edit">&#9998;</button>'
+          + '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>'
+          + '</div>'
+          + '</div>';
+      }
+    });
   }
-  for (var i = 0; i < _d.length; i++) {
-    var item = _d[i];
-    if (i === _ed) {
-      h += '<div class="ss-row" id="r'+i+'">' +
-        '<span class="ss-idx">'+(i+1)+'</span>' +
-        '<div class="ss-fields">' +
-          '<input type="text" id="ni'+i+'" value="'+esc(item.n)+'" maxlength="31" placeholder="Name (e.g. Leia Sequence)">' +
-          '<input type="text" id="si'+i+'" value="'+esc(item.s)+'" maxlength="31" placeholder="Serial string (e.g. :LD00)" class="mono"' +
-          ' onkeydown="if(event.key===\'Enter\')saveStr('+i+')">' +
-        '</div>' +
-        '<div class="ss-acts">' +
-          '<button class="bs" onclick="saveStr('+i+')" title="Save">&#10003;</button>' +
-          '<button class="bc" onclick="cancelEdit('+i+')" title="Cancel">&#10005;</button>' +
-        '</div>' +
-        '</div>';
-    } else {
-      var nameEmpty = !item.n;
-      h += '<div class="ss-row" id="r'+i+'">' +
-        '<span class="ss-idx">'+(i+1)+'</span>' +
-        '<div class="ss-fields">' +
-          '<div class="ss-name'+(nameEmpty?' empty':'')+'">'+esc(item.n||'(unnamed)')+'</div>' +
-          '<div class="ss-val">'+esc(item.s)+'</div>' +
-        '</div>' +
-        '<div class="ss-acts">' +
-          '<button class="be" onclick="startEdit('+i+')" title="Edit">&#9998;</button>' +
-          '<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>' +
-        '</div>' +
-        '</div>';
-    }
+  if (_isNew) {
+    h += '<div class="ss-row">'
+      + '<div class="ss-idx">'+ (_d.length+1)+'</div>'
+      + '<div class="ss-fields">'
+      + '<input type="text" id="ed-name" value="" placeholder="Name">'
+      + '<input type="text" id="ed-val"  value="" placeholder="Serial string" class="mono">'
+      + '</div>'
+      + '<div class="ss-acts">'
+      + '<button class="bs" onclick="saveNew()" title="Save">&#10003;</button>'
+      + '<button class="bc" onclick="cancelEdit()" title="Cancel">&#10005;</button>'
+      + '</div>'
+      + '</div>';
   }
-  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add String</button></div>';
+  h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add Command</button></div>';
   document.getElementById('main').innerHTML = h;
-  if (_ed >= 0) {
-    var ni = document.getElementById('ni'+_ed);
-    if (ni) ni.focus();
+  if (_ed >= 0 || _isNew) {
+    var el = document.getElementById('ed-name');
+    if (el) el.focus();
   }
 }
 
-function startEdit(i) {
-  if (_ed >= 0 && _isNew) { _d.splice(_ed, 1); _isNew = false; }
-  _ed = i;
-  render();
-}
+function startRowEdit(i) { _ed = i; _isNew = false; render(); }
+function cancelEdit()    { _ed = -1; _isNew = false; render(); }
+function addStr()        { if (_isNew) return; _ed = -1; _isNew = true; render(); }
 
-function cancelEdit(i) {
-  if (_isNew) { _d.splice(i, 1); _isNew = false; }
-  _ed = -1;
-  render();
-}
-
-function saveStr(i) {
-  var name = document.getElementById('ni'+i).value.trim();
-  var str  = document.getElementById('si'+i).value.trim();
-  if (!str) { showToast('Serial string cannot be empty', true); return; }
+function saveEdit(i) {
+  var n = (document.getElementById('ed-name').value || '').trim();
+  var s = (document.getElementById('ed-val').value  || '').trim();
+  if (!n || !s) { showToast('Name and string required', true); return; }
   fetch('/api/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'key=sstr_'+i+'&value='+encodeURIComponent(name+'|'+str)
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'\x00'+s)
   }).then(function(r){
-    if (!r.ok) throw new Error(r.status);
-    _d[i] = {n: name, s: str};
-    _ed = -1; _isNew = false;
+    if (!r.ok) { showToast('Save failed', true); return; }
+    _d[i] = {n:n, s:s};
+    _ed = -1;
     render();
     showToast('Saved');
-  }).catch(function(){ showToast('Save failed', true); });
+  }).catch(function(){ showToast('Network error', true); });
+}
+
+function saveNew() {
+  var n = (document.getElementById('ed-name').value || '').trim();
+  var s = (document.getElementById('ed-val').value  || '').trim();
+  if (!n || !s) { showToast('Name and string required', true); return; }
+  fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_add&value='+encodeURIComponent(n+'\x00'+s)
+  }).then(function(r){
+    if (!r.ok) { showToast('Save failed', true); return; }
+    _d.push({n:n, s:s});
+    _isNew = false;
+    render();
+    showToast('Added');
+  }).catch(function(){ showToast('Network error', true); });
 }
 
 function delStr(i) {
-  var label = _d[i].n || _d[i].s || ('string ' + (i+1));
-  if (!confirm('Delete “'+label+'”?\nThis cannot be undone.')) return;
+  if (!confirm('Delete "'+_d[i].n+'"?')) return;
   fetch('/api/config', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'key=sstr_del_'+i+'&value='
+    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'key=sstr_del_'+i
   }).then(function(r){
-    if (!r.ok) throw new Error(r.status);
+    if (!r.ok) { showToast('Delete failed', true); return; }
     _d.splice(i, 1);
-    if (_ed > i) _ed--;
-    else if (_ed === i) { _ed = -1; _isNew = false; }
+    if (_ed >= i) _ed = -1;
     render();
     showToast('Deleted');
-  }).catch(function(){ showToast('Delete failed', true); });
-}
-
-function addStr() {
-  if (_ed >= 0 && _isNew) return;
-  if (_ed >= 0) { _ed = -1; render(); return; }
-  _d.push({n: '', s: ''});
-  _ed = _d.length - 1;
-  _isNew = true;
-  render();
+  }).catch(function(){ showToast('Network error', true); });
 }
 
 load();
@@ -3022,131 +4571,329 @@ static const char WEB_PAGE_GADGETS[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gadgets — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-.info-note{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--dim);line-height:1.5}
-.info-note a{color:var(--fg)}
-.gadget-row{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.gadget-row{padding:.75rem 0;border-bottom:1px solid var(--border)}
 .gadget-top{display:flex;align-items:center;gap:.75rem}
-.gadget-name{flex:1;font-size:.85rem}
-.gadget-sel{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem}
-.sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid #1a1a1a}
-.sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
+.gadget-name{flex:1;font-size:.85rem;color:var(--text)}
+.gadget-sel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem;border-radius:4px}
+.gadget-sel:focus{outline:none;border-color:var(--accent)}
+.sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--border)}
+.sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
 .sstr-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
-.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:#0e0e0e;border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
-.sstr-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
-.sstr-rm:hover{color:#ff5555}
+.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
+.sstr-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
+.sstr-rm:hover{color:var(--danger)}
 .sstr-add-row{display:flex;gap:.4rem;align-items:center}
-.sstr-add-row select{flex:1;background:#111;border:1px solid var(--dim);color:var(--fg);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0}
-.sstr-add-btn{background:var(--bg);border:1px solid var(--border);color:var(--gold);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px}
-.sstr-add-btn:hover{background:#0e0e0e}
-.sstr-empty{font-size:.75rem;color:var(--dim);margin-bottom:.4rem}
-.no-sstr{font-size:.75rem;color:var(--dim)}
-.no-sstr a{color:var(--fg)}
+.sstr-add-row select{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0;border-radius:4px}
+.sstr-add-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px;transition:border-color .15s,color .15s}
+.sstr-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.sstr-empty{font-size:.75rem;color:var(--muted);margin-bottom:.4rem}
+.no-sstr{font-size:.75rem;color:var(--muted)}
+.no-sstr a,.info-note a{color:var(--text)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Gadgets &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Gadgets</span><span class="dot"></span></div>
 </div>
-<div id="main"><div id="status">LOADING&#8230;</div></div>
+<div id="main" style="max-width:820px;margin:0 auto;padding-top:28px"><div id="status">LOADING&#8230;</div></div>
 <script>
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -3188,7 +4935,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -3273,16 +5020,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -3293,37 +5042,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -3373,7 +5140,6 @@ function buildPage(SCHEMA, endpoint, callback) {
 <script>
 var _cfg = null;
 
-// Operational commands — auto-available in button assignments + Droid Control
 var UPPITY_OPS = [
   {name:'Home',           str:':PH'},
   {name:'Raise Full',     str:':PP100'},
@@ -3387,7 +5153,6 @@ var UPPITY_OPS = [
   {name:'Spin CW',        str:':PR-30'},
   {name:'Stop Spin',      str:':PR0'},
 ];
-// Config/calibration commands — one-shot buttons, not assigned to buttons/events
 var UPPITY_CFG = [
   {name:'Calibrate',          str:'#PSC'},
   {name:'Show Config',        str:'#PCONFIG'},
@@ -3399,12 +5164,12 @@ var UPPITY_CFG = [
 
 var GADGETS = [
   {id:0, name:'Periscope', opts:[{v:0,l:'Disabled'},{v:2,l:'Uppity Spinner'}], serial:false},
-  {id:1, name:'Lifeform Scanner',    opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:2, name:'Lightsaber Launcher', opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:3, name:'Bubble Gun',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:4, name:'Zapper Arm',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:5, name:'Gripper',             opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:6, name:'Data Probe',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:1, name:'Lifeform Scanner',    opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:2, name:'Lightsaber Launcher', opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:3, name:'Bubble Gun',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:4, name:'Zapper Arm',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:5, name:'Gripper',             opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:6, name:'Data Probe',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
 ];
 
 function gadgetCmdPost(cmd) {
@@ -3428,7 +5193,7 @@ function render() {
   var sstr = _cfg.sstr || [];
   var h = '';
 
-  h += '<div class="info-note">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &#8250; Gadgets</a> and are excluded from the Sequences tab.</div>';
+  h += '<div class="info-banner">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &rsaquo; Gadgets</a> and are excluded from the Sequences tab.</div>';
 
   GADGETS.forEach(function(g) {
     var cfg      = gCfg[g.id] || {type: 0, sstr: []};
@@ -3447,10 +5212,10 @@ function render() {
     if (g.id === 0 && cfg.type === 2) {
       h += '<div class="sstr-section">';
       h += '<div class="sstr-label">Operational Commands</div>';
-      h += '<div style="font-size:.7rem;color:var(--dim);margin-bottom:.4rem">Auto-available in <a href="/droid-control#gadgets">Droid Control → Gadgets</a> and as button assignments.</div>';
-      h += '<div class="sstr-checks" style="flex-direction:column;gap:.15rem">';
+      h += '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem">Auto-available in <a href="/droid-control#gadgets">Droid Control &rarr; Gadgets</a> and as button assignments.</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:.15rem">';
       UPPITY_OPS.forEach(function(c) {
-        h += '<div class="sstr-empty" style="margin:0"><span style="color:var(--gold);min-width:7rem;display:inline-block">' + c.name + '</span><span style="opacity:.5;font-size:.7rem">' + c.str + '</span></div>';
+        h += '<div class="sstr-empty" style="margin:0"><span style="color:var(--accent);min-width:7rem;display:inline-block">' + c.name + '</span><span style="opacity:.5;font-size:.7rem">' + c.str + '</span></div>';
       });
       h += '</div>';
       h += '</div>';
@@ -3525,9 +5290,7 @@ function apiPost(key, value, cb) {
   }).catch(function() { showToast('Network error', true); });
 }
 
-function saveType(gadgetId, type) {
-  apiPost('gadget_' + gadgetId + '_type', type, render);
-}
+function saveType(gadgetId, type) { apiPost('gadget_' + gadgetId + '_type', type, render); }
 
 function addSstr(gadgetId) {
   var sel = document.getElementById('gadget-' + gadgetId + '-pick');
@@ -3558,129 +5321,309 @@ static const char WEB_PAGE_SERVOS[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Servos — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:900px;margin:0 auto;padding:1rem}
-.section-label{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);padding:.8rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.8rem}
-th{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);padding:.5rem .5rem;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);padding:.5rem;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap}
 th:first-child{text-align:right;width:2rem}
-td{padding:.45rem .5rem;text-align:center;border-bottom:1px solid #0f0f0f;color:#ccc}
-td:first-child{color:var(--dim);font-size:.7rem;text-align:right}
-td input[type=number]{width:4.2rem;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.25rem .3rem;text-align:center;font-family:inherit;font-size:.8rem;box-sizing:border-box}
-td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:pointer;vertical-align:middle}
+td{padding:.45rem .5rem;text-align:center;border-bottom:1px solid var(--border);color:var(--text)}
+td:first-child{color:var(--muted);font-size:.7rem;text-align:right}
+td input[type=number]{width:4.2rem;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.25rem .3rem;text-align:center;font-family:inherit;font-size:.8rem;box-sizing:border-box;border-radius:3px}
+td input[type=number]:focus{outline:none;border-color:var(--accent)}
+td input[type=checkbox]{accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;vertical-align:middle}
 .act{white-space:nowrap}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .4rem;opacity:.55;cursor:pointer}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.rev-yes{color:var(--gold)}
-.rev-no{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-/* Used by buildRow for the pulse limits section */
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.bc{color:var(--dim)}
+.be,.bs,.bc{background:none;border:none;color:var(--muted);font-size:1rem;padding:.2rem .4rem;opacity:.7;cursor:pointer}
+.be:hover,.bs:hover,.bc:hover{opacity:1;color:var(--accent)}
+.rev-yes{color:var(--accent)}
+.rev-no{color:var(--muted)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Servos &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Servos</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="tbl-area"><div id="status">LOADING&#8230;</div></div>
@@ -3690,6 +5633,16 @@ td input[type=checkbox]{accent-color:var(--gold);width:1rem;height:1rem;cursor:p
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -3731,7 +5684,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -3816,16 +5769,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -3836,37 +5791,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -3914,8 +5887,8 @@ function buildPage(SCHEMA, endpoint, callback) {
 }
 </script>
 <script>
-var _d = [];   // [{min,max,n,d,t,sp,r}, ...]
-var _ed = -1;  // channel index in edit mode, -1 = none
+var _d = [];
+var _ed = -1;
 
 function load() {
   fetch('/api/config').then(function(r){return r.json();}).then(function(d){
@@ -3971,15 +5944,8 @@ function render() {
   }
 }
 
-function editRow(i) {
-  _ed = i;
-  render();
-}
-
-function cancelEdit() {
-  _ed = -1;
-  render();
-}
+function editRow(i)  { _ed = i; render(); }
+function cancelEdit(){ _ed = -1; render(); }
 
 function saveRow(i) {
   var min = parseInt(document.getElementById('emin').value,10);
@@ -4018,142 +5984,320 @@ static const char WEB_PAGE_CONTROLLERS[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Controllers — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-/* Control type strip */
-.ctrl-type-strip{text-align:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.ctrl-type-strip span{color:var(--gold)}
-/* Tabs */
-.tabs{display:flex;border-bottom:1px solid var(--border)}
-.tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-family:inherit;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.85rem 1rem;cursor:pointer}
-.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-/* Settings rows (Controller Settings section) */
-.ctrl-section{max-width:660px;margin:0 auto}
-.row{display:flex;align-items:center;padding:.65rem 1rem;border-bottom:1px solid var(--border);gap:.5rem}
-.row-label{flex:0 0 130px;font-size:.78rem;color:var(--dim)}
-.row-sel{flex:1;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem}
-.row-sel option{background:#111}
-/* Section / subsection headings */
-.sec-hdr{font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);padding:.55rem 1rem .35rem;border-bottom:1px solid var(--border);max-width:660px;margin:0 auto}
-.sub-hdr{font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:.4rem 1rem .25rem;border-bottom:1px solid var(--border);background:#0b0b0b;max-width:660px;margin:0 auto}
-/* Button assignment cards */
-.btn-card{max-width:660px;margin:0 auto;border-bottom:1px solid var(--border);padding:.5rem 1rem .4rem}
-.btn-title{font-size:.78rem;color:#ccc;margin-bottom:.3rem}
-.badge{display:inline-block;font-size:.55rem;background:var(--gold);color:#000;padding:.05rem .3rem;border-radius:2px;vertical-align:middle;margin-left:.3rem}
+.ctrl-type-strip{text-align:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ctrl-type-strip span{color:var(--accent)}
+.ctrl-section{max-width:820px;margin:0 auto}
+.row{display:flex;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--border);gap:.5rem}
+.row-label{flex:0 0 130px;font-size:.78rem;color:var(--muted)}
+.row-sel{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;border-radius:4px}
+.row-sel:focus{outline:none;border-color:var(--accent)}
+.badge{display:inline-block;font-size:.55rem;background:var(--accent);color:#fff;padding:.05rem .3rem;border-radius:2px;vertical-align:middle;margin-left:.3rem}
+.btn-card{max-width:820px;margin:0 auto;border-bottom:1px solid var(--border);padding:.5rem 0 .4rem}
+.btn-title{font-size:.78rem;color:var(--text);margin-bottom:.3rem}
 .lyr-row{display:flex;align-items:center;margin:.15rem 0}
-.lyr-label{flex:0 0 80px;font-size:.68rem;color:var(--dim)}
-.act-sel{flex:1;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.25rem .4rem;font-family:inherit;font-size:.75rem}
-.act-sel option,.act-sel optgroup{background:#111}
-/* Gestures */
-.gest-note{max-width:660px;margin:0 auto;font-size:.72rem;color:var(--dim);padding:.6rem 1rem;border-bottom:1px solid var(--border);line-height:1.7}
-.gest-row{max-width:660px;margin:0 auto;display:flex;align-items:center;padding:.4rem 1rem;border-bottom:1px solid var(--border);gap:.6rem}
-.gest-seq{flex:0 0 72px;font-size:.88rem;letter-spacing:.12em;color:var(--gold);font-family:monospace}
-.gest-del{background:none;border:1px solid var(--border);color:var(--dim);cursor:pointer;padding:.15rem .45rem;font-size:.7rem;flex-shrink:0}
-.gest-del:hover{color:var(--gold);border-color:var(--gold)}
-.add-form{max-width:660px;margin:0 auto;display:flex;align-items:center;padding:.7rem 1rem;gap:.5rem;border-bottom:1px solid var(--border)}
-.add-form input{flex:0 0 80px;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:monospace;font-size:.8rem}
-.add-btn{background:none;border:1px solid var(--gold);color:var(--gold);cursor:pointer;padding:.3rem .9rem;font-size:.72rem;flex-shrink:0}
-.add-btn:hover{background:var(--gold);color:#000}
-.empty-note{max-width:660px;margin:0 auto;padding:.8rem 1rem;font-size:.75rem;color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
+.lyr-label{flex:0 0 80px;font-size:.68rem;color:var(--muted)}
+.act-sel{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.25rem .4rem;font-family:inherit;font-size:.75rem;border-radius:4px}
+.act-sel:focus{outline:none;border-color:var(--accent)}
+.gest-note{max-width:820px;margin:0 auto;font-size:.72rem;color:var(--muted);padding:.6rem 0;border-bottom:1px solid var(--border);line-height:1.7}
+.gest-row{max-width:820px;margin:0 auto;display:flex;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--border);gap:.6rem}
+.gest-seq{flex:0 0 72px;font-size:.88rem;letter-spacing:.12em;color:var(--accent);font-family:ui-monospace,'SF Mono',Menlo,monospace}
+.gest-del{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:.15rem .45rem;font-size:.7rem;flex-shrink:0;border-radius:3px;transition:border-color .15s,color .15s}
+.gest-del:hover{color:var(--danger);border-color:var(--danger)}
+.add-form{max-width:820px;margin:0 auto;display:flex;align-items:center;padding:.7rem 0;gap:.5rem;border-bottom:1px solid var(--border)}
+.add-form input{flex:0 0 80px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.8rem;border-radius:4px}
+.add-form input:focus{outline:none;border-color:var(--accent)}
+.add-btn{background:none;border:1px solid var(--border);color:var(--text);cursor:pointer;padding:.3rem .9rem;font-size:.72rem;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.empty-note{max-width:820px;margin:0 auto;padding:.8rem 0;font-size:.75rem;color:var(--muted)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Controllers &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Controllers</span><span class="dot"></span></div>
 </div>
 <div class="ctrl-type-strip">Control Type: <span id="ctrl-type-val">&#8212;</span></div>
 <div class="tabs">
@@ -4165,6 +6309,16 @@ button {
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -4206,7 +6360,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -4291,16 +6445,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -4311,37 +6467,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -4390,7 +6564,7 @@ function buildPage(SCHEMA, endpoint, callback) {
 </script>
 <script>
 var _cfg = null;
-var _tab = 'btn';  // kept as state; updated by initHashTabs callback
+var _tab = 'btn';
 
 var BTN_NAMES = [
   '', // index 0 unused (buttons are 1-based)
@@ -4402,7 +6576,7 @@ function controlTypeName(cfg) {
   var xbeeSet = (cfg.xbr && cfg.xbr !== '00000000') || (cfg.xbl && cfg.xbl !== '00000000');
   if (xbeeSet)       return 'XBee Pocket Remote';
   if (cfg.rcchn > 0) return 'RC Radio';
-  return 'XBee Pocket Remote';  // default when nothing explicitly configured
+  return 'XBee Pocket Remote';
 }
 
 function load() {
@@ -4416,17 +6590,9 @@ function load() {
     .catch(function() { document.getElementById('status').textContent = 'Failed to load.'; });
 }
 
-initHashTabs('btn', function(t) {
-  _tab = t;
-  if (_cfg) render();
-});
+initHashTabs('btn', function(t) { _tab = t; if (_cfg) render(); });
 
-function render() {
-  if (!_cfg) return;
-  _tab === 'btn' ? renderButtons() : renderGestures();
-}
-
-/* ---- action dropdown helpers ---- */
+function render() { if (!_cfg) return; _tab === 'btn' ? renderButtons() : renderGestures(); }
 
 function opt(v, label, sel) {
   return '<option value="' + v + '"' + (String(sel) === String(v) ? ' selected' : '') + '>' + label + '</option>';
@@ -4434,11 +6600,9 @@ function opt(v, label, sel) {
 
 function actionOptions(sel) {
   var h = opt('0', '— None —', sel);
-
   var sstr   = _cfg.sstr || [];
   var gCfg   = _cfg.gadgets_cfg || [];
   var percSstr = (gCfg[0] && gCfg[0].type === 2) ? (gCfg[0].sstr || []) : [];
-
   var nonPerc = sstr.filter(function(_, i) { return percSstr.indexOf(i + 1) < 0; });
   if (nonPerc.length) {
     h += '<optgroup label="Serial Commands">';
@@ -4448,7 +6612,6 @@ function actionOptions(sel) {
     });
     h += '</optgroup>';
   }
-
   if (percSstr.length) {
     h += '<optgroup label="Periscope">';
     percSstr.forEach(function(idx) {
@@ -4457,17 +6620,15 @@ function actionOptions(sel) {
     });
     h += '</optgroup>';
   }
-
   h += '<optgroup label="Dome">';
   h += opt('9,0', 'Random Mode Toggle', sel);
   h += opt('9,8', 'Abs-Stick Toggle',   sel);
   h += '</optgroup>';
-
   if (_cfg.audiohw === 'hcr') {
     h += '<optgroup label="HCR Audio">';
     h += opt('8', 'Musing Toggle', sel);
-    var emos  = ['Happy','Sad','Mad','Scared','Overload'];
-    var lvls  = ['Moderate','Strong'];
+    var emos = ['Happy','Sad','Mad','Scared','Overload'];
+    var lvls = ['Moderate','Strong'];
     lvls.forEach(function(lvl, li) {
       emos.forEach(function(emo, ei) {
         h += opt('7,' + ei + ',' + li, emo + ' (' + lvl + ')', sel);
@@ -4475,12 +6636,10 @@ function actionOptions(sel) {
     });
     h += '</optgroup>';
   }
-
   h += '<optgroup label="Special">';
-  h += opt('altbtn',     'Set as Alt Modifier',  sel);
-  h += opt('mutebutton', 'Set as Mute Button',   sel);
+  h += opt('altbtn',     'Set as Alt Modifier', sel);
+  h += opt('mutebutton', 'Set as Mute Button',  sel);
   h += '</optgroup>';
-
   return h;
 }
 
@@ -4495,7 +6654,7 @@ function actToVal(act) {
 
 function getBtnValue(n, lyr) {
   if (lyr === 'p') {
-    if (_cfg.altbtn    === n) return 'altbtn';
+    if (_cfg.altbtn     === n) return 'altbtn';
     if (_cfg.mutebutton === n) return 'mutebutton';
   }
   var btns = _cfg.buttons || [];
@@ -4503,8 +6662,6 @@ function getBtnValue(n, lyr) {
   if (!btn) return '0';
   return actToVal(btn[lyr]);
 }
-
-/* ---- save helpers ---- */
 
 function apiPost(key, value, cb) {
   fetch('/api/config', {
@@ -4525,35 +6682,24 @@ function apiPost(key, value, cb) {
   }).catch(function() { showToast('Network error', true); });
 }
 
-function saveGlobal(key, value) {
-  apiPost(key, value);
-}
+function saveGlobal(key, value) { apiPost(key, value); }
 
 function saveBtn(n, lyr, sel) {
   var val = sel.value;
   var layerName = lyr === 'p' ? 'press' : lyr === 'l' ? 'long' : 'alt';
-  if (val === 'altbtn' || val === 'mutebutton') {
-    apiPost(val, String(n));
-  } else {
-    apiPost('btn_' + n + '_' + layerName, val);
-  }
+  if (val === 'altbtn' || val === 'mutebutton') apiPost(val, String(n));
+  else apiPost('btn_' + n + '_' + layerName, val);
 }
 
-/* ---- buttons tab ---- */
-
 function renderButtons() {
-  var altbtn    = _cfg.altbtn    || 0;
+  var altbtn    = _cfg.altbtn     || 0;
   var mutebutton= _cfg.mutebutton || 0;
   var ads       = _cfg.altdomestick || 0;
   var showAlt   = altbtn > 0;
+  var h = '<div class="ctrl-section">';
 
-  var h = '';
-
-  /* Controller Settings */
   h += '<div class="sec-hdr">Controller Settings</div>';
-  h += '<div class="ctrl-section">';
 
-  /* Alt Button */
   h += '<div class="row"><div class="row-label">Alt Button</div>';
   h += '<select name="altbtn" class="row-sel" onchange="saveGlobal(\'altbtn\',this.value)">';
   h += opt('0', 'None', altbtn === 0 ? '0' : String(altbtn));
@@ -4563,7 +6709,6 @@ function renderButtons() {
   }
   h += '</select></div>';
 
-  /* Mute Button */
   h += '<div class="row"><div class="row-label">Mute Button</div>';
   h += '<select name="mutebutton" class="row-sel" onchange="saveGlobal(\'mutebutton\',this.value)">';
   h += opt('0', 'None', mutebutton === 0 ? '0' : String(mutebutton));
@@ -4573,29 +6718,23 @@ function renderButtons() {
   }
   h += '</select></div>';
 
-  /* Alt Dome Stick */
   h += '<div class="row"><div class="row-label">Alt Dome Stick</div>';
   h += '<select name="altdomestick" class="row-sel" onchange="saveGlobal(\'altdomestick\',this.value)">';
-  h += opt('0', 'Off',                            String(ads));
+  h += opt('0', 'Off',                           String(ads));
   h += opt('1', 'On — joystick → dome heading', String(ads));
   h += '</select></div>';
 
-  h += '</div>'; /* ctrl-section */
-
-  /* Column header note */
   h += '<div class="sec-hdr">Button Assignments</div>';
-  if (showAlt) h += '<div class="gest-note" style="font-size:.65rem">Alt Press column is active (Alt Button = ' + BTN_NAMES[altbtn] + '). Hold the alt button then press another to trigger its alt action.</div>';
+  if (showAlt) h += '<div class="gest-note" style="font-size:.65rem;margin:0">Alt Press column active (Alt Button = ' + BTN_NAMES[altbtn] + ').</div>';
 
-  /* Right controller */
   h += '<div class="sub-hdr">Right Controller</div>';
   for (var i = 1; i <= 5; i++) h += renderBtnCard(i, showAlt, altbtn, mutebutton);
-
-  /* Left controller */
   h += '<div class="sub-hdr">Left Controller</div>';
   for (var i = 6; i <= 9; i++) h += renderBtnCard(i, showAlt, altbtn, mutebutton);
 
-  h += '<div class="gest-note" style="font-size:.65rem">Left Stick Press (button 10) initiates gesture sequences and is not configurable here.</div>';
+  h += '<div class="gest-note" style="font-size:.65rem;margin:0">Left Stick Press (button 10) initiates gesture sequences and is not configurable here.</div>';
 
+  h += '</div>';
   document.getElementById('main').innerHTML = h;
 }
 
@@ -4605,7 +6744,6 @@ function renderBtnCard(n, showAlt, altbtn, mutebutton) {
   var title  = BTN_NAMES[n];
   if (isAlt)  title += '<span class="badge">ALT</span>';
   if (isMute) title += '<span class="badge">MUTE</span>';
-
   var h = '<div class="btn-card">';
   h += '<div class="btn-title">' + title + '</div>';
   h += '<div class="lyr-row"><div class="lyr-label">Press</div>';
@@ -4620,11 +6758,7 @@ function renderBtnCard(n, showAlt, altbtn, mutebutton) {
   return h;
 }
 
-/* ---- gestures tab ---- */
-
-function gestToVal(g) {
-  return actToVal({t: g.t, x: g.x, y: g.y});
-}
+function gestToVal(g) { return actToVal({t: g.t, x: g.x, y: g.y}); }
 
 function saveGest(i, seq, sel) {
   var val = sel.value;
@@ -4633,14 +6767,11 @@ function saveGest(i, seq, sel) {
     method: 'POST',
     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     body: 'key=gesture_' + i + '&value=' + encodeURIComponent(body)
-  }).then(function(r) {
-    showToast(r.ok ? 'Saved' : 'Failed', !r.ok);
-  }).catch(function() { showToast('Network error', true); });
+  }).then(function(r) { showToast(r.ok ? 'Saved' : 'Failed', !r.ok); })
+    .catch(function() { showToast('Network error', true); });
 }
 
-function delGest(i) {
-  apiPost('gesture_del_' + i, '');
-}
+function delGest(i) { apiPost('gesture_del_' + i, ''); }
 
 function addGest() {
   var seqEl = document.getElementById('new-seq');
@@ -4649,23 +6780,18 @@ function addGest() {
   var val   = actEl.value;
   if (!seq || !/^[1-9]+$/.test(seq)) { showToast('Enter a valid sequence (digits 1–9)', true); return; }
   var body  = seq + (val !== '0' ? ',' + val : ',0');
-  apiPost('gesture_add', body, function() {
-    seqEl.value = '';
-    actEl.value = '0';
-  });
+  apiPost('gesture_add', body, function() { seqEl.value = ''; actEl.value = '0'; });
 }
 
 function renderGestures() {
   var gestures = _cfg.gestures || [];
   var h = '';
-
   h += '<div class="gest-note">';
   h += '<b>Joystick grid positions:</b><br>';
   h += '1=up-left &nbsp;&nbsp;&nbsp; 2=up-center &nbsp;&nbsp; 3=up-right<br>';
   h += '4=mid-left &nbsp;&nbsp; 5=center &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 6=mid-right<br>';
   h += '7=down-left &nbsp; 8=down-center &nbsp; 9=down-right';
   h += '</div>';
-
   if (gestures.length === 0) {
     h += '<div class="empty-note">No gestures configured.</div>';
   } else {
@@ -4673,17 +6799,15 @@ function renderGestures() {
       h += '<div class="gest-row">';
       h += '<div class="gest-seq">' + g.seq + '</div>';
       h += '<select name="gest-' + i + '-action" class="act-sel" style="flex:1" onchange="saveGest(' + i + ',\'' + g.seq + '\',this)">' + actionOptions(gestToVal(g)) + '</select>';
-      h += '<button class="gest-del" onclick="delGest(' + i + ')" title="Delete gesture">✕</button>';
+      h += '<button class="gest-del" onclick="delGest(' + i + ')" title="Delete gesture">&#10005;</button>';
       h += '</div>';
     });
   }
-
   h += '<div class="add-form">';
   h += '<input id="new-seq" type="text" placeholder="e.g. 258" maxlength="8">';
   h += '<select id="new-act" class="act-sel" style="flex:1">' + actionOptions('0') + '</select>';
   h += '<button class="add-btn" onclick="addGest()">Add</button>';
   h += '</div>';
-
   document.getElementById('main').innerHTML = h;
 }
 
@@ -4700,135 +6824,312 @@ static const char WEB_PAGE_DROID_CONTROL[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Droid Control — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-/* Tabs — identical to controllers page */
-.tabs{display:flex;border-bottom:1px solid var(--border)}
-.tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-family:inherit;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.85rem 1rem;cursor:pointer}
-.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-/* Dome */
-.ctrl-section{padding:.75rem 1rem 1.2rem}
-.dome-stop{width:100%;padding:1.1rem;background:#3a0000;border:1px solid #7a0000;color:#ff4444;font-size:1.1rem;font-weight:bold;border-radius:4px;cursor:pointer;letter-spacing:.1em;margin-bottom:.9rem;-webkit-tap-highlight-color:transparent}
-.dome-stop:hover,.dome-stop:active{background:#4a0000}
+.ctrl-section{padding:.75rem 0 1.2rem;max-width:820px;margin:0 auto}
+.dome-stop{width:100%;padding:1.1rem;background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger);font-size:1.1rem;font-weight:bold;border-radius:6px;cursor:pointer;letter-spacing:.1em;margin-bottom:.9rem;-webkit-tap-highlight-color:transparent;transition:background .15s,color .15s}
+.dome-stop:hover,.dome-stop:active{background:var(--danger);color:#fff}
 .btn-group{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.4rem}
-.dc-btn{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.85rem .5rem;border-radius:4px;cursor:pointer;font-size:.88rem;text-align:center;-webkit-tap-highlight-color:transparent}
-.dc-btn:hover,.dc-btn:active{background:#0e0e0e}
-.angle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem}
-.angle-btn{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.8rem .2rem;border-radius:4px;cursor:pointer;font-size:.88rem;text-align:center;-webkit-tap-highlight-color:transparent}
-.angle-btn:hover,.angle-btn:active{background:#0e0e0e}
+.angle-btn{padding:.8rem .2rem}
 .custom-row{display:flex;gap:.5rem;align-items:center;margin-top:.6rem}
-.custom-row span{font-size:.78rem;color:var(--dim);white-space:nowrap}
-.custom-row input[type=number]{flex:1;max-width:6rem;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.7rem .6rem;border-radius:4px;font-size:.9rem}
-/* Sequences — big touch grid */
+.custom-row span{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.custom-row input[type=number]{flex:1;max-width:6rem;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.7rem .6rem;border-radius:4px;font-size:.9rem}
+.custom-row input[type=number]:focus{outline:none;border-color:var(--accent)}
 .cmd-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.grid-btn{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:1rem .5rem;border-radius:4px;cursor:pointer;font-size:.88rem;text-align:center;line-height:1.3;-webkit-tap-highlight-color:transparent;min-height:3.5rem}
-.grid-btn:hover,.grid-btn:active{background:#0e0e0e}
-.grid-btn.full{grid-column:1/-1}
-.empty-note{padding:.75rem 0;color:var(--dim);font-size:.82rem}
-.empty-note a{color:var(--fg)}
-/* Coming soon */
-.coming-soon{text-align:center;padding:3.5rem 1rem;color:var(--dim)}
+.empty-note{padding:.75rem 0;color:var(--muted);font-size:.82rem}
+.empty-note a{color:var(--text)}
+.coming-soon{text-align:center;padding:3.5rem 1rem;color:var(--muted)}
 .cs-icon{font-size:2.5rem;margin-bottom:.8rem;opacity:.35}
 .cs-title{font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.8rem}
 .cs-text{font-size:.8rem;line-height:1.65;max-width:380px;margin:0 auto}
+.cs-text a{color:var(--text)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Droid Control &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Droid Control</span><span class="dot"></span></div>
 </div>
 <div class="tabs">
   <button class="tab" data-tab="dome"      onclick="showHashTab('dome')">Dome</button>
@@ -4840,6 +7141,16 @@ button {
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -4881,7 +7192,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -4966,16 +7277,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -4986,37 +7299,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -5084,9 +7415,7 @@ function load() {
       _cfg = d;
       initHashTabs('dome', function(t) { _tab = t; render(); });
     })
-    .catch(function() {
-      document.getElementById('status').textContent = 'Failed to load.';
-    });
+    .catch(function() { document.getElementById('status').textContent = 'Failed to load.'; });
 }
 
 function render() {
@@ -5094,8 +7423,6 @@ function render() {
   else if (_tab === 'sequences') renderSequences();
   else                           renderGadgets();
 }
-
-/* ---- API helpers ---- */
 
 function domePost(cmd) {
   fetch('/api/dome', {
@@ -5126,8 +7453,6 @@ function hcrPost(cmd, emotion, level) {
     .catch(function() { showToast('Network error', true); });
 }
 
-/* ---- dome tab ---- */
-
 function domeMoveTo() {
   var v = document.getElementById('dome-angle').value;
   var n = parseInt(v, 10);
@@ -5137,7 +7462,6 @@ function domeMoveTo() {
 
 function renderDome() {
   var h = '<div class="ctrl-section">';
-
   h += '<button class="dome-stop" onclick="domePost(\'stop\')">&#9632;&nbsp; STOP</button>';
 
   h += '<div class="sec-hdr" style="margin-top:.2rem">Position</div>';
@@ -5146,7 +7470,7 @@ function renderDome() {
   h += '</div>';
 
   h += '<div class="sec-hdr">Go to Angle</div>';
-  h += '<div class="angle-grid">';
+  h += '<div class="angle-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem">';
   ANGLES.forEach(function(a) {
     h += '<button class="angle-btn" onclick="domePost(\'' + a + '\')">' + a + '&#176;</button>';
   });
@@ -5158,7 +7482,7 @@ function renderDome() {
   h += '</div>';
 
   h += '<div class="sec-hdr">Relative Move</div>';
-  h += '<div class="angle-grid">';
+  h += '<div class="angle-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem">';
   h += '<button class="angle-btn" onclick="domePost(\'-90\')">&#9664;&#9664; 90&#176;</button>';
   h += '<button class="angle-btn" onclick="domePost(\'-45\')">&#9664; 45&#176;</button>';
   h += '<button class="angle-btn" onclick="domePost(\'+45\')">45&#176; &#9654;</button>';
@@ -5174,8 +7498,6 @@ function renderDome() {
   h += '</div>';
   document.getElementById('main').innerHTML = h;
 }
-
-/* ---- sequences tab ---- */
 
 function renderSequences() {
   var sstr = _cfg.sstr || [];
@@ -5211,8 +7533,6 @@ function renderSequences() {
   document.getElementById('main').innerHTML = h;
 }
 
-/* ---- gadgets tab ---- */
-
 function renderGadgets() {
   var gCfg = _cfg.gadgets_cfg || [];
   var sstr = _cfg.sstr || [];
@@ -5235,7 +7555,7 @@ function renderGadgets() {
     h += '<div class="sec-hdr">' + GADGET_NAMES[i] + '</div>';
     var slots = (g.sstr || []).filter(function(idx) { return idx > 0 && idx <= sstr.length; });
     if (slots.length === 0) {
-      h += '<div style="padding:.3rem 0 .6rem;color:var(--dim);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a></div>';
+      h += '<div style="padding:.3rem 0 .6rem;color:var(--muted);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a></div>';
     } else {
       h += '<div class="cmd-grid">';
       slots.forEach(function(idx) {
@@ -5262,120 +7582,296 @@ static const char WEB_PAGE_SAFETY[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Safety — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.ri{min-width:90px}
-.ri input,.ri select{width:100%;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.82rem}
-.ri select option{background:#111}
-.be,.bs,.bc{background:none;border:none;color:var(--gold);font-size:1rem;padding:.2rem .5rem;opacity:.6}
-.be:hover,.bs:hover,.bc:hover{opacity:1}
-.bc{color:var(--dim)}
-#status{text-align:center;padding:2rem;color:var(--dim);font-size:.8rem;letter-spacing:.1em}
-.info-banner{border:1px solid var(--border);background:#0d0d0d;color:var(--dim);padding:.7rem 1rem;font-size:.75rem;line-height:1.6;margin-bottom:.8rem}
-.note-row{padding:.3rem .2rem .6rem;color:var(--dim);font-size:.72rem;line-height:1.5;border-bottom:1px solid #0f0f0f}
+.note-row{padding:.3rem 0 .6rem;color:var(--muted);font-size:.72rem;line-height:1.5;border-bottom:1px solid var(--border)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Safety &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Safety</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="status">LOADING&#8230;</div>
@@ -5384,6 +7880,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -5425,7 +7931,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -5510,16 +8016,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -5530,37 +8038,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -5624,9 +8150,9 @@ buildPage(SCHEMA, '/api/config', function() {
 
   var notes = {
     fst: 'Drive motors stop this many milliseconds after the last controller packet is received. '
-       + 'Shorter values cut power faster when the remote disconnects or signal drops (1000–3000 ms).',
+       + 'Shorter values cut power faster when the remote disconnects or signal drops (1000–3000 ms).',
     domestall: 'If the dome motor runs but the encoder detects no movement for this long, '
-             + 'the driver cuts power to protect against obstructions or mechanical jams (100–5000 ms).'
+             + 'the driver cuts power to protect against obstructions or mechanical jams (100–5000 ms).'
   };
 
   Object.keys(notes).forEach(function(k) {
@@ -5651,126 +8177,316 @@ static const char WEB_PAGE_MONITOR[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Serial Monitor — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-html,body{height:100%;display:flex;flex-direction:column;overflow:hidden}
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem;flex-shrink:0}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{flex:1;display:flex;flex-direction:column;min-height:0}
-.toolbar{display:flex;align-items:center;gap:.6rem;padding:.45rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0}
-.dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .4s}
-.dot.ok{background:#4c4;animation:pulse 2s ease infinite}
+html,body{height:100%;display:flex;flex-direction:column;overflow:hidden;padding:0}
+.page-header{flex-shrink:0;padding:12px 22px 12px;max-width:none;margin:0}
+main{flex:1;display:flex;flex-direction:column;min-height:0;max-width:none;margin:0;padding:0;width:100%}
+.toolbar{display:flex;align-items:center;gap:.6rem;padding:.45rem 22px;border-bottom:1px solid var(--border);flex-shrink:0}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .4s}
+.dot.ok{background:#3a3;animation:pulse 2s ease infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.conn-lbl{font-size:.7rem;color:var(--dim);letter-spacing:.1em;flex:1}
-.tbtn{background:none;border:1px solid var(--dim);color:var(--gold);padding:.22rem .7rem;font-family:inherit;font-size:.72rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0}
-.tbtn:hover{border-color:var(--gold)}
-.tbtn.on{border-color:var(--gold);background:rgba(200,160,0,.08)}
-.log{flex:1;overflow-y:auto;padding:.6rem 1rem;font-family:monospace;font-size:.8rem;line-height:1.65;background:#060606;min-height:0}
+.conn-lbl{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);letter-spacing:.1em;flex:1}
+.tbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.22rem .7rem;font-family:inherit;font-size:.72rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn.on{border-color:var(--accent);background:rgba(143,45,59,.06)}
+.log{flex:1;overflow-y:auto;padding:.6rem 22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.8rem;line-height:1.65;background:#1a1a1a;min-height:0}
 .ll{white-space:pre-wrap;word-break:break-all}
-.ll.tx{color:var(--gold)}
+.ll.tx{color:#c47a35}
 .ll.rx{color:#7cf}
-.ll.info{color:var(--dim)}
-.send-bar{display:flex;gap:.5rem;padding:.6rem 1rem;border-top:1px solid var(--border);flex-shrink:0}
-#cmd{flex:1;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.35rem .6rem;font-family:monospace;font-size:.85rem;min-width:0}
-#cmd:focus{outline:none;border-color:var(--gold)}
-#sbtn{background:none;border:1px solid var(--dim);color:var(--gold);padding:.35rem 1rem;font-family:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0}
-#sbtn:hover{border-color:var(--gold)}
+.ll.info{color:#666}
+.send-bar{display:flex;gap:.5rem;padding:.6rem 22px;border-top:1px solid var(--border);flex-shrink:0}
+#cmd{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .6rem;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.85rem;min-width:0;border-radius:4px}
+#cmd:focus{outline:none;border-color:var(--accent)}
+#sbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem 1rem;font-family:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
+#sbtn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Serial Monitor &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Serial Monitor</span><span class="dot"></span></div>
 </div>
 <main>
   <div class="toolbar">
@@ -5790,6 +8506,16 @@ main{flex:1;display:flex;flex-direction:column;min-height:0}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -5831,7 +8557,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -5916,16 +8642,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -5936,37 +8664,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -6067,10 +8813,7 @@ function sendCmd() {
   }).catch(function(){ addLine('! Send failed', 'info'); });
 }
 
-function clearLog() {
-  logEl.innerHTML = '';
-  _seq = -1;
-}
+function clearLog() { logEl.innerHTML = ''; _seq = -1; }
 
 function togglePause() {
   _paused = !_paused;
@@ -6092,133 +8835,318 @@ static const char WEB_PAGE_UPDATE[] = R"html(<!DOCTYPE html>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Firmware Update &#9670; AMIDALA</title>
+<title>Firmware Update — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.rv{font-size:.82rem;color:var(--gold);min-width:60px;text-align:right}
-.warn-box{border:1px solid #c80;background:#1a1200;color:#fa0;padding:.9rem 1.1rem;font-size:.78rem;line-height:1.7;margin:1rem 0}
-.warn-box strong{color:#ffd;letter-spacing:.05em;display:block;margin-bottom:.3rem}
-.warn-box code{color:#fc8;font-size:.82em}
-.file-row{padding:.9rem .2rem;border-bottom:1px solid #0f0f0f}
-#fw-file{font-size:.8rem;color:var(--dim);width:100%}
-#fw-file::file-selector-button{background:#111;color:var(--gold);border:1px solid var(--gold);padding:.3rem .8rem;cursor:pointer;font-size:.75rem;letter-spacing:.08em;margin-right:.7rem}
-#flash-btn{margin-top:1.2rem;background:#700;color:#fff;border:1px solid #c44;padding:.5rem 1.6rem;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase}
+.warn-box{border:1px solid #c59000;background:#fffbeb;color:#7c5e00;padding:.9rem 1.1rem;font-size:.78rem;line-height:1.7;margin:1rem 0;border-radius:4px}
+.warn-box strong{color:#5a4300;letter-spacing:.05em;display:block;margin-bottom:.3rem}
+.warn-box code{color:#8a6c00;font-size:.82em}
+.file-row{padding:.9rem 0;border-bottom:1px solid var(--border)}
+#fw-file{font-size:.8rem;color:var(--muted);width:100%}
+#fw-file::file-selector-button{background:var(--surface);color:var(--text);border:1px solid var(--border);padding:.3rem .8rem;cursor:pointer;font-size:.75rem;letter-spacing:.08em;margin-right:.7rem;border-radius:4px;transition:border-color .15s,color .15s}
+#fw-file::file-selector-button:hover{border-color:var(--accent);color:var(--accent)}
+#flash-btn{margin-top:1.2rem;background:var(--danger-soft);color:var(--danger);border:1px solid var(--danger);padding:.5rem 1.6rem;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:background .15s,color .15s}
 #flash-btn:disabled{opacity:.35;cursor:default}
-#flash-btn:not(:disabled):hover{background:#a00}
+#flash-btn:not(:disabled):hover{background:var(--danger);color:#fff}
 .prog-wrap{margin:1.6rem 0 .4rem}
-.prog-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.7rem}
-progress{width:100%;height:22px;appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:#111;display:block}
-progress::-webkit-progress-bar{background:#111}
-progress::-webkit-progress-value{background:var(--gold);transition:width .4s ease}
-progress::-moz-progress-bar{background:var(--gold)}
+.prog-label{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem}
+progress{width:100%;height:22px;appearance:none;-webkit-appearance:none;border:1px solid var(--border);background:var(--surface2);display:block;border-radius:4px}
+progress::-webkit-progress-bar{background:var(--surface2);border-radius:4px}
+progress::-webkit-progress-value{background:var(--accent);transition:width .4s ease;border-radius:4px}
+progress::-moz-progress-bar{background:var(--accent)}
 progress.busy::-webkit-progress-value{animation:prog-pulse 1.2s ease-in-out infinite}
 @keyframes prog-pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.prog-pct{font-size:.7rem;color:var(--dim);text-align:right;margin-top:.35rem}
-.success-box{border:1px solid #0a0;background:#001400;color:#4f4;padding:1.6rem;text-align:center;line-height:2.2;margin-top:1rem}
+.prog-pct{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);text-align:right;margin-top:.35rem}
+.success-box{border:1px solid #2d7a2d;background:#f0fdf4;color:#2d7a2d;padding:1.6rem;text-align:center;line-height:2.2;margin-top:1rem;border-radius:6px}
 .success-box .icon{font-size:2rem;display:block}
-.success-box .ver{font-size:.72rem;color:#8f8;letter-spacing:.1em;display:block}
+.success-box .ver{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.1em;display:block;opacity:.8}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Firmware Update &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Firmware Update</span><span class="dot"></span></div>
 </div>
 <main>
   <div id="form-area">
@@ -6261,6 +9189,16 @@ progress.busy::-webkit-progress-value{animation:prog-pulse 1.2s ease-in-out infi
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
 
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
+
 // ------------------------------------------------------------------ toast ---
 
 function showToast(msg, isErr) {
@@ -6301,7 +9239,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -6386,16 +9324,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -6406,37 +9346,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {
@@ -6499,17 +9457,13 @@ var prog        = document.getElementById('prog');
 var progLabel   = document.getElementById('prog-label');
 var progPct     = document.getElementById('prog-pct');
 
-fileInput.onchange = function() {
-  flashBtn.disabled = !fileInput.files.length;
-};
+fileInput.onchange = function() { flashBtn.disabled = !fileInput.files.length; };
 
 flashBtn.onclick = function() {
   if (!fileInput.files.length) return;
   var ok = window.confirm(
-    '⚠ WARNING\n\n' +
-    'This will overwrite the firmware currently running on your droid.\n\n' +
-    'Do NOT power off the droid during the update.\n\n' +
-    'Press OK to begin flashing.'
+    '⚠ WARNING\n\nThis will overwrite the firmware currently running on your droid.\n\n' +
+    'Do NOT power off the droid during the update.\n\nPress OK to begin flashing.'
   );
   if (!ok) return;
   startUpload();
@@ -6528,13 +9482,9 @@ function startUpload() {
   setPhase('Uploading firmware…', 0, false);
 
   var xhr = new XMLHttpRequest();
-
   xhr.upload.onprogress = function(e) {
-    if (e.lengthComputable) {
-      setPhase('Uploading firmware…', Math.round(e.loaded / e.total * 85), false);
-    }
+    if (e.lengthComputable) setPhase('Uploading firmware…', Math.round(e.loaded / e.total * 85), false);
   };
-
   xhr.onload = function() {
     if (xhr.status !== 200 || xhr.responseText.trim() !== 'OK') {
       progLabel.textContent = 'Upload failed: ' + xhr.responseText;
@@ -6543,11 +9493,7 @@ function startUpload() {
     }
     onFlashing();
   };
-
-  xhr.onerror = function() {
-    // Connection dropped — device restarted mid-send; treat as success
-    onFlashing();
-  };
+  xhr.onerror = function() { onFlashing(); };
 
   var fd = new FormData();
   fd.append('firmware', fileInput.files[0]);
@@ -6579,8 +9525,7 @@ function pollForRestart() {
         setTimeout(function() {
           progArea.hidden = true;
           successArea.hidden = false;
-          document.getElementById('new-ver').textContent =
-            'Now running v' + d.version + ' · built ' + d.date;
+          document.getElementById('new-ver').textContent = 'Now running v' + d.version + ' · built ' + d.date;
         }, 600);
       })
       .catch(function() { /* still restarting */ });
@@ -6603,89 +9548,278 @@ static const char WEB_PAGE_COMING_SOON[] = R"html(<!DOCTYPE html>
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
 body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;gap:1rem}
@@ -6694,6 +9828,7 @@ p{color:var(--dim);font-size:.8rem;letter-spacing:.15em}
 a{color:var(--dim);font-size:.75rem;letter-spacing:.1em;margin-top:1rem;display:block}
 a:hover{color:var(--gold)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="big">&#9670;</div>
@@ -6710,120 +9845,305 @@ static const char WEB_PAGE_DIAGNOSTICS[] = R"html(<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Droid Status — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Amidala web UI — shared styles.
    Embed script inlines this into every page's <style> block.
    In dev mode (scripts/web_dev.py) it's served as a real file from /assets/common.css. */
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
 
 :root {
-  --gold:   #ffe81f;
-  --red:    #c00;
-  --bg:     #000;
-  --card:   #0a0a0a;
-  --dim:    #555;
-  --border: #ffe81f22;
+  --accent:      #8f2d3b;
+  --bg:          #e9edf1;
+  --surface:     #ffffff;
+  --surface2:    #f4f7f9;
+  --border:      #dce3e9;
+  --text:        #2b333b;
+  --muted:       #707b85;
+  --danger:      #a8323a;
+  --danger-soft: rgba(168,50,58,.08);
+  --tex:         rgba(43,51,59,.07);
+  --glow:        rgba(143,45,59,.10);
+  /* legacy aliases — pages referencing --gold / --dim / --fg still work */
+  --gold: var(--accent);
+  --dim:  var(--muted);
+  --fg:   var(--text);
 }
 
 body {
-  background: var(--bg);
-  color: var(--gold);
-  font-family: 'Courier New', Courier, monospace;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(120% 62% at 50% -12%, var(--glow), transparent 58%),
+    radial-gradient(var(--tex) .9px, transparent 1.2px),
+    radial-gradient(var(--tex) .9px, transparent 1.2px);
+  background-size: auto, 14px 14px, 23px 23px;
+  background-position: center top, 0 0, 7px 11px;
+  color: var(--text);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   min-height: 100vh;
-  font-size: 15px;
+  padding: 24px 22px 80px;
 }
 
-a {
-  color: var(--gold);
-  text-decoration: none;
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+.hidden { display: none !important; }
+[hidden] { display: none !important; }
+
+/* ---- page shell ---- */
+
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 4px 0 18px; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
 }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .18em; color: var(--muted); transition: color .15s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.back:hover { color: var(--accent); }
+
+.page-title {
+  display: flex; align-items: center; gap: 13px;
+}
+.page-title .dot {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+  display: inline-block; flex-shrink: 0;
+}
+.page-title .label {
+  font: 600 20px/1 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: .16em; color: var(--text); text-transform: uppercase;
 }
 
-.hidden {
-  display: none !important;
+main {
+  max-width: 820px; margin: 0 auto; padding-top: 28px;
 }
+
+#status {
+  text-align: center; padding: 2rem; color: var(--muted);
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .2em;
+}
+
+/* ---- section labels ---- */
+
+.section-label {
+  margin: 26px 0 4px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ---- settings rows ---- */
+
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--border);
+}
+.row-label {
+  font: 400 15px/1.3 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: var(--text); flex: 1;
+}
+.rv {
+  font: 500 14px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--accent);
+}
+.ri { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ri input, .ri select {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .3rem .5rem; border-radius: 4px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .82rem;
+  min-width: 80px;
+}
+.ri input:focus, .ri select:focus { outline: none; border-color: var(--accent); }
+
+/* edit / save / cancel */
+.be {
+  background: none; border: none; padding: 4px; color: var(--muted);
+  cursor: pointer; display: flex; align-items: center;
+  opacity: .7; transition: opacity .15s, color .15s; flex-shrink: 0;
+}
+.be:hover { opacity: 1; color: var(--accent); }
+.bs {
+  background: var(--accent); border: none; border-radius: 4px;
+  padding: 5px 12px; font: 600 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: #fff; cursor: pointer;
+  flex-shrink: 0; transition: opacity .15s;
+}
+.bs:hover { opacity: .85; }
+.bc {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  color: var(--muted); cursor: pointer; flex-shrink: 0; transition: border-color .15s;
+}
+.bc:hover { border-color: var(--muted); }
+
+/* action-type row button */
+.be-action {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 16px; font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .1em; color: var(--text); cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.be-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- tabs (used on controllers + droid-control) ---- */
+
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  max-width: 820px; margin: 0 auto;
+}
+.tab {
+  flex: 1; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: inherit; font-size: .72rem;
+  letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1rem; cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ---- toast ---- */
 
 .toast {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111;
-  border: 1px solid var(--gold);
-  color: var(--gold);
-  padding: .55rem 1.4rem;
-  font-size: .78rem;
-  letter-spacing: .08em;
-  pointer-events: none;
-  white-space: nowrap;
-  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards;
-  z-index: 9999;
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .55rem 1.4rem;
+  font: 500 11px/1 ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .08em;
+  pointer-events: none; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(30,45,55,.12);
+  animation: _tfi .15s ease, _tfo .3s 1.9s ease forwards; z-index: 9999;
 }
-.toast-err {
-  border-color: var(--red);
-  color: var(--red);
-}
+.toast-err { border-color: var(--danger); color: var(--danger); }
 @keyframes _tfi {
-  from { opacity: 0; transform: translateX(-50%) translateY(6px) }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0) }
+  from { opacity:0; transform:translateX(-50%) translateY(6px) }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) }
 }
-@keyframes _tfo {
-  from { opacity: 1 }
-  to   { opacity: 0 }
-}
+@keyframes _tfo { from{opacity:1} to{opacity:0} }
+
+/* ---- E-Stop (injected into page-header by edit.js) ---- */
 
 #estop {
-  position: fixed;
-  top: .5rem;
-  right: .7rem;
-  background: #900;
-  color: #fff;
-  border: 1px solid #c44;
-  padding: .28rem .75rem;
-  font-size: .7rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  z-index: 9998;
+  display: inline-flex; align-items: center; gap: 9px;
+  background: var(--danger-soft); border: 1px solid var(--danger); border-radius: 6px;
+  padding: 8px 14px; font: 600 11px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .2em; color: var(--danger); cursor: pointer;
+  transition: background .15s, color .15s; flex-shrink: 0;
 }
-#estop:hover, #estop:active { background: #c00; border-color: #f44; }
+#estop:hover { background: var(--danger); color: #fff; }
+#estop .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---- shared page utilities ---- */
+
+.info-banner {
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--muted); padding: .7rem 1rem; font-size: .75rem;
+  line-height: 1.6; margin-bottom: .8rem; border-radius: 4px;
+}
+
+/* sub-section heading used in droid-control + controllers */
+.sec-hdr {
+  font-size: .58rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--muted); padding: .55rem 0 .35rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+.sub-hdr {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); padding: .4rem 0 .25rem;
+  border-bottom: 1px solid var(--border); margin: .6rem 0 0;
+}
+
+/* touch-control buttons */
+.dc-btn, .angle-btn, .grid-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); padding: .85rem .5rem; border-radius: 4px;
+  cursor: pointer; font-size: .88rem; text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .12s, border-color .12s;
+}
+.dc-btn:hover, .dc-btn:active,
+.angle-btn:hover, .angle-btn:active,
+.grid-btn:hover, .grid-btn:active { background: var(--surface2); border-color: var(--accent); }
+.grid-btn { line-height: 1.3; min-height: 3.5rem; }
+.grid-btn.full { grid-column: 1/-1; }
+
+/* ---- footer (injected by edit.js on sub-pages) ---- */
+
+footer {
+  max-width: 820px; margin: 48px auto 0; padding-bottom: 32px;
+  text-align: center;
+  font: 500 10px/1 ui-monospace, 'SF Mono', Menlo, monospace;
+  letter-spacing: .24em; color: var(--muted); opacity: .7;
+}
+footer a {
+  color: inherit; text-decoration: none;
+  border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  transition: opacity .15s;
+}
+footer a:hover { opacity: 1; }
+
+/* ---- dark mode (colors from design system renderVals()) ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent:      #cf6470;
+    --bg:          #0f1216;
+    --surface:     #161b21;
+    --surface2:    #1c232a;
+    --border:      #283139;
+    --text:        #e7ecf0;
+    --muted:       #828e98;
+    --danger:      #d05b63;
+    --danger-soft: rgba(208,91,99,.14);
+    --tex:         rgba(231,236,240,.06);
+    --glow:        rgba(207,100,112,.17);
+  }
+}
+:root[data-theme="dark"] {
+  --accent:      #cf6470;
+  --bg:          #0f1216;
+  --surface:     #161b21;
+  --surface2:    #1c232a;
+  --border:      #283139;
+  --text:        #e7ecf0;
+  --muted:       #828e98;
+  --danger:      #d05b63;
+  --danger-soft: rgba(208,91,99,.14);
+  --tex:         rgba(231,236,240,.06);
+  --glow:        rgba(207,100,112,.17);
+}
+
+/* ---- right header group (theme toggle + e-stop, injected by edit.js) ---- */
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ---- theme toggle button ---- */
+#theme-toggle {
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  padding: 5px 9px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  font-size: .85rem; line-height: 1; transition: border-color .15s, color .15s;
+}
+#theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.row-note{font-size:.65rem;color:var(--dim);margin-left:.35rem}
-.gpio{font-size:.65rem;color:var(--dim);min-width:4rem;text-align:right}
-.pin-led{font-size:1.1rem;min-width:2.5rem;text-align:right;transition:color .15s}
-.pin-led.high{color:#3c3}
-.pin-led.low{color:#222}
-.pin-state{font-size:.72rem;min-width:2.5rem;text-align:left;letter-spacing:.06em}
-.pin-state.high{color:#3c3}
-.pin-state.low{color:var(--dim)}
-.ain-val{font-size:.82rem;color:var(--gold);min-width:4rem;text-align:right}
-#ts{text-align:center;padding:.6rem;color:var(--dim);font-size:.65rem;letter-spacing:.1em;border-top:1px solid var(--border);margin-top:.5rem}
+.pin-led{font-size:1.1rem;flex-shrink:0;transition:color .15s}
+.pin-led.high{color:#2a8a2a}
+.pin-led.low{color:var(--border)}
+.pin-state{font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;flex-shrink:0;min-width:2.5rem}
+.pin-state.high{color:#2a8a2a}
+.pin-state.low{color:var(--muted)}
+.ain-val{font:500 14px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--accent);flex-shrink:0}
+.row-note{font-size:.65rem;color:var(--muted);margin-left:.35rem}
+.gpio{font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;color:var(--muted);flex-shrink:0}
+#ts{text-align:center;padding:.6rem 0;color:var(--muted);font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.1em;border-top:1px solid var(--border);margin-top:.5rem}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Droid Status &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Droid Status</span><span class="dot"></span></div>
 </div>
 <main id="main">
   <div id="ts">LOADING&#8230;</div>
@@ -6832,6 +10152,16 @@ main{max-width:660px;margin:0 auto;padding:1rem}
 /* Amidala web UI — edit-in-place widget + shared config page helpers.
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
+
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
 
 // ------------------------------------------------------------------ toast ---
 
@@ -6873,7 +10203,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -6958,16 +10288,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -6978,37 +10310,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {

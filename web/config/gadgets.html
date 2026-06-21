@@ -4,44 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Gadgets — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/common.css">
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-.info-note{padding:.7rem 1rem;border-bottom:1px solid var(--border);font-size:.75rem;color:var(--dim);line-height:1.5}
-.info-note a{color:var(--fg)}
-.gadget-row{padding:.75rem 1rem;border-bottom:1px solid var(--border)}
+.gadget-row{padding:.75rem 0;border-bottom:1px solid var(--border)}
 .gadget-top{display:flex;align-items:center;gap:.75rem}
-.gadget-name{flex:1;font-size:.85rem}
-.gadget-sel{background:#111;border:1px solid var(--dim);color:var(--gold);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem}
-.sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid #1a1a1a}
-.sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:.4rem}
+.gadget-name{flex:1;font-size:.85rem;color:var(--text)}
+.gadget-sel{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.8rem;min-width:9rem;border-radius:4px}
+.gadget-sel:focus{outline:none;border-color:var(--accent)}
+.sstr-section{margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--border)}
+.sstr-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
 .sstr-tags{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
-.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:#0e0e0e;border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
-.sstr-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
-.sstr-rm:hover{color:#ff5555}
+.sstr-tag{display:inline-flex;align-items:center;gap:.3rem;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem .2rem .5rem;font-size:.78rem}
+.sstr-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:0 .1rem;line-height:1}
+.sstr-rm:hover{color:var(--danger)}
 .sstr-add-row{display:flex;gap:.4rem;align-items:center}
-.sstr-add-row select{flex:1;background:#111;border:1px solid var(--dim);color:var(--fg);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0}
-.sstr-add-btn{background:var(--bg);border:1px solid var(--border);color:var(--gold);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px}
-.sstr-add-btn:hover{background:#0e0e0e}
-.sstr-empty{font-size:.75rem;color:var(--dim);margin-bottom:.4rem}
-.no-sstr{font-size:.75rem;color:var(--dim)}
-.no-sstr a{color:var(--fg)}
+.sstr-add-row select{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .5rem;font-family:inherit;font-size:.8rem;min-width:0;border-radius:4px}
+.sstr-add-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .7rem;font-family:inherit;font-size:.8rem;cursor:pointer;white-space:nowrap;border-radius:3px;transition:border-color .15s,color .15s}
+.sstr-add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.sstr-empty{font-size:.75rem;color:var(--muted);margin-bottom:.4rem}
+.no-sstr{font-size:.75rem;color:var(--muted)}
+.no-sstr a,.info-note a{color:var(--text)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Gadgets &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Gadgets</span><span class="dot"></span></div>
 </div>
-<div id="main"><div id="status">LOADING&#8230;</div></div>
+<div id="main" style="max-width:820px;margin:0 auto;padding-top:28px"><div id="status">LOADING&#8230;</div></div>
 <script src="/assets/edit.js"></script>
 <script>
 var _cfg = null;
 
-// Operational commands — auto-available in button assignments + Droid Control
 var UPPITY_OPS = [
   {name:'Home',           str:':PH'},
   {name:'Raise Full',     str:':PP100'},
@@ -55,7 +53,6 @@ var UPPITY_OPS = [
   {name:'Spin CW',        str:':PR-30'},
   {name:'Stop Spin',      str:':PR0'},
 ];
-// Config/calibration commands — one-shot buttons, not assigned to buttons/events
 var UPPITY_CFG = [
   {name:'Calibrate',          str:'#PSC'},
   {name:'Show Config',        str:'#PCONFIG'},
@@ -67,12 +64,12 @@ var UPPITY_CFG = [
 
 var GADGETS = [
   {id:0, name:'Periscope', opts:[{v:0,l:'Disabled'},{v:2,l:'Uppity Spinner'}], serial:false},
-  {id:1, name:'Lifeform Scanner',    opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:2, name:'Lightsaber Launcher', opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:3, name:'Bubble Gun',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:4, name:'Zapper Arm',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:5, name:'Gripper',             opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
-  {id:6, name:'Data Probe',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}],        serial:true},
+  {id:1, name:'Lifeform Scanner',    opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:2, name:'Lightsaber Launcher', opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:3, name:'Bubble Gun',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:4, name:'Zapper Arm',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:5, name:'Gripper',             opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
+  {id:6, name:'Data Probe',          opts:[{v:0,l:'Disabled'},{v:1,l:'Enabled'}], serial:true},
 ];
 
 function gadgetCmdPost(cmd) {
@@ -96,7 +93,7 @@ function render() {
   var sstr = _cfg.sstr || [];
   var h = '';
 
-  h += '<div class="info-note">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &#8250; Gadgets</a> and are excluded from the Sequences tab.</div>';
+  h += '<div class="info-banner">Commands assigned to a gadget appear in <a href="/droid-control#gadgets">Droid Control &rsaquo; Gadgets</a> and are excluded from the Sequences tab.</div>';
 
   GADGETS.forEach(function(g) {
     var cfg      = gCfg[g.id] || {type: 0, sstr: []};
@@ -115,10 +112,10 @@ function render() {
     if (g.id === 0 && cfg.type === 2) {
       h += '<div class="sstr-section">';
       h += '<div class="sstr-label">Operational Commands</div>';
-      h += '<div style="font-size:.7rem;color:var(--dim);margin-bottom:.4rem">Auto-available in <a href="/droid-control#gadgets">Droid Control → Gadgets</a> and as button assignments.</div>';
-      h += '<div class="sstr-checks" style="flex-direction:column;gap:.15rem">';
+      h += '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.4rem">Auto-available in <a href="/droid-control#gadgets">Droid Control &rarr; Gadgets</a> and as button assignments.</div>';
+      h += '<div style="display:flex;flex-direction:column;gap:.15rem">';
       UPPITY_OPS.forEach(function(c) {
-        h += '<div class="sstr-empty" style="margin:0"><span style="color:var(--gold);min-width:7rem;display:inline-block">' + c.name + '</span><span style="opacity:.5;font-size:.7rem">' + c.str + '</span></div>';
+        h += '<div class="sstr-empty" style="margin:0"><span style="color:var(--accent);min-width:7rem;display:inline-block">' + c.name + '</span><span style="opacity:.5;font-size:.7rem">' + c.str + '</span></div>';
       });
       h += '</div>';
       h += '</div>';
@@ -193,9 +190,7 @@ function apiPost(key, value, cb) {
   }).catch(function() { showToast('Network error', true); });
 }
 
-function saveType(gadgetId, type) {
-  apiPost('gadget_' + gadgetId + '_type', type, render);
-}
+function saveType(gadgetId, type) { apiPost('gadget_' + gadgetId + '_type', type, render); }
 
 function addSstr(gadgetId) {
   var sel = document.getElementById('gadget-' + gadgetId + '-pick');

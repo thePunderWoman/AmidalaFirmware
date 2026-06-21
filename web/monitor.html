@@ -4,38 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Serial Monitor — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/common.css">
 <style>
-html,body{height:100%;display:flex;flex-direction:column;overflow:hidden}
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem;flex-shrink:0}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{flex:1;display:flex;flex-direction:column;min-height:0}
-.toolbar{display:flex;align-items:center;gap:.6rem;padding:.45rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0}
-.dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .4s}
-.dot.ok{background:#4c4;animation:pulse 2s ease infinite}
+html,body{height:100%;display:flex;flex-direction:column;overflow:hidden;padding:0}
+.page-header{flex-shrink:0;padding:12px 22px 12px;max-width:none;margin:0}
+main{flex:1;display:flex;flex-direction:column;min-height:0;max-width:none;margin:0;padding:0;width:100%}
+.toolbar{display:flex;align-items:center;gap:.6rem;padding:.45rem 22px;border-bottom:1px solid var(--border);flex-shrink:0}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .4s}
+.dot.ok{background:#3a3;animation:pulse 2s ease infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.conn-lbl{font-size:.7rem;color:var(--dim);letter-spacing:.1em;flex:1}
-.tbtn{background:none;border:1px solid var(--dim);color:var(--gold);padding:.22rem .7rem;font-family:inherit;font-size:.72rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0}
-.tbtn:hover{border-color:var(--gold)}
-.tbtn.on{border-color:var(--gold);background:rgba(200,160,0,.08)}
-.log{flex:1;overflow-y:auto;padding:.6rem 1rem;font-family:monospace;font-size:.8rem;line-height:1.65;background:#060606;min-height:0}
+.conn-lbl{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);letter-spacing:.1em;flex:1}
+.tbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.22rem .7rem;font-family:inherit;font-size:.72rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.tbtn.on{border-color:var(--accent);background:rgba(143,45,59,.06)}
+.log{flex:1;overflow-y:auto;padding:.6rem 22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.8rem;line-height:1.65;background:#1a1a1a;min-height:0}
 .ll{white-space:pre-wrap;word-break:break-all}
-.ll.tx{color:var(--gold)}
+.ll.tx{color:#c47a35}
 .ll.rx{color:#7cf}
-.ll.info{color:var(--dim)}
-.send-bar{display:flex;gap:.5rem;padding:.6rem 1rem;border-top:1px solid var(--border);flex-shrink:0}
-#cmd{flex:1;background:#111;border:1px solid var(--dim);color:var(--gold);padding:.35rem .6rem;font-family:monospace;font-size:.85rem;min-width:0}
-#cmd:focus{outline:none;border-color:var(--gold)}
-#sbtn{background:none;border:1px solid var(--dim);color:var(--gold);padding:.35rem 1rem;font-family:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0}
-#sbtn:hover{border-color:var(--gold)}
+.ll.info{color:#666}
+.send-bar{display:flex;gap:.5rem;padding:.6rem 22px;border-top:1px solid var(--border);flex-shrink:0}
+#cmd{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem .6rem;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.85rem;min-width:0;border-radius:4px}
+#cmd:focus{outline:none;border-color:var(--accent)}
+#sbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.35rem 1rem;font-family:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
+#sbtn:hover{border-color:var(--accent);color:var(--accent)}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Serial Monitor &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Serial Monitor</span><span class="dot"></span></div>
 </div>
 <main>
   <div class="toolbar">
@@ -106,10 +107,7 @@ function sendCmd() {
   }).catch(function(){ addLine('! Send failed', 'info'); });
 }
 
-function clearLog() {
-  logEl.innerHTML = '';
-  _seq = -1;
-}
+function clearLog() { logEl.innerHTML = ''; _seq = -1; }
 
 function togglePause() {
   _paused = !_paused;

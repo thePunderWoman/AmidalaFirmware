@@ -2,6 +2,16 @@
    Embed script inlines this into every config sub-page.
    In dev mode (scripts/web_dev.py) it's served as /assets/edit.js. */
 
+// ----------------------------------------------------------------- theme ----
+
+function _toggleTheme() {
+  var t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem('amidala-theme', t);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
+}
+
 // ------------------------------------------------------------------ toast ---
 
 function showToast(msg, isErr) {
@@ -42,7 +52,7 @@ async function doSave(btn) {
   var inp = row.querySelector('input,select');
   var val = inp.value;
   var prev = btn.textContent;
-  btn.textContent = '...';
+  btn.textContent = '…';
   btn.disabled = true;
   try {
     var r = await fetch('/api/config', {
@@ -127,16 +137,18 @@ async function doAction(btn) {
   btn.disabled = false;
 }
 
+var _pencil = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 l0.5-3.5 L15 6 l3 3 L7.5 19.5 Z"/><line x1="13.5" y1="7.5" x2="16.5" y2="10.5"/></svg>';
+
 function buildRow(s, val) {
   if (s.type === 'action') {
     return '<div class="row">'
       + '<div class="row-label">' + s.label + '</div>'
-      + '<button class="be" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
+      + '<button class="be-action" onclick="doAction(this)" data-cmd="' + s.cmd + '" data-endpoint="' + (s.endpoint || '/api/monitor') + '">'
       + (s.btnLabel || 'Send') + '</button>'
       + '</div>';
   }
   var disp = dispValue(s, val);
-  var note = s.note ? '<span style="font-size:.65rem;color:var(--dim);margin-left:.3rem">' + s.note + '</span>' : '';
+  var note = s.note ? '<span style="font-size:.65rem;color:var(--muted);margin-left:.3rem">' + s.note + '</span>' : '';
   if (s.readOnly) {
     return '<div class="row" data-key="' + (s.key || '') + '" data-type="' + (s.type || 'text') + '">'
       + '<div class="row-label">' + s.label + '</div>'
@@ -147,37 +159,55 @@ function buildRow(s, val) {
     + '<div class="row-label">' + s.label + '</div>'
     + '<div class="rv">' + disp + '</div>'
     + '<div class="ri" hidden><div style="display:flex;align-items:center">' + buildInput(s, val) + note + '</div></div>'
-    + '<button class="be" onclick="startEdit(this)" title="Edit">&#9998;</button>'
-    + '<button class="bs" hidden onclick="doSave(this)" title="Save">&#10003;</button>'
-    + '<button class="bc" hidden onclick="doCancel(this)" title="Cancel">&#10005;</button>'
+    + '<button class="be" onclick="startEdit(this)" title="Edit">' + _pencil + '</button>'
+    + '<button class="bs" hidden onclick="doSave(this)">SAVE</button>'
+    + '<button class="bc" hidden onclick="doCancel(this)">&#10005;</button>'
     + '</div>';
 }
 
 // --------------------------------------------------- emergency stop button ---
 
 (function() {
+  var hdr = document.querySelector('.page-header');
+
+  // right-side group keeps the header at 3 flex children: [BACK] [TITLE] [GROUP]
+  var rg = document.createElement('div');
+  rg.className = 'hdr-right';
+
+  // theme toggle
+  var tt = document.createElement('button');
+  tt.id = 'theme-toggle';
+  tt.title = 'Toggle dark / light mode';
+  tt.textContent = document.documentElement.dataset.theme === 'dark' ? '☀' : '☾';
+  tt.onclick = _toggleTheme;
+  rg.appendChild(tt);
+
+  // e-stop
   var b = document.createElement('button');
   b.id = 'estop';
-  b.textContent = 'E-Stop';
   b.title = 'Emergency Stop — halts all motors';
+  b.innerHTML = '<span class="dot"></span>E-STOP';
   b.onclick = function() {
     fetch('/api/estop', { method: 'POST' })
       .then(function(r) { showToast(r.ok ? 'Emergency stop sent' : 'Stop failed', !r.ok); })
       .catch(function() { showToast('Stop failed', true); });
   };
-  document.body.appendChild(b);
+  rg.appendChild(b);
+
+  if (hdr) hdr.appendChild(rg);
+  else document.body.appendChild(rg);
+})();
+
+// --------------------------------------------------------------- footer -------
+
+(function() {
+  if (location.pathname.indexOf('monitor') !== -1) return;
+  var f = document.createElement('footer');
+  f.innerHTML = '<a href="https://github.com/thePunderWoman/Amidala/wiki" target="_blank" rel="noopener">DOCUMENTATION</a>';
+  document.body.appendChild(f);
 })();
 
 // ------------------------------------------------- hash-based tab nav --------
-// initHashTabs(defaultTab, onSwitch)
-//   Reads location.hash to pick the active tab on load, then listens for
-//   hashchange (browser back/forward) and re-activates accordingly.
-//   Expects .tab elements with data-tab="<id>" attributes on the page.
-//   onSwitch(tabId) is called whenever the active tab changes.
-//
-// showHashTab(t)
-//   Call from tab button onclick. Pushes a history entry then lets the
-//   hashchange handler do the actual switch (single code path for all sources).
 
 function initHashTabs(defaultTab, onSwitch) {
   function activate(raw) {

@@ -4,32 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Droid Status — AMIDALA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/common.css">
 <style>
-.page-header{display:flex;align-items:center;padding:.9rem 1rem;border-bottom:1px solid var(--border);gap:1rem}
-.back{font-size:.8rem;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
-.back:hover{color:var(--gold)}
-.page-title{flex:1;text-align:center;font-size:.9rem;letter-spacing:.25em;text-transform:uppercase}
-main{max-width:660px;margin:0 auto;padding:1rem}
-.section-label{font-size:.6rem;color:var(--dim);letter-spacing:.25em;text-transform:uppercase;padding:.5rem 0 .4rem;border-bottom:1px solid var(--border);margin-bottom:.2rem}
-.row{display:flex;align-items:center;padding:.7rem .2rem;border-bottom:1px solid #0f0f0f;gap:.5rem}
-.row-label{flex:1;font-size:.82rem;color:#ccc}
-.row-note{font-size:.65rem;color:var(--dim);margin-left:.35rem}
-.gpio{font-size:.65rem;color:var(--dim);min-width:4rem;text-align:right}
-.pin-led{font-size:1.1rem;min-width:2.5rem;text-align:right;transition:color .15s}
-.pin-led.high{color:#3c3}
-.pin-led.low{color:#222}
-.pin-state{font-size:.72rem;min-width:2.5rem;text-align:left;letter-spacing:.06em}
-.pin-state.high{color:#3c3}
-.pin-state.low{color:var(--dim)}
-.ain-val{font-size:.82rem;color:var(--gold);min-width:4rem;text-align:right}
-#ts{text-align:center;padding:.6rem;color:var(--dim);font-size:.65rem;letter-spacing:.1em;border-top:1px solid var(--border);margin-top:.5rem}
+.pin-led{font-size:1.1rem;flex-shrink:0;transition:color .15s}
+.pin-led.high{color:#2a8a2a}
+.pin-led.low{color:var(--border)}
+.pin-state{font:500 12px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;flex-shrink:0;min-width:2.5rem}
+.pin-state.high{color:#2a8a2a}
+.pin-state.low{color:var(--muted)}
+.ain-val{font:500 14px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--accent);flex-shrink:0}
+.row-note{font-size:.65rem;color:var(--muted);margin-left:.35rem}
+.gpio{font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;color:var(--muted);flex-shrink:0}
+#ts{text-align:center;padding:.6rem 0;color:var(--muted);font:500 10px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.1em;border-top:1px solid var(--border);margin-top:.5rem}
 </style>
+<script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
 <body>
 <div class="page-header">
-  <a class="back" href="/">&#9664; Back</a>
-  <div class="page-title">&#9670; Droid Status &#9670;</div>
+  <a class="back" href="/">&#9664; BACK</a>
+  <div class="page-title"><span class="dot"></span><span class="label">Droid Status</span><span class="dot"></span></div>
 </div>
 <main id="main">
   <div id="ts">LOADING&#8230;</div>
