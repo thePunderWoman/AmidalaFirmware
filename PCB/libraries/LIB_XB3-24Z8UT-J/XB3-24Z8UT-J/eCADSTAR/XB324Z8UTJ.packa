@@ -1,0 +1,13 @@
+(unit MM)
+
+(package "XB3-24Z8UT-J"
+    (type UNDEF)
+    (uver 2)
+    (cuser "SamacSys")
+    (uuser "SamacSys")
+    (utime 2019-03-15-18:09:50)
+    (mountForm default
+        (footprintRef "XB324Z8UTJ")
+        (spec "System")
+    )
+)

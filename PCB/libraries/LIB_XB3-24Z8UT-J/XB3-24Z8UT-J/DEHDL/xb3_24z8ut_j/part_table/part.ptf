@@ -1,0 +1,11 @@
+FILE_TYPE = MULTI_PHYS_TABLE;
+
+PART 'XB3_24Z8UT_J'
+CLASS = IC
+{========================================================================================}
+:"MANUFACTURER_NAME", "MANUFACTURER_PART_NUMBER"= "PART_NUMBER", "JEDEC_TYPE", "PACK_TYPE", "MOUSER_PART_NUMBER", "MOUSER_PRICE/STOCK", "DESCRIPTION", "DATASHEET", "HEIGHT";
+{========================================================================================}
+ "Digi International", "XB3-24Z8UT-J" (!) = "", "XB324Z8UTJ", "Other", "888-XB3-24Z8UT-J", "https://www.mouser.com/Search/Refine.aspx?Keyword=888-XB3-24Z8UT-J", "Zigbee Modules (802.15.4) XBee3,2.4 Ghz ZB 3.0, U.FL Ant, TH MT", "https://componentsearchengine.com/Datasheets/1/XB3-24Z8UT-J.pdf", "2.79 mm"
+END_PART
+
+END.

@@ -1,0 +1,219 @@
+;Proteus Design Interchange Format
+(PDIF
+ (vendor "SamacSys Limited")
+ (version 1 0)
+ (library
+  (part "XB3-24Z8UT-J"
+   (description "Zigbee Modules (802.15.4) XBee3,2.4 Ghz ZB 3.0, U.FL Ant, TH MT")
+   (family "ANA")
+   (package "XB324Z8UTJ")
+   (attribute "Datasheet Link" "https://componentsearchengine.com/Datasheets/1/XB3-24Z8UT-J.pdf")
+   (attribute "Geometry.Height" "2.79mm")
+   (attribute "Mouser Part Number" "888-XB3-24Z8UT-J")
+   (attribute "Mouser Price/Stock" "https://www.mouser.com/Search/Refine.aspx?Keyword=888-XB3-24Z8UT-J")
+   (attribute "Manufacturer_Name" "Digi International")
+   (attribute "Manufacturer_Part_Number" "XB3-24Z8UT-J")
+   (gate
+    (symbol "XB3-24Z8UT-J")
+    (pin "VCC" 1 PS)
+    (pin "DOUT/DIO13" 2 PS)
+    (pin "DIN/$CONFIG$/DIO14" 3 PS)
+    (pin "DIO12/SPI_MISO" 4 PS)
+    (pin "$RESET$" 5 PS)
+    (pin "RSSI_PWM/DIO10" 6 PS)
+    (pin "PWM1/DIO11" 7 PS)
+    (pin "[RESERVED]_1" 8 PS)
+    (pin "$DTR$/SLEEP_RQ/DIO8" 9 PS)
+    (pin "GND" 10 PS)
+    (pin "DIO4/SPI_MOSI" 11 PS)
+    (pin "$CTS$/DIO7" 12 PS)
+    (pin "ON/$SLEEP$/DIO9" 13 PS)
+    (pin "[RESERVED]_2" 14 PS)
+    (pin "ASSOCIATE/DIO5" 15 PS)
+    (pin "$RTS$/DIO6" 16 PS)
+    (pin "AD3/DIO3/SPI_$SSEL$" 17 PS)
+    (pin "AD2/DIO2/SPI_CLK" 18 PS)
+    (pin "AD1/DIO1/SPI_$ATTN$" 19 PS)
+    (pin "AD0_/DIO0" 20 PS)
+   )
+  )
+  (symbol "XB3-24Z8UT-J"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 200 100) (pt 2300 100) (pt 2300 -1000) (pt 200 -1000) (pt 200 100) (closed))
+   )
+   (terminal
+    (body (symbol "PIN") (pt 0 0) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -100) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -200) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -300) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -400) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -500) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -600) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -700) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -800) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 0 -900) (rot 0) (mir 0) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -900) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -800) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -700) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -600) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -500) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -400) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -300) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -200) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 -100) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+   (terminal
+    (body (symbol "PIN") (pt 2500 0) (rot 0) (mir X) (visible true))
+    (name (pt 230 0) (rot 0) (just MIDDLE LEFT) (visible true))
+    (number (pt 140 20) (rot 0) (just BOTTOM RIGHT) (visible true)))
+  )
+  (symbol "PIN"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 0 0) (pt 200 0))))
+  (symbol "PINSHORT"
+   (units THOU)
+   (origin (pt 0 0))
+   (graphic
+    (stroke 10)
+    (path (pt 0 0) (pt 100 0))))
+  (package "XB324Z8UTJ"
+   (units MM)
+   (layer OCCA
+    (graphic
+     (stroke 0.1)
+     (path
+      (closed true)
+      (pt -2.6 8.72)
+      (pt 24.19 8.72)
+      (pt 24.19 -20.914)
+      (pt -2.6 -20.914)
+      (pt -2.6 8.72))))
+   (layer TASM
+    (graphic
+     (stroke 0.2)
+     (path
+      (closed true)
+      (pt -1.19 1.19)
+      (pt -1.19 -19.914)
+      (pt 23.19 -19.914)
+      (pt 23.19 1.19)
+      (pt 15.5 7.72)
+      (pt 6.5 7.72)
+      (pt -1.19 1.19))))
+   (layer TSLK
+    (graphic
+     (stroke 0.1)
+     (path
+      (closed true)
+      (pt -1.19 1.19)
+      (pt -1.19 -19.914)
+      (pt 23.19 -19.914)
+      (pt 23.19 1.19)
+      (pt 15.5 7.72)
+      (pt 6.5 7.72)
+      (pt -1.19 1.19))))
+   (layer TSLK
+    (graphic
+     (stroke 0.1)
+     (path
+      (closed true)
+      (pt -1.5 0)
+      (arc (pt -1.500 0.000) (pt -1.600 -0.050) (pt -1.500 0.050) (start 180.0) (sweep .0))
+      (pt -1.6 0)
+      (arc (pt -1.600 0.000) (pt -1.600 -0.050) (pt -1.500 0.050) (start 180.0) (sweep -180.0))
+      (pt -1.5 0))))
+   (leg 1 (pt 0.000 0.000) (padstack 0))
+   (leg 2 (pt 0.000 -2.000) (padstack 0))
+   (leg 3 (pt 0.000 -4.000) (padstack 0))
+   (leg 4 (pt 0.000 -6.000) (padstack 0))
+   (leg 5 (pt 0.000 -8.000) (padstack 0))
+   (leg 6 (pt 0.000 -10.000) (padstack 0))
+   (leg 7 (pt 0.000 -12.000) (padstack 0))
+   (leg 8 (pt 0.000 -14.000) (padstack 0))
+   (leg 9 (pt 0.000 -16.000) (padstack 0))
+   (leg 10 (pt 0.000 -18.000) (padstack 0))
+   (leg 11 (pt 22.000 -18.000) (padstack 0))
+   (leg 12 (pt 22.000 -16.000) (padstack 0))
+   (leg 13 (pt 22.000 -14.000) (padstack 0))
+   (leg 14 (pt 22.000 -12.000) (padstack 0))
+   (leg 15 (pt 22.000 -10.000) (padstack 0))
+   (leg 16 (pt 22.000 -8.000) (padstack 0))
+   (leg 17 (pt 22.000 -6.000) (padstack 0))
+   (leg 18 (pt 22.000 -4.000) (padstack 0))
+   (leg 19 (pt 22.000 -2.000) (padstack 0))
+   (leg 20 (pt 22.000 0.000) (padstack 0))
+   (padstack 0
+    (hole 0.92)
+    (plated true)
+    (pad (layer TCOP) (round 1.431))
+    (pad (layer INNER) (round 1.431))
+    (pad (layer BCOP) (round 1.431))
+   )
+   (model "XB3-24Z8UT-J.stp"
+    (euler 0 0 0)
+    (offset 11.020000457763672 -6.099999904632568 2.75)
+   )
+  )
+ )
+)

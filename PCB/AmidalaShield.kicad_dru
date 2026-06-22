@@ -1,0 +1,6 @@
+(version 1)
+
+(rule "XBee3 courtyard exception"
+   (constraint courtyard_clearance (min -1mm))
+   (condition "A.Reference == 'XBee3' || B.Reference == 'XBee3'")
+)

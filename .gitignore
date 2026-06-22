@@ -13,3 +13,49 @@ lib/*
 
 # Claude Code internal state
 .claude/
+
+# KiCad files
+
+# Temporary files
+PCB/*.000
+PCB/*.bak
+PCB/*.bck
+PCB/*.kicad_pcb-bak
+PCB/*.kicad_sch-bak
+PCB/*-backups
+PCB/*-cache*
+PCB/*-bak
+PCB/*-bak*
+PCB/*~
+PCB/~*
+PCB/_autosave-*
+PCB/\#auto_saved_files\#
+PCB/*.tmp
+PCB/*-save.pro
+PCB/*-save.kicad_pcb
+fp-info-cache
+~*.lck
+
+# Netlist files (exported from Eeschema)
+PCB/*.net
+
+# Autorouter files (exported from Pcbnew)
+PCB/*.dsn
+PCB/*.ses
+
+# Exported BOM files
+PCB/**/*.xml
+PCB/**/*.csv
+!PCB/production/bom/*.csv
+
+# Archived Backups (KiCad 6.0)
+PCB/**/*-backups/*.zip
+
+# Local git-based history (KiCad 9.0+)
+PCB/.history
+
+# Local project settings
+PCB/*.kicad_prl
+
+# Production reports
+PCB/production/misc/*
