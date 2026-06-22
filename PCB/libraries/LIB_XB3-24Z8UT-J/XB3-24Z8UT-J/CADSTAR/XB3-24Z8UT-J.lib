@@ -1,0 +1,16 @@
+.XB3-24Z8UT-J :1 ;Zigbee Modules (802.15.4) XBee3,2.4 Ghz ZB 3.0, U.FL Ant, TH MT
+XB324Z8UTJ
+*STM IC
+*NGS
+*PLB 1="VCC" 2="DOUT/DIO13" 3="DIN/'CONFIG'/DIO14" 4="DIO12/SPI_MISO" 5="'RESET'" 6="RSSI PWM/DIO10" 7="PWM1/DIO11" 8="[RESERVED]_1" 9="'DTR'/SLEEP_RQ/DIO8" 10="GND" 11="DIO4/SPI_MOSI" 12="'CTS'/DIO7" 13="ON/'SLEEP'/DIO9" 14="[RESERVED]_2" 15="ASSOCIATE/DIO5" 16="'RTS'/DIO6" 17="AD3/DIO3/SPI_'SSEL'" 18="AD2/DIO2/SPI_CLK" 19="AD1/DIO1/SPI_'ATTN'" 20="AD0 /DIO0"
+*MXP 20
+*DFN XB3-24Z8UT-J
+~!Mouser Part Number (888-XB3-24Z8UT-J)
+~!Link Mouser Price/Stock (https://www.mouser.com/Search/Refine.aspx?Keyword=888-XB3-24Z8UT-J)
+~!Manufacturer_Name (Digi International)
+~!Manufacturer_Part_Number (XB3-24Z8UT-J)
+~!Link Datasheet (https://componentsearchengine.com/Datasheets/1/XB3-24Z8UT-J.pdf)
+~!Height (2.79mm)
+~!3D_Model (XB3-24Z8UT-J)
+XB3-24Z8UT-J
+1.1!U 2.1!U 3.1!U 4.1!U 5.1!U 6.1!U 7.1!U 8.1!U 9.1!U 10.1!U 11.1!U 12.1!U 13.1!U 14.1!U 15.1!U 16.1!U 17.1!U 18.1!U 19.1!U 20.1!U 

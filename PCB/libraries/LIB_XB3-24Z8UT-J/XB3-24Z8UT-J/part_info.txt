@@ -1,0 +1,9 @@
+Manufacturer=Digi International
+PartNumber=XB3-24Z8UT-J
+PartCategory=Integrated Circuit
+PackageCategory=Other
+PinCount=20
+Version=2.1
+Released=2019-03-15 17:33:02
+Downloaded=2026-05-03 00:53:49
+3D=Y

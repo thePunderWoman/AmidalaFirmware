@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "project": "AmidalaShield.kicad_pro",
+  "current": "2026-06-11_2147",
+  "runs": {
+    "2026-06-10_2210": {
+      "source_hashes": {
+        "AmidalaShield.kicad_sch": "sha256:a6635e28d01b7079f1af4810a9e568c07337dfad1a81f116e83310188e44b75d",
+        "AmidalaShield.kicad_pcb": "sha256:265f53f59fdc6e6d7116fccc3a0b5472922d292dcaac1fca467310b61c469581"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py AmidalaShield.kicad_sch"
+      },
+      "generated": "2026-06-10T22:10:45-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2017": {
+      "source_hashes": {
+        "AmidalaShield.kicad_sch": "sha256:8edb5dd4fe28a790f40f0465c9d5067244e255bf5e5589d2ddf41c05bcb3bba9"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py AmidalaShield.kicad_sch"
+      },
+      "generated": "2026-06-11T20:17:22-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2017-2": {
+      "source_hashes": {
+        "AmidalaShield.kicad_pcb": "sha256:7d0b326ada42d4efebbd13484a854ee1a4bf792cf5e7d82ef395d0b39b53bbfa",
+        "AmidalaShield.kicad_sch": "sha256:8edb5dd4fe28a790f40f0465c9d5067244e255bf5e5589d2ddf41c05bcb3bba9"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py AmidalaShield.kicad_pcb"
+      },
+      "generated": "2026-06-11T20:47:27-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2047": {
+      "source_hashes": {
+        "AmidalaShield.kicad_pcb": "sha256:3fad02e8596455f9a30261b766e3bef76a0acce1c5e4e0ee9662acb45bfbecd6"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py AmidalaShield.kicad_pcb"
+      },
+      "generated": "2026-06-11T20:47:48-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2117": {
+      "source_hashes": {
+        "AmidalaShield.kicad_pcb": "sha256:1e4cc7e5f3a39c6b62f11aac93659d0394bd61ddb11582c92a6b9ef3a8950c20"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py AmidalaShield.kicad_pcb"
+      },
+      "generated": "2026-06-11T21:18:02-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2121": {
+      "source_hashes": {
+        "AmidalaShield.kicad_sch": "sha256:8edb5dd4fe28a790f40f0465c9d5067244e255bf5e5589d2ddf41c05bcb3bba9",
+        "AmidalaShield.kicad_pcb": "sha256:8dbbee9fab46b8bf99453522a8403c4dcdbfe6666b190f96f57235392e5a01a0"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py AmidalaShield.kicad_sch"
+      },
+      "generated": "2026-06-11T21:37:12-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2146": {
+      "source_hashes": {
+        "AmidalaShield.kicad_sch": "sha256:8edb5dd4fe28a790f40f0465c9d5067244e255bf5e5589d2ddf41c05bcb3bba9"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py AmidalaShield.kicad_sch"
+      },
+      "generated": "2026-06-11T21:46:58-07:00",
+      "pinned": false
+    },
+    "2026-06-11_2147": {
+      "source_hashes": {
+        "AmidalaShield.kicad_pcb": "sha256:3f6dbc26693d86aa0a03ba72193aa85c6d2fb0050fb71aaeeb582261d53f840a",
+        "AmidalaShield.kicad_sch": "sha256:8edb5dd4fe28a790f40f0465c9d5067244e255bf5e5589d2ddf41c05bcb3bba9"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json",
+        "gerber": "gerber.json",
+        "cross_analysis": "cross_analysis.json",
+        "thermal": "thermal.json"
+      },
+      "scripts": {
+        "pcb": "analyze_pcb.py AmidalaShield.kicad_pcb"
+      },
+      "generated": "2026-06-11T22:00:04-07:00",
+      "pinned": false
+    }
+  }
+}

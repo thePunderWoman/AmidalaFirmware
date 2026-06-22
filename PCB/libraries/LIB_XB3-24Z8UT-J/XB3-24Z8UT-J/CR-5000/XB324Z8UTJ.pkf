@@ -1,0 +1,10 @@
+(unit MM)
+
+(package "XB324Z8UTJ"
+    (type UNDEF)
+    (uver 2)
+    (mountForm default
+        (footprintRef "XB324Z8UTJ")
+        (spec "default")
+    )
+)

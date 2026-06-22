@@ -1,0 +1,19 @@
+### Footprint positions - created on 2026-06-11T22:14:07-0700 ###
+### Printed by KiCad version 9.0.9
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val            Package                                PosX       PosY       Rot  Side
+C1        100n           C_0603_1608Metric                  144.4700   -66.9000  180.0000  top
+C2        100n           C_0603_1608Metric                  155.5500   -66.7500  -90.0000  top
+C3        100n           C_0603_1608Metric                  146.8000   -59.2000  -90.0000  top
+C4        10u            C_0805_2012Metric                  149.0000   -58.9500  -90.0000  top
+C5        1u             C_0603_1608Metric                  159.6500   -66.8250  -90.0000  top
+C6        8.2p           C_0603_1608Metric                  157.5500   -66.7750  -90.0000  top
+C7        10u            C_0805_2012Metric                  157.5000   -71.2000  -90.0000  top
+C9        100µF          CP_EIA-3216-18_Kemet-A             139.4000   -97.1525  -90.0000  top
+J3        Micro_SD_Card  microSD_HC_Hirose_DM3AT-SF-PEJM5   146.5750   -47.5250  180.0000  top
+R1        10k            R_0603_1608Metric                  151.0000   -59.5750  -90.0000  top
+R2        10k            R_0603_1608Metric                  143.1500   -59.5750   90.0000  top
+R3        10k            R_0603_1608Metric                  145.0000   -59.5750   90.0000  top
+R5        10k            R_0603_1608Metric                  152.8500   -59.5750   90.0000  top
+## End

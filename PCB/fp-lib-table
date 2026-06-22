@@ -1,0 +1,5 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "Xbee3")(type "KiCad")(uri "/Users/jessica/repos/AmidalaBoard/libraries/LIB_XB3-24Z8UT-J/XB3-24Z8UT-J/KiCad")(options "")(descr ""))
+  (lib (name "Amidala")(type "KiCad")(uri "${KIPRJMOD}/images")(options "")(descr ""))
+)
