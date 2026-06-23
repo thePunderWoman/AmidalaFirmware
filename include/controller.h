@@ -328,7 +328,10 @@ public:
 #endif
   }
 
+  void (*fSerialTxLog)(const char*) = nullptr;
+
   void sendSerialString(const char *str) {
+    if (fSerialTxLog) fSerialTxLog(str);
     char ch;
     while ((ch = *str++) != '\0') {
       if (ch == params.serialdelim)

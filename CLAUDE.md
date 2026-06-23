@@ -14,6 +14,9 @@ This firmware is intended to run on many different R2 builds with varying hardwa
 - Tests run on the native PlatformIO environment (no hardware required) — keep them that way. Do not introduce test dependencies that require Arduino or physical hardware.
 - When fixing a bug, add a test that would have caught it.
 
+**Bug fixes and regression test**
+- Any time you fix a bug, that bugfix should be covered by a new regression test.
+
 ## Git workflow
 
 **All changes must go through pull requests — never push directly to `main`.**

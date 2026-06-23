@@ -8,7 +8,9 @@
 #include "debug.h"
 #include "dome_drive_roboclaw.h"
 #include "dome_position_math.h"
+#ifndef UNIT_TEST
 #include "ReelTwo.h"   // DEBUG_PRINT / DEBUG_PRINTLN macros
+#endif
 
 // Uncomment to enable high-frequency per-cycle logging (sendMotorCommand,
 // readEncoder).  These fire every 25 ms so leave this off in normal use.
@@ -22,7 +24,8 @@ DomeDriveRoboClaw* DomeDriveRoboClaw::sInstance = nullptr;
 
 /*static*/
 void DomeDriveRoboClaw::hallISR() {
-    if (sInstance != nullptr)
+    // Triggered on CHANGE — only act when pin goes LOW (sensor active / falling edge).
+    if (sInstance != nullptr && digitalRead(sInstance->fHallPin) == LOW)
         sInstance->onHallTrigger();
 }
 
@@ -71,7 +74,7 @@ void DomeDriveRoboClaw::setup() {
 #ifndef UNIT_TEST
     // Configure hall sensor pin: active-LOW output, use internal pull-up.
     pinMode(fHallPin, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(fHallPin), hallISR, FALLING);
+    attachInterrupt(digitalPinToInterrupt(fHallPin), hallISR, CHANGE);
 
     // Bring up the RoboClaw serial link and reset its encoder counters.
     ROBOCLAW_SERIAL.begin(ROBOCLAW_BAUD_RATE);
@@ -93,6 +96,18 @@ void DomeDriveRoboClaw::setup() {
 void DomeDriveRoboClaw::animate() {
     // 1. Refresh encoder-derived position (no-op until calibrated).
     updatePosition();
+
+    // 1b. Polling fallback: directly read the hall pin every animate() cycle
+    // in case the ISR missed a trigger. onHallTrigger()'s debounce prevents
+    // double-counting if both the ISR and the poll fire for the same pass.
+#ifndef UNIT_TEST
+    {
+        bool pinLow = (digitalRead(fHallPin) == LOW);
+        if (pinLow && !fHallPinWasLow)
+            onHallTrigger();
+        fHallPinWasLow = pinLow;
+    }
+#endif
 
     // 2. Consume any pending hall-sensor trigger.
     bool hallFired = processHallTrigger();
@@ -171,6 +186,18 @@ void DomeDriveRoboClaw::animate() {
 void DomeDriveRoboClaw::stop() {
     sendMotorCommand(0.0f);
     fMoving = false;
+    // Cancel any active auto-motion so the state machine doesn't restart the motor.
+    switch (fState) {
+        case kStateHoming:
+        case kStateCalibrating:
+        case kStateAbsoluteStick:
+        case kStateGoToAngle:
+        case kStateRandom:
+            fState = kStateHomed;
+            break;
+        default:
+            break;  // kStateManual, kStateHomed, kStateObstructed: preserve
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -413,6 +440,10 @@ bool DomeDriveRoboClaw::processHallTrigger() {
 
     // Snapshot the encoder at the moment of the trigger.
     fHomeEncoderTick = readEncoder();
+#if defined(USE_HALL_DEBUG) && !defined(UNIT_TEST)
+    Serial.print("HALL: fired encoder=");
+    Serial.println(fHomeEncoderTick);
+#endif
     return true;
 }
 
@@ -507,8 +538,17 @@ void DomeDriveRoboClaw::handleCalibrating(bool hallFired) {
                 DEBUG_PRINTLN("DOME: Calibration reference set — counting revolutions");
                 break;
 
-            case kCalibrationContinue:
+            case kCalibrationContinue: {
+                int completedRev = fCalibrationTriggerCount - 1;
+                int32_t ticksSoFar = currentTick - fCalibrationStartTick;
+                DEBUG_PRINT("DOME: Calibration rev ");
+                DEBUG_PRINT(completedRev);
+                DEBUG_PRINT("/");
+                DEBUG_PRINT(kCalibrationRotations);
+                DEBUG_PRINT(" ticks_so_far=");
+                DEBUG_PRINTLN(ticksSoFar);
                 break;
+            }
 
             case kCalibrationComplete:
                 fTicksPerDomeRev = result.tpr;

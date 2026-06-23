@@ -53,6 +53,10 @@ static uint32_t mock_millis_value = 0;
 static inline uint32_t millis() { return mock_millis_value; }
 static inline void    delay(unsigned long /*ms*/) {}
 static inline void    delayMicroseconds(unsigned int /*us*/) {}
+static inline void    noInterrupts() {}
+static inline void    interrupts()   {}
+static inline long    random(long max)           { return (max > 0) ? (::rand() % max) : 0; }
+static inline long    random(long min, long max) { return (max > min) ? (min + ::rand() % (max - min)) : min; }
 
 // ---- EEPROM mock ----
 struct MockEEPROM {

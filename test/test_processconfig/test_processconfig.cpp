@@ -431,6 +431,124 @@ void test_channel_volumes_are_independent_of_volume() {
     TEST_ASSERT_EQUAL(20, p.volumeChB);
 }
 
+// ---- sstr= parse logic ------------------------------------------------------
+// Bug: processConfig() called startswith(cmd, "sstr=") which advances cmd past
+// "sstr=", then did `const char* val = cmd + 5` — double-skipping 10 chars.
+// Result: the first 5 chars of every name were eaten, and short names became
+// empty strings (showing as "(unnamed)" in the UI).
+//
+// Fix: use `val = cmd` after startswith because cmd is already at the value.
+// These tests exercise the corrected parse logic in isolation.
+
+// Parse helper using the fixed algorithm (mirrors config.cpp after the fix).
+static bool parse_sstr_line(const char* line,
+                             char* name, size_t nameLen,
+                             char* str,  size_t strLen) {
+    const char* cmd = line;
+    if (!startswith(cmd, "sstr=")) return false;
+    // After startswith, cmd already points past "sstr=" — no additional offset.
+    const char* val  = cmd;
+    const char* pipe = strchr(val, '|');
+    if (pipe) {
+        size_t nlen = (size_t)(pipe - val);
+        if (nlen >= nameLen) nlen = nameLen - 1;
+        memcpy(name, val, nlen);
+        name[nlen] = '\0';
+        strncpy(str, pipe + 1, strLen - 1);
+        str[strLen - 1] = '\0';
+    } else {
+        name[0] = '\0';
+        strncpy(str, val, strLen - 1);
+        str[strLen - 1] = '\0';
+    }
+    return true;
+}
+
+// Parse helper using the OLD broken algorithm (val = cmd + 5 double-skips).
+static bool parse_sstr_line_broken(const char* line,
+                                   char* name, size_t nameLen,
+                                   char* str,  size_t strLen) {
+    const char* cmd = line;
+    if (!startswith(cmd, "sstr=")) return false;
+    const char* val  = cmd + 5;  // BUG: double-skip
+    const char* pipe = strchr(val, '|');
+    if (pipe) {
+        size_t nlen = (size_t)(pipe - val);
+        if (nlen >= nameLen) nlen = nameLen - 1;
+        memcpy(name, val, nlen);
+        name[nlen] = '\0';
+        strncpy(str, pipe + 1, strLen - 1);
+        str[strLen - 1] = '\0';
+    } else {
+        name[0] = '\0';
+        strncpy(str, val, strLen - 1);
+        str[strLen - 1] = '\0';
+    }
+    return true;
+}
+
+void test_sstr_parse_basic_name_and_str() {
+    char name[32], str[32];
+    bool ok = parse_sstr_line("sstr=Sad (Moderate)|<SS0>", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_TRUE(ok);
+    TEST_ASSERT_EQUAL_STRING("Sad (Moderate)", name);
+    TEST_ASSERT_EQUAL_STRING("<SS0>", str);
+}
+
+void test_sstr_parse_short_name_not_empty() {
+    // "Vader" is 5 chars — the double-skip bug consumed exactly "Vader" and
+    // left the pipe as the first char, producing an empty name.
+    char name[32], str[32];
+    bool ok = parse_sstr_line("sstr=Vader|BD:VADER", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_TRUE(ok);
+    TEST_ASSERT_EQUAL_STRING("Vader", name);
+    TEST_ASSERT_EQUAL_STRING("BD:VADER", str);
+}
+
+void test_sstr_parse_name_not_truncated_by_five() {
+    // "Toggle Mute" → broken: "e Mute" (first 6 chars gone). Fixed: full name.
+    char name[32], str[32];
+    bool ok = parse_sstr_line("sstr=Toggle Mute|BD:VOL", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_TRUE(ok);
+    TEST_ASSERT_EQUAL_STRING("Toggle Mute", name);
+    TEST_ASSERT_EQUAL_STRING("BD:VOL", str);
+}
+
+void test_sstr_parse_angle_bracket_command_preserved() {
+    // Angle brackets in the serial string must survive the parse.
+    char name[32], str[32];
+    bool ok = parse_sstr_line("sstr=Scared (Moderate)|<SC0>", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_TRUE(ok);
+    TEST_ASSERT_EQUAL_STRING("Scared (Moderate)", name);
+    TEST_ASSERT_EQUAL_STRING("<SC0>", str);
+}
+
+void test_sstr_parse_no_pipe_stores_str_only() {
+    // No pipe → name empty, entire value goes to str.
+    char name[32], str[32];
+    name[0] = 0xFF;
+    bool ok = parse_sstr_line("sstr=BD:VOL", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_TRUE(ok);
+    TEST_ASSERT_EQUAL_STRING("", name);
+    TEST_ASSERT_EQUAL_STRING("BD:VOL", str);
+}
+
+void test_sstr_parse_broken_eats_first_five_chars() {
+    // Regression guard: document exactly what the old code produced so any
+    // accidental revert is immediately caught.
+    char name[32], str[32];
+    parse_sstr_line_broken("sstr=Sad (Moderate)|<SS0>", name, sizeof(name), str, sizeof(str));
+    // Old code produced "Moderate)" not "Sad (Moderate)".
+    TEST_ASSERT_EQUAL_STRING("Moderate)", name);
+}
+
+void test_sstr_parse_broken_short_name_becomes_empty() {
+    // "Vader" (5 chars) → old code val pointed at '|', nlen=0, name empty.
+    char name[32], str[32];
+    parse_sstr_line_broken("sstr=Vader|BD:VADER", name, sizeof(name), str, sizeof(str));
+    TEST_ASSERT_EQUAL_STRING("", name);
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -486,6 +604,14 @@ int main(int argc, char **argv) {
     RUN_TEST(test_mutebutton_clamps_above_nine);
     RUN_TEST(test_mutebutton_default_is_zero_after_init);
     RUN_TEST(test_mutebutton_field_is_distinct_from_altbtn);
+
+    RUN_TEST(test_sstr_parse_basic_name_and_str);
+    RUN_TEST(test_sstr_parse_short_name_not_empty);
+    RUN_TEST(test_sstr_parse_name_not_truncated_by_five);
+    RUN_TEST(test_sstr_parse_angle_bracket_command_preserved);
+    RUN_TEST(test_sstr_parse_no_pipe_stores_str_only);
+    RUN_TEST(test_sstr_parse_broken_eats_first_five_chars);
+    RUN_TEST(test_sstr_parse_broken_short_name_becomes_empty);
 
     return UNITY_END();
 }

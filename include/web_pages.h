@@ -249,7 +249,11 @@ function toggleTheme() {
 
 function toggleEstop() {
   var active = document.getElementById('estop-overlay').classList.toggle('active');
-  if (active) fetch('/api/estop', {method:'POST'}).catch(function(){});
+  if (active) {
+    fetch('/api/estop',  {method:'POST'}).catch(function(){});
+  } else {
+    fetch('/api/resume', {method:'POST'}).catch(function(){});
+  }
 }
 
 Promise.all([
@@ -3833,7 +3837,7 @@ var SCHEMA = [
   {key:'domespeedmin',  label:'Min Speed',          type:'number', min:0,  max:30},
   {key:'domedecelzone', label:'Decel Zone',         type:'number', min:5,  max:90, note:'degrees'},
   {section:'Position'},
-  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees'},
+  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees', when:function(d){return !RC(d);}},
   {key:'domeflip',  label:'Invert Direction',       type:'bool'},
   {key:'domeimu',   label:'IMU Assist',             type:'bool'},
   {key:'domech6',   label:'Channel 6 Mode',         type:'bool'},
@@ -3848,11 +3852,11 @@ var SCHEMA = [
   {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
   {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'},
   {section:'Dome Commands', when:RC},
-  {type:'action', label:'Go Home',    cmd:'dome=home',      endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Calibrate',  cmd:'dome=calibrate', endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Face Front', cmd:'dome=front',     endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Random',     cmd:'dome=rand',      endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Stop',       cmd:'dome=stop',      endpoint:'/api/dome', btnLabel:'Send'}
+  {type:'action', label:'Go Home',    cmd:'home',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Calibrate',  cmd:'calibrate', endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Face Front', cmd:'front',     endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Random',     cmd:'rand',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Stop',       cmd:'stop',      endpoint:'/api/dome', btnLabel:'Send'}
 ];
 buildPage(SCHEMA, '/api/config');
 </script>
@@ -4516,9 +4520,10 @@ function saveEdit(i) {
   var n = (document.getElementById('ed-name').value || '').trim();
   var s = (document.getElementById('ed-val').value  || '').trim();
   if (!n || !s) { showToast('Name and string required', true); return; }
+  if (n.indexOf('|') >= 0) { showToast('Name cannot contain |', true); return; }
   fetch('/api/config', {
     method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'\x00'+s)
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'|'+s)
   }).then(function(r){
     if (!r.ok) { showToast('Save failed', true); return; }
     _d[i] = {n:n, s:s};
@@ -4532,9 +4537,10 @@ function saveNew() {
   var n = (document.getElementById('ed-name').value || '').trim();
   var s = (document.getElementById('ed-val').value  || '').trim();
   if (!n || !s) { showToast('Name and string required', true); return; }
+  if (n.indexOf('|') >= 0) { showToast('Name cannot contain |', true); return; }
   fetch('/api/config', {
     method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: 'key=sstr_add&value='+encodeURIComponent(n+'\x00'+s)
+    body: 'key=sstr_add&value='+encodeURIComponent(n+'|'+s)
   }).then(function(r){
     if (!r.ok) { showToast('Save failed', true); return; }
     _d.push({n:n, s:s});
@@ -7465,8 +7471,9 @@ function renderDome() {
   h += '<button class="dome-stop" onclick="domePost(\'stop\')">&#9632;&nbsp; STOP</button>';
 
   h += '<div class="sec-hdr" style="margin-top:.2rem">Position</div>';
-  h += '<div class="btn-group" style="grid-template-columns:1fr">';
-  h += '<button class="dc-btn" onclick="domePost(\'home\')">Go Home</button>';
+  h += '<div class="btn-group" style="grid-template-columns:1fr 1fr">';
+  h += '<button class="dc-btn" onclick="domePost(\'front\')">Face Front</button>';
+  h += '<button class="dc-btn" onclick="domePost(\'home\')">Run Homing</button>';
   h += '</div>';
 
   h += '<div class="sec-hdr">Go to Angle</div>';
@@ -8462,14 +8469,15 @@ footer a:hover { opacity: 1; }
 html,body{height:100%;display:flex;flex-direction:column;overflow:hidden;padding:0}
 .page-header{flex-shrink:0;padding:12px 22px 12px;max-width:none;margin:0}
 main{flex:1;display:flex;flex-direction:column;min-height:0;max-width:none;margin:0;padding:0;width:100%}
-.toolbar{display:flex;align-items:center;gap:.6rem;padding:.45rem 22px;border-bottom:1px solid var(--border);flex-shrink:0}
+.toolbar{display:flex;align-items:center;gap:.4rem;padding:.45rem 22px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
 .dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--border);flex-shrink:0;transition:background .4s}
 .dot.ok{background:#3a3;animation:pulse 2s ease infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.conn-lbl{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);letter-spacing:.1em;flex:1}
+.conn-lbl{font:500 11px/1 ui-monospace,'SF Mono',Menlo,monospace;color:var(--muted);letter-spacing:.1em;flex:1;min-width:4rem}
 .tbtn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.22rem .7rem;font-family:inherit;font-size:.72rem;letter-spacing:.1em;cursor:pointer;flex-shrink:0;border-radius:4px;transition:border-color .15s,color .15s}
 .tbtn:hover{border-color:var(--accent);color:var(--accent)}
 .tbtn.on{border-color:var(--accent);background:rgba(143,45,59,.06)}
+.tsep{width:1px;height:1.1rem;background:var(--border);flex-shrink:0;margin:0 .15rem}
 .log{flex:1;overflow-y:auto;padding:.6rem 22px;font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.8rem;line-height:1.65;background:#1a1a1a;min-height:0}
 .ll{white-space:pre-wrap;word-break:break-all}
 .ll.tx{color:#c47a35}
@@ -8492,6 +8500,13 @@ main{flex:1;display:flex;flex-direction:column;min-height:0;max-width:none;margi
   <div class="toolbar">
     <div class="dot" id="dot"></div>
     <span class="conn-lbl" id="conn">Connecting&#8230;</span>
+    <button class="tbtn on" id="f-tx" onclick="toggleFilter('tx')" title="Show TX (outgoing)">TX</button>
+    <button class="tbtn"    id="f-rx" onclick="toggleFilter('rx')" title="Show RX (incoming)">RX</button>
+    <span class="tsep"></span>
+    <button class="tbtn on" id="f-S0" onclick="toggleFilter('S0')" title="S0 — WCB serial">S0</button>
+    <button class="tbtn on" id="f-S1" onclick="toggleFilter('S1')" title="S1 — auxiliary">S1</button>
+    <button class="tbtn on" id="f-S2" onclick="toggleFilter('S2')" title="S2 — auxiliary">S2</button>
+    <span class="tsep"></span>
     <button class="tbtn" id="pbtn" onclick="togglePause()">Pause</button>
     <button class="tbtn" onclick="clearLog()">Clear</button>
   </div>
@@ -8760,9 +8775,11 @@ function buildPage(SCHEMA, endpoint, callback) {
 }
 </script>
 <script>
-var _seq = -1;
-var _paused = false;
+var _seq      = -1;
+var _paused   = false;
 var _autoScroll = true;
+var _entries  = [];   // all received entries: [{t: text, c: cls}, ...]
+var _filters  = { tx: true, rx: false, S0: true, S1: true, S2: true };
 
 var logEl  = document.getElementById('log');
 var dotEl  = document.getElementById('dot');
@@ -8773,6 +8790,21 @@ logEl.addEventListener('scroll', function() {
   _autoScroll = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 20;
 });
 
+function portOf(text) {
+  var m = text.match(/^(S\d)/);
+  return m ? m[1] : null;
+}
+
+function shouldShow(entry) {
+  var port = portOf(entry.t);
+  // System/info entries (no port prefix) always show
+  if (port === null) return true;
+  if (entry.c === 'tx' && !_filters.tx) return false;
+  if (entry.c === 'rx' && !_filters.rx) return false;
+  if (!_filters[port]) return false;
+  return true;
+}
+
 function addLine(text, cls) {
   var d = document.createElement('div');
   d.className = 'll' + (cls ? ' '+cls : '');
@@ -8781,16 +8813,30 @@ function addLine(text, cls) {
   if (_autoScroll) logEl.scrollTop = logEl.scrollHeight;
 }
 
+function renderLog() {
+  logEl.innerHTML = '';
+  for (var i = 0; i < _entries.length; i++) {
+    if (shouldShow(_entries[i])) addLine(_entries[i].t, _entries[i].c);
+  }
+  if (_autoScroll) logEl.scrollTop = logEl.scrollHeight;
+}
+
+function toggleFilter(key) {
+  _filters[key] = !_filters[key];
+  var btn = document.getElementById('f-' + key);
+  if (btn) btn.className = 'tbtn' + (_filters[key] ? ' on' : '');
+  renderLog();
+}
+
 function poll() {
   if (_paused) return;
   fetch('/api/monitor').then(function(r){ return r.json(); }).then(function(d){
     dotEl.className = 'dot ok';
     connEl.textContent = 'Connected';
     if (d.seq !== _seq) {
-      logEl.innerHTML = '';
-      var lines = d.lines || [];
-      for (var i = 0; i < lines.length; i++) addLine(lines[i].t, lines[i].c);
+      _entries = d.lines || [];
       _seq = d.seq;
+      renderLog();
     }
   }).catch(function(){
     dotEl.className = 'dot';
@@ -8813,7 +8859,7 @@ function sendCmd() {
   }).catch(function(){ addLine('! Send failed', 'info'); });
 }
 
-function clearLog() { logEl.innerHTML = ''; _seq = -1; }
+function clearLog() { logEl.innerHTML = ''; _entries = []; _seq = -1; }
 
 function togglePause() {
   _paused = !_paused;
@@ -9487,13 +9533,16 @@ function startUpload() {
   };
   xhr.onload = function() {
     if (xhr.status !== 200 || xhr.responseText.trim() !== 'OK') {
-      progLabel.textContent = 'Upload failed: ' + xhr.responseText;
+      setPhase('Update failed: ' + xhr.responseText.trim(), prog.value, false);
       prog.classList.remove('busy');
       return;
     }
     onFlashing();
   };
-  xhr.onerror = function() { onFlashing(); };
+  xhr.onerror = function() {
+    setPhase('Upload failed — check connection and try again.', prog.value, false);
+    prog.classList.remove('busy');
+  };
 
   var fd = new FormData();
   fd.append('firmware', fileInput.files[0]);

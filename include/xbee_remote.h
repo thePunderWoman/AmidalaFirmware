@@ -42,8 +42,8 @@ class XBeePocketRemote : public JoystickController {
 public:
   XBeePocketRemote() {
     addr = 0;
-    y = 0;
-    x = 0;
+    y = 512;   // center; map(512,0,1024,127,-128) == 0 (neutral stick)
+    x = 512;
     w1 = 0;
     w2 = 0;
     memset(button, 0, sizeof(button));
