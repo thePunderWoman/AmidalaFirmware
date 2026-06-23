@@ -47,6 +47,7 @@ AmidalaController::AmidalaController()
 void AmidalaController::emergencyStop() {
 #ifdef DRIVE_SYSTEM
   fTankDrive.stop();
+  fTankDrive.setEnable(false);
   // Force neutral PWM signals as a safety backup
   servoDispatch.moveTo(1, 0.5); // Drive Left
   servoDispatch.moveTo(0, 0.5); // Drive Right
@@ -57,6 +58,7 @@ void AmidalaController::emergencyStop() {
 void AmidalaController::domeEmergencyStop() {
 #ifdef DOME_DRIVE
   fDomeDrive.stop();
+  fDomeDrive.setEnable(false);
 #if DOME_DRIVE != DOME_DRIVE_ROBOCLAW
   // Force neutral PWM signal as a safety backup (PWM/Sabertooth only).
   servoDispatch.moveTo(3, 0.5); // Dome

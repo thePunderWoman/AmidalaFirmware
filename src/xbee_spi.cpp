@@ -97,15 +97,23 @@ void xbeeSPIReceiveAll(XBeePocketRemote** remotes, unsigned count) {
         for (unsigned i = 0; i < count; i++) {
             auto r = remotes[i];
             if (addrLsb != r->addr) continue;
-            r->y  = analog[0];
-            r->x  = analog[1];
-            r->w1 = analog[2];
-            r->w2 = analog[3];
-            r->button[0] = !(digitalSamples & (1 << 5));   // triangle
-            r->button[1] = !(digitalSamples & (1 << 6));   // circle
-            r->button[2] = !(digitalSamples & (1 << 10));  // cross
-            r->button[3] = !(digitalSamples & (1 << 11));  // square
-            r->button[4] = !(digitalSamples & (1 << 4));   // l3
+            // Only update analog channels that are present in this packet.
+            // A button-only packet (analogMask==0) must not clobber the last
+            // known stick position with the {512,512,0,0} defaults — that
+            // would reset lx/ly to zero and prevent gesture direction detection.
+            if (analogMask & (1 << 0)) r->y  = analog[0];
+            if (analogMask & (1 << 1)) r->x  = analog[1];
+            if (analogMask & (1 << 2)) r->w1 = analog[2];
+            if (analogMask & (1 << 3)) r->w2 = analog[3];
+            // Active-LOW buttons: a DIO bit of 0 means the button is pressed.
+            // If a DIO pin isn't in digitalMask (not wired), its bit is 0 in
+            // digitalSamples regardless of physical state — guard with the mask
+            // so an unwired button reads as not-pressed rather than always-pressed.
+            r->button[0] = (digitalMask & (1 << 5))  && !(digitalSamples & (1 << 5));   // triangle
+            r->button[1] = (digitalMask & (1 << 6))  && !(digitalSamples & (1 << 6));   // circle
+            r->button[2] = (digitalMask & (1 << 10)) && !(digitalSamples & (1 << 10));  // cross
+            r->button[3] = (digitalMask & (1 << 11)) && !(digitalSamples & (1 << 11));  // square
+            r->button[4] = (digitalMask & (1 << 4))  && !(digitalSamples & (1 << 4));   // l3
             r->lastPacket = millis();
             if (r->type != r->kXBee) r->type = r->kXBee;
             DEBUG_PRINT("XBee J");

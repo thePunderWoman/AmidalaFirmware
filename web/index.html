@@ -244,7 +244,11 @@ function toggleTheme() {
 
 function toggleEstop() {
   var active = document.getElementById('estop-overlay').classList.toggle('active');
-  if (active) fetch('/api/estop', {method:'POST'}).catch(function(){});
+  if (active) {
+    fetch('/api/estop',  {method:'POST'}).catch(function(){});
+  } else {
+    fetch('/api/resume', {method:'POST'}).catch(function(){});
+  }
 }
 
 Promise.all([

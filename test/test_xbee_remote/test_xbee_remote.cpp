@@ -56,8 +56,8 @@ void test_xbee_failsafe_returns_false_when_type_rc() {
 
 void test_xbee_initial_axes_zero() {
     XBeePocketRemote r;
-    TEST_ASSERT_EQUAL(0, r.x);
-    TEST_ASSERT_EQUAL(0, r.y);
+    TEST_ASSERT_EQUAL(512, r.x);   // center: map(512,0,1024,127,-128)==0 (neutral)
+    TEST_ASSERT_EQUAL(512, r.y);
     TEST_ASSERT_EQUAL(0, r.w1);
     TEST_ASSERT_EQUAL(0, r.w2);
 }

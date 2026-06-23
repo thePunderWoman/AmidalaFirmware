@@ -16,6 +16,11 @@
 // #define USE_SERVO_DEBUG
 // #define USE_VERBOSE_SERVO_DEBUG
 
+// Uncomment to print a line to serial every time the hall sensor fires during
+// normal operation (homing, calibration, running).  Works independently of
+// USE_DEBUG.
+// #define USE_HALL_DEBUG
+
 // Uncomment to enter hall-sensor test mode at boot.
 // Skips all normal init and loops forever printing HIGH/LOW transitions on DOME_HALL_PIN.
 // #define HALL_SENSOR_TEST

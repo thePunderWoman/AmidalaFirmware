@@ -13,9 +13,16 @@
 //   dome_calibration_trigger()     — state-machine calibration decisions
 //   dome_obstruction_check()       — stall detection logic
 //   dome_save/load_calibration()   — EEPROM round-trip
+//   DomeDriveRoboClaw::stop()      — auto-motion state clearing (e-stop bug)
+//   DomeDriveRoboClaw::setEnable() — motor lock-out
 
 #include "arduino_mock.h"
 #include "dome_position_math.h"
+#include "drive_config.h"
+#include "dome_drive_roboclaw.h"
+// Pull in the implementation so the linker can find DomeDriveRoboClaw methods.
+// test_build_src=no means src/ files are not compiled automatically.
+#include "../../src/dome_drive_roboclaw.cpp"
 #include <unity.h>
 
 void setUp(void)    { memset(EEPROM.data, 0, sizeof(EEPROM.data)); }
@@ -619,6 +626,120 @@ void test_seqpause_arg_at_cap_boundary_stays() {
         dome_sequence_pause_duration_ms(300, 30000u, 300000u));
 }
 
+// ---- DomeDriveRoboClaw::stop() state-clearing (e-stop regression) ----------
+// Bug: stop() only cleared kStateGoToAngle and kStateRandom. kStateHoming,
+// kStateCalibrating, and kStateAbsoluteStick were NOT cleared, so their
+// handlers restarted the motor on the very next animate() cycle after an
+// e-stop was issued.
+// Fix: stop() now clears every auto-motion state to kStateHomed.
+//
+// Additional bug: emergencyStop() / domeEmergencyStop() did not call
+// setEnable(false), so driveFromJoystick() would immediately re-command the
+// motor from the current stick position on the next animate() cycle.
+// Fix: emergencyStop() and domeEmergencyStop() now call setEnable(false).
+// The /api/resume handler calls setEnable(true) to re-enable movement.
+
+// Helper: a freshly-constructed drive is in kStateManual (default).
+static JoystickController sTestStick;
+
+static DomeDriveRoboClaw make_drive() {
+    return DomeDriveRoboClaw(128, 1, 5, sTestStick);
+}
+
+void test_stop_clears_kStateHoming() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHoming);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_clears_kStateCalibrating() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateCalibrating);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_clears_kStateAbsoluteStick() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateAbsoluteStick);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_clears_kStateGoToAngle() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateGoToAngle);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_clears_kStateRandom() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateRandom);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_preserves_kStateObstructed() {
+    // Obstruction handler manages its own transitions; stop() must not
+    // clobber that state or it would reset the obstruction lock prematurely.
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateObstructed);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateObstructed, drive.getStateForTest());
+}
+
+void test_stop_preserves_kStateManual() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateManual);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateManual, drive.getStateForTest());
+}
+
+void test_stop_preserves_kStateHomed() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.stop();
+    TEST_ASSERT_EQUAL_INT(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_stop_zeros_motor_command() {
+    auto drive = make_drive();
+    drive.setLastCommandedSpeedForTest(0.75f);
+    drive.stop();
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drive.getLastCommandedSpeed());
+}
+
+void test_setEnable_false_blocks_joystick_drive() {
+    // Simulate an e-stop: motor was running, setEnable(false) is called,
+    // then animate() fires with a non-zero joystick input.
+    // Expected: driveFromJoystick() sees !fEnabled and issues stop(),
+    // so fLastCommandedSpeed must remain 0.
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateManual);
+
+    // Fake a connected joystick at full-right deflection.
+    sTestStick.onConnect();
+    sTestStick.state.analog.stick.rx = 127;
+
+    // Prime the commanded speed as if the motor had been running.
+    drive.setLastCommandedSpeedForTest(0.5f);
+
+    // E-stop: disable the drive.
+    drive.setEnable(false);
+    TEST_ASSERT_FALSE(drive.getEnable());
+
+    // One animate() cycle — driveFromJoystick() must call stop(), not drive.
+    drive.animate();
+
+    TEST_ASSERT_EQUAL_FLOAT(0.0f, drive.getLastCommandedSpeed());
+
+    // Cleanup: reset stick state so it doesn't affect other tests.
+    sTestStick.onDisconnect();
+    sTestStick.state.analog.stick.rx = 0;
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -731,6 +852,17 @@ int main(int argc, char **argv) {
     RUN_TEST(test_seqpause_arg_exceeding_cap_is_clamped);
     RUN_TEST(test_seqpause_default_exceeding_cap_is_clamped);
     RUN_TEST(test_seqpause_arg_at_cap_boundary_stays);
+
+    RUN_TEST(test_stop_clears_kStateHoming);
+    RUN_TEST(test_stop_clears_kStateCalibrating);
+    RUN_TEST(test_stop_clears_kStateAbsoluteStick);
+    RUN_TEST(test_stop_clears_kStateGoToAngle);
+    RUN_TEST(test_stop_clears_kStateRandom);
+    RUN_TEST(test_stop_preserves_kStateObstructed);
+    RUN_TEST(test_stop_preserves_kStateManual);
+    RUN_TEST(test_stop_preserves_kStateHomed);
+    RUN_TEST(test_stop_zeros_motor_command);
+    RUN_TEST(test_setEnable_false_blocks_joystick_drive);
 
     return UNITY_END();
 }

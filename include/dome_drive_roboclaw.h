@@ -41,7 +41,9 @@
 
 #if DOME_DRIVE == DOME_DRIVE_ROBOCLAW
 
+#ifndef UNIT_TEST
 #include "ReelTwo.h"
+#endif
 #include "JoystickController.h"
 #include "drive_config.h"
 #include "pin_config.h"
@@ -329,6 +331,7 @@ private:
 
     volatile bool     fHallTriggered      = false;
     volatile uint32_t fHallLastTriggerMs  = 0;
+    bool              fHallPinWasLow      = false; ///< For polling fallback
 
     static constexpr uint32_t kHallDebounceMs = DEFAULT_DOME_HALL_DEBOUNCE_MS;
 

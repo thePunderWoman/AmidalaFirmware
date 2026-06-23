@@ -120,9 +120,10 @@ function saveEdit(i) {
   var n = (document.getElementById('ed-name').value || '').trim();
   var s = (document.getElementById('ed-val').value  || '').trim();
   if (!n || !s) { showToast('Name and string required', true); return; }
+  if (n.indexOf('|') >= 0) { showToast('Name cannot contain |', true); return; }
   fetch('/api/config', {
     method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'\x00'+s)
+    body: 'key=sstr_'+i+'&value='+encodeURIComponent(n+'|'+s)
   }).then(function(r){
     if (!r.ok) { showToast('Save failed', true); return; }
     _d[i] = {n:n, s:s};
@@ -136,9 +137,10 @@ function saveNew() {
   var n = (document.getElementById('ed-name').value || '').trim();
   var s = (document.getElementById('ed-val').value  || '').trim();
   if (!n || !s) { showToast('Name and string required', true); return; }
+  if (n.indexOf('|') >= 0) { showToast('Name cannot contain |', true); return; }
   fetch('/api/config', {
     method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: 'key=sstr_add&value='+encodeURIComponent(n+'\x00'+s)
+    body: 'key=sstr_add&value='+encodeURIComponent(n+'|'+s)
   }).then(function(r){
     if (!r.ok) { showToast('Save failed', true); return; }
     _d.push({n:n, s:s});

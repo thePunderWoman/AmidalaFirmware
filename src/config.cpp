@@ -595,7 +595,7 @@ bool AmidalaConfig::processConfig(const char *cmd) {
     if (params.serialcount >= params.getSerialStringCount())
       return true; // silently ignore when full
     SerialString *a = &params.Str[params.serialcount];
-    const char* val = cmd + 5; // skip "sstr="
+    const char* val = cmd; // startswith already advanced past "sstr="
     const char* pipe = strchr(val, '|');
     if (pipe) {
       size_t nlen = (size_t)(pipe - val);
@@ -789,17 +789,13 @@ bool AmidalaConfig::processConfig(const char *cmd) {
   } else if (intparam(cmd, "domehome=", params.domehome, 0, 360)) {
 #ifdef RDH_SERIAL
     autoDome.setDomeHomePosition(params.domehome);
-    return true;
-#else
-    return false;
 #endif
+    return true;
   } else if (intparam(cmd, "domemode=", params.domemode, 1, 5)) {
 #ifdef RDH_SERIAL
     autoDome.setDomeDefaultMode(params.domemode);
-    return true;
-#else
-    return false;
 #endif
+    return true;
   } else if (intparam(cmd, "domeseekr=",    params.domeseekr,    1,   180) ||
              intparam(cmd, "domeseekl=",    params.domeseekl,    1,   180) ||
              intparam(cmd, "domefudge=",    params.domefudge,    1,    45) ||

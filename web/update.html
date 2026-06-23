@@ -122,13 +122,16 @@ function startUpload() {
   };
   xhr.onload = function() {
     if (xhr.status !== 200 || xhr.responseText.trim() !== 'OK') {
-      progLabel.textContent = 'Upload failed: ' + xhr.responseText;
+      setPhase('Update failed: ' + xhr.responseText.trim(), prog.value, false);
       prog.classList.remove('busy');
       return;
     }
     onFlashing();
   };
-  xhr.onerror = function() { onFlashing(); };
+  xhr.onerror = function() {
+    setPhase('Upload failed — check connection and try again.', prog.value, false);
+    prog.classList.remove('busy');
+  };
 
   var fd = new FormData();
   fd.append('firmware', fileInput.files[0]);

@@ -5,16 +5,14 @@
 #include <EEPROM.h>     // must precede params.h (via web_api.h)
 #include <WiFi.h>
 #include <WebServer.h>
-#include <DNSServer.h>
 #include <ESPmDNS.h>
-#include <Update.h>
+#include "esp_partition.h"
 #include "SD.h"
 #include "web_api.h"
 #include "controller.h"
 #include "drive_config.h"
 
 static WebServer          sServer(80);
-static DNSServer          sDNS;
 static AmidalaController* sCtrl = nullptr;
 // Count of user-defined serial strings, excluding built-in injected commands.
 // Saved before injectBuiltinSerialCmds() runs; used to bound rewriteSerialStrings().
@@ -24,7 +22,7 @@ static uint8_t            sUserSerialCount = 0;
 // Serial monitor log buffer
 // ---------------------------------------------------------------------------
 
-#define MON_LINES    32
+#define MON_LINES    256
 #define MON_LINE_LEN 96
 
 struct MonLine { char text[MON_LINE_LEN]; char cls; }; // cls: 't'=tx 'r'=rx 'i'=info
@@ -777,8 +775,21 @@ static void handleApiConfigPost() {
 }
 
 static void handleApiEstop() {
-    monAppend("! EMERGENCY STOP", 't');
-    if (sCtrl) sCtrl->sendSerialString("ESTOP");
+    monAppend("! EMERGENCY STOP", 'i');
+    if (sCtrl) {
+        sCtrl->emergencyStop();
+        sCtrl->domeEmergencyStop();
+        sCtrl->sendSerialString("ESTOP");
+    }
+    sServer.send(200, "text/plain", "OK");
+}
+
+static void handleApiResume() {
+    monAppend("RESUME", 'i');
+    if (sCtrl) {
+        sCtrl->enableController();
+        sCtrl->enableDomeController();
+    }
     sServer.send(200, "text/plain", "OK");
 }
 
@@ -883,31 +894,107 @@ static void handleApiMonitorPost() {
 // Firmware update (OTA)
 // ---------------------------------------------------------------------------
 
+// Write directly to the factory partition using esp_partition_write(), bypassing
+// esp_ota which requires an otadata partition we deliberately don't have.
+// Sectors are erased on demand as data arrives.  Writes are kept 4-byte aligned
+// by buffering any trailing bytes across chunk boundaries.
+
+static constexpr uint32_t    kFwSectorSize = 4096;
+static const esp_partition_t* sFwPart      = nullptr;
+static uint32_t               sFwOffset    = 0;
+static uint32_t               sFwEraseEnd  = 0;
+static bool                   sFwOk        = false;
+static uint8_t                sFwTail[4];
+static uint8_t                sFwTailLen   = 0;
+
+static bool fwFlushBytes(const uint8_t* data, size_t len) {
+    uint32_t need = sFwOffset + (uint32_t)len;
+    while (sFwEraseEnd < need) {
+        if (esp_partition_erase_range(sFwPart, sFwEraseEnd, kFwSectorSize) != ESP_OK)
+            return false;
+        sFwEraseEnd += kFwSectorSize;
+    }
+    if (esp_partition_write(sFwPart, sFwOffset, data, len) != ESP_OK)
+        return false;
+    sFwOffset += (uint32_t)len;
+    return true;
+}
+
 static void handleUpdateUpload() {
     HTTPUpload& upload = sServer.upload();
     if (upload.status == UPLOAD_FILE_START) {
         monAppend("OTA: upload started", 'i');
-        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-            monAppend("OTA: begin failed", 'i');
-        }
+        sFwOk      = false;
+        sFwOffset  = 0;
+        sFwEraseEnd = 0;
+        sFwTailLen = 0;
+        sFwPart    = esp_partition_find_first(
+                         ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_ANY, "factory");
+        if (!sFwPart) monAppend("OTA: factory partition not found", 'i');
+
     } else if (upload.status == UPLOAD_FILE_WRITE) {
-        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-            monAppend("OTA: write error", 'i');
+        if (!sFwPart) return;
+        const uint8_t* src = upload.buf;
+        size_t         rem = upload.currentSize;
+
+        // Drain the carry buffer first.
+        if (sFwTailLen > 0) {
+            uint8_t word[4];
+            memcpy(word, sFwTail, sFwTailLen);
+            size_t need = 4 - sFwTailLen;
+            if (rem < need) {
+                memcpy(sFwTail + sFwTailLen, src, rem);
+                sFwTailLen += (uint8_t)rem;
+                return;
+            }
+            memcpy(word + sFwTailLen, src, need);
+            if (!fwFlushBytes(word, 4)) {
+                monAppend("OTA: write error", 'i'); sFwPart = nullptr; return;
+            }
+            src += need; rem -= need; sFwTailLen = 0;
         }
+
+        // Write the 4-byte-aligned bulk.
+        size_t aligned = rem & ~3u;
+        if (aligned > 0) {
+            if (!fwFlushBytes(src, aligned)) {
+                monAppend("OTA: write error", 'i'); sFwPart = nullptr; return;
+            }
+            src += aligned; rem -= aligned;
+        }
+
+        // Carry ≤3 trailing bytes into the next chunk.
+        if (rem > 0) {
+            memcpy(sFwTail, src, rem);
+            sFwTailLen = (uint8_t)rem;
+        }
+
     } else if (upload.status == UPLOAD_FILE_END) {
-        if (Update.end(true)) {
-            monAppend("OTA: flash complete, restarting", 'i');
-        } else {
-            monAppend("OTA: end failed", 'i');
+        if (!sFwPart) return;
+        // Flush any remaining bytes padded with 0xFF (erased flash value).
+        if (sFwTailLen > 0) {
+            uint8_t padded[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+            memcpy(padded, sFwTail, sFwTailLen);
+            if (!fwFlushBytes(padded, 4)) {
+                monAppend("OTA: write error", 'i'); sFwPart = nullptr; return;
+            }
         }
+        monAppend("OTA: flash complete, restarting", 'i');
+        sFwOk   = true;
+        sFwPart = nullptr;
     }
 }
 
 static void handleUpdatePost() {
-    bool ok = !Update.hasError();
-    sServer.send(200, "text/plain", ok ? "OK" : "FAIL");
-    delay(200);
-    if (ok) ESP.restart();
+    if (sFwOk) {
+        sServer.send(200, "text/plain", "OK");
+        delay(200);
+        ESP.restart();
+    } else {
+        String err = "UPDATE FAILED: FLASH FAILED: see serial monitor";
+        monAppend(err.c_str(), 'i');
+        sServer.send(500, "text/plain", err);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -941,6 +1028,11 @@ static void handleDiagnostics()         { sServer.send(200, "text/html", WEB_PAG
 
 void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaController* ctrl) {
     sCtrl = ctrl;
+    sCtrl->fSerialTxLog = [](const char* s) {
+        char buf[MON_LINE_LEN];
+        snprintf(buf, sizeof(buf), "S0: %s", s);
+        monAppend(buf, 't');
+    };
     loadGadgetConfig();
     sUserSerialCount = sCtrl->params.serialcount; // snapshot before builtin injection
     injectBuiltinSerialCmds();
@@ -952,9 +1044,6 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     Serial.print(ssid);
     Serial.print(F("\" @ "));
     Serial.println(ip);
-
-    // Wildcard DNS: all hostnames → AP IP (captive-portal style)
-    sDNS.start(53, "*", ip);
 
     // mDNS: advertise <ssid>.local
     if (MDNS.begin(ssid)) {
@@ -987,6 +1076,7 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     // REST API
     sServer.on("/api/info",   HTTP_GET,  handleApiInfo);
     sServer.on("/api/estop",  HTTP_POST, handleApiEstop);
+    sServer.on("/api/resume", HTTP_POST, handleApiResume);
     sServer.on("/api/dome",   HTTP_POST, handleApiDome);
     sServer.on("/api/gadget-cmd", HTTP_POST, handleApiGadgetCmd);
     sServer.on("/api/serial",     HTTP_POST, handleApiSerial);
@@ -996,16 +1086,70 @@ void AmidalaWiFiAP::begin(const char* ssid, const char* password, AmidalaControl
     sServer.on("/api/pins",   HTTP_GET,  handleApiPins);
     sServer.on("/diagnostics", HTTP_GET, handleDiagnostics);
 
-    // Catch-all: any other URL redirects home (supports captive-portal flow)
-    sServer.onNotFound(handleHome);
+    sServer.onNotFound([]() { sServer.send(404, "text/plain", "Not found"); });
 
     sServer.begin();
     Serial.println(F("[WiFi] HTTP server started"));
 }
 
+// Drain one serial port into the monitor.  Accumulates printable bytes into a
+// line buffer and flushes on newline, when the buffer is full, or after 100 ms
+// of silence.  Non-printable bytes (other than \r/\n) are silently skipped.
+struct SerialMonPort {
+    HardwareSerial* port;
+    const char      label[5]; // "S0: ", "S1: ", "S2: "
+    char            buf[MON_LINE_LEN];
+    uint8_t         pos;
+    uint32_t        lastMs;
+};
+
+static void monDrainSerial(SerialMonPort& p) {
+    bool flushed = false;
+    while (p.port->available()) {
+        uint8_t b = (uint8_t)p.port->read();
+        p.lastMs = millis();
+        if (b == '\r' || b == '\n') {
+            if (p.pos > 0) { p.buf[p.pos] = '\0'; monAppend(p.buf, 'r'); p.pos = 0; flushed = true; }
+        } else if (b >= 0x20 && b < 0x7F) {
+            if (p.pos < MON_LINE_LEN - 1) p.buf[p.pos++] = (char)b;
+        }
+        // non-printable bytes silently skipped
+        if (p.pos >= MON_LINE_LEN - 1) { p.buf[p.pos] = '\0'; monAppend(p.buf, 'r'); p.pos = 0; flushed = true; }
+    }
+    // Flush on 100 ms silence
+    if (!flushed && p.pos > 0 && (millis() - p.lastMs) > 100) {
+        p.buf[p.pos] = '\0'; monAppend(p.buf, 'r'); p.pos = 0;
+    }
+}
+
 void AmidalaWiFiAP::handle() {
-    sDNS.processNextRequest();
     sServer.handleClient();
+
+    // Serial RX monitoring.  ROBOCLAW_SERIAL is defined to Serial1 when the
+    // RoboClaw dome drive is active — skip Serial1 in that case (binary protocol).
+    static SerialMonPort sPortWCB = { &Serial0, "S0: ", {}, 0, 0 };
+#ifndef ROBOCLAW_SERIAL
+    static SerialMonPort sPortS1  = { &Serial1, "S1: ", {}, 0, 0 };
+#endif
+    static SerialMonPort sPortAux = { &Serial2, "S2: ", {}, 0, 0 };
+    auto seedLabel = [](SerialMonPort& p) {
+        if (p.pos == 0) {
+            uint8_t len = (uint8_t)strlen(p.label);
+            memcpy(p.buf, p.label, len);
+            p.buf[len] = '\0';
+            p.pos = len;
+        }
+    };
+    seedLabel(sPortWCB);
+    monDrainSerial(sPortWCB);
+#ifndef ROBOCLAW_SERIAL
+    seedLabel(sPortS1);
+    monDrainSerial(sPortS1);
+#endif
+    if (sCtrl && sCtrl->params.auxserial3) {
+        seedLabel(sPortAux);
+        monDrainSerial(sPortAux);
+    }
 }
 
 #else  // UNIT_TEST

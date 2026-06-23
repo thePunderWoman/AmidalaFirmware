@@ -30,7 +30,7 @@ var SCHEMA = [
   {key:'domespeedmin',  label:'Min Speed',          type:'number', min:0,  max:30},
   {key:'domedecelzone', label:'Decel Zone',         type:'number', min:5,  max:90, note:'degrees'},
   {section:'Position'},
-  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees'},
+  {key:'domehome',  label:'Home Position',          type:'number', min:0,  max:360, note:'degrees', when:function(d){return !RC(d);}},
   {key:'domeflip',  label:'Invert Direction',       type:'bool'},
   {key:'domeimu',   label:'IMU Assist',             type:'bool'},
   {key:'domech6',   label:'Channel 6 Mode',         type:'bool'},
@@ -45,11 +45,11 @@ var SCHEMA = [
   {key:'domefront', label:'Front Offset',           type:'number', min:0,  max:359, note:'degrees'},
   {key:'domestall', label:'Stall Timeout',          type:'number', min:100,max:5000, note:'ms'},
   {section:'Dome Commands', when:RC},
-  {type:'action', label:'Go Home',    cmd:'dome=home',      endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Calibrate',  cmd:'dome=calibrate', endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Face Front', cmd:'dome=front',     endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Random',     cmd:'dome=rand',      endpoint:'/api/dome', btnLabel:'Send'},
-  {type:'action', label:'Stop',       cmd:'dome=stop',      endpoint:'/api/dome', btnLabel:'Send'}
+  {type:'action', label:'Go Home',    cmd:'home',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Calibrate',  cmd:'calibrate', endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Face Front', cmd:'front',     endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Random',     cmd:'rand',      endpoint:'/api/dome', btnLabel:'Send'},
+  {type:'action', label:'Stop',       cmd:'stop',      endpoint:'/api/dome', btnLabel:'Send'}
 ];
 buildPage(SCHEMA, '/api/config');
 </script>
