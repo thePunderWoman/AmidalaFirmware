@@ -636,6 +636,92 @@ void test_diagnostics_page_polls_api_info() {
 }
 
 // ---------------------------------------------------------------------------
+// buttonActionJson
+// ---------------------------------------------------------------------------
+
+static ButtonAction makeAction(uint8_t type) {
+    ButtonAction b;
+    memset(&b, 0, sizeof(b));
+    b.action = type;
+    return b;
+}
+
+void test_buttonActionJson_kNone_emits_type_only() {
+    ButtonAction b = makeAction(ButtonAction::kNone);
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":0"));
+    TEST_ASSERT_FALSE(contains(j.c_str(), "\"x\""));
+    TEST_ASSERT_FALSE(contains(j.c_str(), "\"y\""));
+}
+
+void test_buttonActionJson_kHCRMuse_emits_type_only() {
+    ButtonAction b = makeAction(ButtonAction::kHCRMuse);
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":8"));
+    TEST_ASSERT_FALSE(contains(j.c_str(), "\"x\""));
+}
+
+void test_buttonActionJson_kSerialStr_emits_index() {
+    ButtonAction b = makeAction(ButtonAction::kSerialStr);
+    b.serial.serialstr = 3;
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":5"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":3"));
+    TEST_ASSERT_FALSE(contains(j.c_str(), "\"y\""));
+}
+
+void test_buttonActionJson_kSerialStr_index_one() {
+    ButtonAction b = makeAction(ButtonAction::kSerialStr);
+    b.serial.serialstr = 1;
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":1"));
+}
+
+void test_buttonActionJson_kHCREmote_emits_emotion_and_level() {
+    ButtonAction b = makeAction(ButtonAction::kHCREmote);
+    b.emote.emotion = 2; // MAD
+    b.emote.level   = 1; // STRONG
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":7"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":2"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"y\":1"));
+}
+
+void test_buttonActionJson_kHCREmote_happy_moderate() {
+    ButtonAction b = makeAction(ButtonAction::kHCREmote);
+    b.emote.emotion = 0; // HAPPY
+    b.emote.level   = 0; // MODERATE
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":0"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"y\":0"));
+}
+
+void test_buttonActionJson_kDomeCmd_emits_subcmd() {
+    ButtonAction b = makeAction(ButtonAction::kDomeCmd);
+    b.dome.subcmd = ButtonAction::kDomeRand;
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":9"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":"));
+    TEST_ASSERT_FALSE(contains(j.c_str(), "\"y\""));
+}
+
+void test_buttonActionJson_kDomeCmd_front_subcmd() {
+    ButtonAction b = makeAction(ButtonAction::kDomeCmd);
+    b.dome.subcmd = ButtonAction::kDomeFront; // kDomeFront = 2
+    String j = buttonActionJson(b);
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"t\":9"));
+    TEST_ASSERT_TRUE(contains(j.c_str(), "\"x\":2"));
+}
+
+void test_buttonActionJson_wraps_in_braces() {
+    ButtonAction b = makeAction(ButtonAction::kNone);
+    String j = buttonActionJson(b);
+    const char* s = j.c_str();
+    TEST_ASSERT_EQUAL('{', s[0]);
+    TEST_ASSERT_EQUAL('}', s[strlen(s) - 1]);
+}
+
+// ---------------------------------------------------------------------------
 // Runner
 // ---------------------------------------------------------------------------
 
@@ -735,6 +821,17 @@ int main(int /*argc*/, char** /*argv*/) {
     RUN_TEST(test_info_json_dome_not_homed_default);
     RUN_TEST(test_diagnostics_page_has_connectivity_rows);
     RUN_TEST(test_diagnostics_page_polls_api_info);
+
+    // buttonActionJson
+    RUN_TEST(test_buttonActionJson_kNone_emits_type_only);
+    RUN_TEST(test_buttonActionJson_kHCRMuse_emits_type_only);
+    RUN_TEST(test_buttonActionJson_kSerialStr_emits_index);
+    RUN_TEST(test_buttonActionJson_kSerialStr_index_one);
+    RUN_TEST(test_buttonActionJson_kHCREmote_emits_emotion_and_level);
+    RUN_TEST(test_buttonActionJson_kHCREmote_happy_moderate);
+    RUN_TEST(test_buttonActionJson_kDomeCmd_emits_subcmd);
+    RUN_TEST(test_buttonActionJson_kDomeCmd_front_subcmd);
+    RUN_TEST(test_buttonActionJson_wraps_in_braces);
 
     return UNITY_END();
 }
