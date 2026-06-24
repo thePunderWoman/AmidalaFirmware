@@ -54,6 +54,8 @@ class AmidalaController;
 #include "params.h"
 #include "wifi_ap.h"
 
+#include "serial_output.h"
+
 class AmidalaController : public SetupEvent, public AnimatedEvent {
 public:
   // Defined in src/controller.cpp — initialiser list references
@@ -330,25 +332,11 @@ public:
 
   void (*fSerialTxLog)(const char*) = nullptr;
 
-  void writeEol() {
-    if (params.serialeol == 0) {
-      SERIAL.write('\r');
-      SERIAL.write('\n');
-    } else {
-      SERIAL.write(params.serialeol);
-    }
-  }
+  void writeEol() { writeEolTo(SERIAL, params.serialeol); }
 
   void sendSerialString(const char *str) {
     if (fSerialTxLog) fSerialTxLog(str);
-    char ch;
-    while ((ch = *str++) != '\0') {
-      if (ch == params.serialdelim)
-        writeEol();
-      else
-        SERIAL.write(ch);
-    }
-    writeEol();
+    sendSerialStringTo(SERIAL, str, params.serialdelim, params.serialeol);
   }
 
   // Defined in src/controller.cpp — references servoDispatch, panservo,

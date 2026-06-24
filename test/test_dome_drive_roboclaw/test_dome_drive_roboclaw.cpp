@@ -805,6 +805,121 @@ void test_alt_stick_idle_when_primary_disconnected_and_alt_centred() {
     sAltStick.onDisconnect();
 }
 
+// ---- isHomed / getCurrentDegrees / goToAngle / goToRelative -----------------
+
+void test_isHomed_false_in_manual_state() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateManual);
+    TEST_ASSERT_FALSE(drive.isHomed());
+}
+
+void test_isHomed_true_in_homed_state() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    TEST_ASSERT_TRUE(drive.isHomed());
+}
+
+void test_isHomed_true_in_goto_angle_state() {
+    // Any state >= kStateHomed is considered homed.
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateGoToAngle);
+    TEST_ASSERT_TRUE(drive.isHomed());
+}
+
+void test_isHomed_true_in_random_state() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateRandom);
+    TEST_ASSERT_TRUE(drive.isHomed());
+}
+
+void test_getCurrentDegrees_returns_injected_value() {
+    auto drive = make_drive();
+    drive.setCurrentDegreesForTest(127);
+    TEST_ASSERT_EQUAL(127, drive.getCurrentDegrees());
+}
+
+void test_getCurrentDegrees_default_is_zero() {
+    auto drive = make_drive();
+    TEST_ASSERT_EQUAL(0, drive.getCurrentDegrees());
+}
+
+void test_goToAngle_ignored_when_not_homed() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateManual);
+    drive.setTicksPerRevForTest(1200);
+    drive.goToAngle(90);
+    // State must remain Manual — request was silently ignored.
+    TEST_ASSERT_EQUAL(DomeDriveRoboClaw::kStateManual, drive.getStateForTest());
+}
+
+void test_goToAngle_ignored_when_not_calibrated() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    // fTicksPerDomeRev stays 0 (not calibrated)
+    drive.goToAngle(90);
+    TEST_ASSERT_EQUAL(DomeDriveRoboClaw::kStateHomed, drive.getStateForTest());
+}
+
+void test_goToAngle_sets_state_and_target() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.goToAngle(180);
+    TEST_ASSERT_EQUAL(DomeDriveRoboClaw::kStateGoToAngle, drive.getStateForTest());
+    TEST_ASSERT_EQUAL(180, drive.getGoToTargetForTest());
+}
+
+void test_goToAngle_normalizes_360_to_zero() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.goToAngle(360);
+    TEST_ASSERT_EQUAL(0, drive.getGoToTargetForTest());
+}
+
+void test_goToAngle_normalizes_negative_to_positive() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.goToAngle(-90);
+    TEST_ASSERT_EQUAL(270, drive.getGoToTargetForTest());
+}
+
+void test_goToAngle_normalizes_large_value() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.goToAngle(450); // 450 - 360 = 90
+    TEST_ASSERT_EQUAL(90, drive.getGoToTargetForTest());
+}
+
+void test_goToRelative_adds_to_current_position() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.setCurrentDegreesForTest(45);
+    drive.goToRelative(90);
+    TEST_ASSERT_EQUAL(135, drive.getGoToTargetForTest());
+}
+
+void test_goToRelative_negative_wraps_correctly() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.setCurrentDegreesForTest(30);
+    drive.goToRelative(-60); // 30 - 60 = -30 → 330
+    TEST_ASSERT_EQUAL(330, drive.getGoToTargetForTest());
+}
+
+void test_goToRelative_crosses_360_boundary() {
+    auto drive = make_drive();
+    drive.setStateForTest(DomeDriveRoboClaw::kStateHomed);
+    drive.setTicksPerRevForTest(1200);
+    drive.setCurrentDegreesForTest(300);
+    drive.goToRelative(90); // 300 + 90 = 390 → 30
+    TEST_ASSERT_EQUAL(30, drive.getGoToTargetForTest());
+}
+
 // ---- main -------------------------------------------------------------------
 
 int main(int argc, char **argv) {
@@ -931,6 +1046,22 @@ int main(int argc, char **argv) {
     RUN_TEST(test_alt_stick_used_when_primary_disconnected);
     RUN_TEST(test_primary_stick_takes_priority_over_alt);
     RUN_TEST(test_alt_stick_idle_when_primary_disconnected_and_alt_centred);
+
+    RUN_TEST(test_isHomed_false_in_manual_state);
+    RUN_TEST(test_isHomed_true_in_homed_state);
+    RUN_TEST(test_isHomed_true_in_goto_angle_state);
+    RUN_TEST(test_isHomed_true_in_random_state);
+    RUN_TEST(test_getCurrentDegrees_returns_injected_value);
+    RUN_TEST(test_getCurrentDegrees_default_is_zero);
+    RUN_TEST(test_goToAngle_ignored_when_not_homed);
+    RUN_TEST(test_goToAngle_ignored_when_not_calibrated);
+    RUN_TEST(test_goToAngle_sets_state_and_target);
+    RUN_TEST(test_goToAngle_normalizes_360_to_zero);
+    RUN_TEST(test_goToAngle_normalizes_negative_to_positive);
+    RUN_TEST(test_goToAngle_normalizes_large_value);
+    RUN_TEST(test_goToRelative_adds_to_current_position);
+    RUN_TEST(test_goToRelative_negative_wraps_correctly);
+    RUN_TEST(test_goToRelative_crosses_360_boundary);
 
     return UNITY_END();
 }

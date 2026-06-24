@@ -435,6 +435,12 @@ public:
     State   getStateForTest()            const { return fState; }
     /// Directly exercise the full checkObstruction() wrapper.
     void    testCheckObstruction() { checkObstruction(); }
+    /// Inject current dome angle for goToAngle / getCurrentDegrees tests.
+    void    setCurrentDegreesForTest(int d)  { fCurrentDegrees = d; }
+    /// Inject calibration ticks-per-rev so isCalibrated() returns true.
+    void    setTicksPerRevForTest(int32_t t) { fTicksPerDomeRev = t; }
+    /// Read back the target set by the most recent goToAngle() call.
+    int     getGoToTargetForTest()     const { return fGoToTargetDegrees; }
 private:
     int32_t fMockEncoderSpeed = 0;
 #endif
