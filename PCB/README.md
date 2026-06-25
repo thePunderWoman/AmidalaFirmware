@@ -22,24 +22,22 @@ The AmidalaShield is a carrier/breakout board for the **ESP32-S3 N16R8 DevKit**.
 ## Hardware Features
 
 ### Wireless Communication
-- **2× XBee3 module sockets** for dual-controller operation (drive + dome)
+- **XBee3 module socket** for dual-controller operation (drive + dome)
 
 ### Servo Control
-- **8× PWM servo outputs** — 3-pin headers (signal, power, ground)
+- **4× PWM servo outputs** — 3-pin headers (signal, power, ground)
 
 ### Serial Ports
 - **2× hardware serial ports** — UART0 (shared with USB/programming) and UART1
 - **1× software serial port** — for additional peripherals
 
 ### I/O
-- **6× digital I/O pins**
+- **4× digital I/O pins**
 - **2× analog input pins**
 - **1× Aux I2C header** — for external I2C devices
 
 ### RC Control
 - **PPM input (ppmin)** — for analog RC receiver
-- **RC select (rcsel)** — RC source selection
-- **sel2** — secondary selection/mode pin
 
 ### Storage
 - **Built-in microSD card reader** — used for `config.txt` at startup (matches Amidala Firmware config system)
