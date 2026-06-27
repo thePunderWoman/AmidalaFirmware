@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amidala Firmware Wizards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #63b3ed;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 0.6rem;
+      color: #94a3b8;
+      font-size: 1rem;
+    }
+
+    .wizard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .wizard-card {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 2rem;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .wizard-card:not(.disabled):hover {
+      border-color: #63b3ed;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .wizard-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .wizard-icon {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .wizard-card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .wizard-card p {
+      font-size: 0.875rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .wizard-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      align-self: flex-start;
+    }
+
+    .badge-ready {
+      background: rgba(104, 211, 145, 0.15);
+      border: 1px solid rgba(104, 211, 145, 0.4);
+      color: #68d391;
+    }
+
+    .badge-soon {
+      background: rgba(246, 173, 85, 0.15);
+      border: 1px solid rgba(246, 173, 85, 0.4);
+      color: #f6ad55;
+    }
+
+    .wizard-arrow {
+      color: #4a5568;
+      font-size: 1.1rem;
+      transition: color 0.2s;
+      align-self: flex-end;
+    }
+
+    .wizard-card:not(.disabled):hover .wizard-arrow {
+      color: #63b3ed;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Amidala Firmware Wizards</h1>
+    <p>Tools for setting up and configuring your R2 droid</p>
+  </header>
+
+  <div class="wizard-grid">
+
+    <a href="config-converter/" class="wizard-card">
+      <div class="wizard-icon">🔄</div>
+      <h2>Config Converter</h2>
+      <p>Migrate an existing Stealth RC or OG Amidala config file to the current Amidala firmware format.</p>
+      <div class="wizard-badge badge-ready">Ready</div>
+      <div class="wizard-arrow">→</div>
+    </a>
+
+    <div class="wizard-card disabled">
+      <div class="wizard-icon">⚡</div>
+      <h2>Firmware Installer</h2>
+      <p>Build and flash Amidala firmware directly to an ESP32 S3 devkit connected via USB — no toolchain required.</p>
+      <div class="wizard-badge badge-soon">Coming soon</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
