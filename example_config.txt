@@ -1,8 +1,7 @@
-#START
 # --- XBEE Configuration ---
 # Unique serial numbers for the XBEE modules (Lower 32-bits in Hex)
-xbr=40C8CCB0
-xbl=40C8CCC4
+xbr=4270E54D
+xbl=4270E3F7
 
 # --- Joystick Analog Calibration ---
 # Reference voltages for analog stick limits (0-1024)
@@ -40,30 +39,8 @@ ackem=0
 acklvl=0
 
 # --- General System Settings ---
-# Global Volume (0-100). Sets the initial volume for the HCR voice channel and,
-# if volumeChA/volumeChB are not overridden, all HCR channels.
+# Global Volume (0-100)
 volume=50
-# HCR Channel A initial volume (0-100). Defaults to volume= if not set.
-# Useful when wav files are louder than voice — set lower than volume= to balance.
-#volumeChA=50
-# HCR Channel B initial volume (0-100). Defaults to volume= if not set.
-#volumeChB=50
-# Which channel the volume wheel controls:
-#   0 = global (all three HCR channels simultaneously, default)
-#   1 = voice only (CH_V)
-#   2 = channel A only (CH_A)
-#   3 = channel B only (CH_B)
-#   4 = channel A + channel B together (leaves voice independent)
-# Has no effect when using VMusic audio.
-#volumewheel=0
-# Which channel is controlled when the alt button is held and the volume wheel turns.
-#   0 = fall through to volumewheel= behaviour (default, no separate alt channel)
-#   1 = voice only (CH_V)
-#   2 = channel A only (CH_A)
-#   3 = channel B only (CH_B)
-#   4 = channel A + channel B together (leaves voice independent)
-# Only active when altbtn= is configured and audiohw=hcr.
-#altvolumewheel=0
 # Startup Sound: Play a sound when the robot boots (y/n)
 startup=y
 # Random Sounds: Start in random sound mode on boot (y/n)
@@ -101,7 +78,7 @@ domespeed=100
 # Dome Home position in degrees (0-360)
 domehome=50
 # Dome rotation inversion (y/n)
-domeflip=n
+domeflip=y
 # Dome Fudge Factor: Dead zone around target position in degrees (1-45).
 # Larger values prevent wobble at the cost of positional precision.
 domefudge=10
@@ -112,8 +89,8 @@ domespeedseek=60
 # Lower values allow gentler final approach and reduce overshoot.
 domespeedmin=5
 # Delays between movements (Seconds)
-domeseekmin=6
-domeseekmax=20
+domeseekmin=8
+domeseekmax=25
 # Rotation range for seeking (Degrees)
 domeseekl=40
 domeseekr=40
@@ -146,23 +123,8 @@ s=1,0,180,90,4,0,50,0
 s=2,0,180,90,4,0,50,0
 s=3,0,180,90,4,0,50,0
 s=4,50,130,90,4,0,50,1
-
-# --- Sound Bank Configuration ---
-# Format: sb=dir,numfiles
-sb=gen,16
-sb=chat,22
-sb=sad,11
-sb=raspb,1
-sb=whis,12
-sb=scream,4
-sb=warn,2
-sb=short,1
-sb=leia,1
-sb=vader,1
-sb=sw,1
-sb=dance,2
-sb=cant,1
-sb=leial,1
+s=5,0,180,90,10,0,50,0
+s=6,0,180,90,10,0,50,0
 
 # --- Serial String Definitions ---
 # Format: sstr=Name|string_here
@@ -170,33 +132,6 @@ sb=leial,1
 #   displays.  The string after | is what gets sent over serial to child boards.
 #   Strings are 1-indexed and read in the order they appear.
 
-sstr=Sad (Moderate)|<SS0>
-sstr=Scared (Moderate)|<SC0>
-sstr=Mad (Moderate)|<SM0>
-sstr=Very Mad (Strong)|<SM1>
-sstr=Very Happy (Strong)|<SH1>
-sstr=Overload|<SE>
-sstr=Toggle Mute|BD:VOL
-sstr=Vader|BD:VADER
-sstr=Utility Arms|BD:UARMS
-sstr=Toggle Musing|BD:MUSE
-sstr=Reset All|DM:RESET
-sstr=Pie Panels|DM:PIES
-sstr=Low Panels|DM:LOW
-sstr=All Panels|DM:OPENALL
-sstr=Leia Sequence|DM:LEIA
-sstr=Heart Sequence|DM:HEART
-sstr=Hello There|DM:HELLO
-sstr=Scream|DM:SCREAM
-sstr=Panel Flutter|DM:FLUTTER
-sstr=Overload Sequence|DM:OVERLOAD
-sstr=Body Panels|BD:CBIDATADOOR
-sstr=Alarm|DM:ALARM
-sstr=Cantina|DM:CANTINA
-sstr=Bloom|DM:BLOOM
-sstr=Random|DM:RANDOM
-sstr=Disco|DM:DISCO
-sstr=Rock March|DM:ROCKMARCH
 
 # --- Button Mappings ---
 # Two mappings are available per button:
@@ -278,14 +213,8 @@ sstr=Rock March|DM:ROCKMARCH
 ## left controller upper left button is alt button
 altbtn=7
 altdomestick=1
-# Mute button: double-pressing this button within 400ms toggles HCR mute (sets
-# all channels to 0, or restores saved volumes when unmuting).  Uses the same
-# button numbering as altbtn (1-5 = drive stick, 6-9 = dome stick).
-# Can be the same button as altbtn — a quick double-tap fires mute while
-# holding acts as the alt modifier.
-# Moving the volume wheel while muted automatically unmutes.
-# 0 = disabled (default).
-#mutebutton=0
+volumewheel=1
+altvolumewheel=2
 
 # lb=1,
 # lb=2,
@@ -295,7 +224,7 @@ altdomestick=1
 lb=5,5,11
 # Rock March
 lb=3,5,27
-# Rock March
+# Disco
 lb=4,5,26
 
 # Hello There
@@ -332,7 +261,6 @@ ab=8,5,18
 # Cantina (Scared Strong)
 ab=9,5,23
 
-
 # --- Gesture Mappings (Stick Movements) ---
 # Format: g=GestureString,Action,Arg1,Arg2
 # Actions: 5=SerStr, 7=HCREmote(emotion,level), 8=HCRMuseToggle, 9=DomeCmd(subcmd,angle)
@@ -349,4 +277,32 @@ g=8,5,13
 # All Panels Open / Close
 g=858,5,14
 
-#END
+sstr=Sad (Moderate)|<SS0>
+sstr=Scared (Moderate)|<SC0>
+sstr=Mad (Moderate)|<SM0>
+sstr=Very Mad (Strong)|<SM1>
+sstr=Very Happy (Strong)|<SH1>
+sstr=Overload Audio Only|<SE>
+sstr=Toggle Mute|BD:VOL
+sstr=Vader|BD:VADER
+sstr=Utility Arms|BD:UARMS
+sstr=Toggle Musing|BD:MUSE
+sstr=Reset All|DM:RESET
+sstr=Pie panels|DM:PIES
+sstr=Low Panels|DM:LOW
+sstr=All Panels|DM:OPENALL
+sstr=Leia Sequence|DM:LEIA
+sstr=Heart Sequence|DM:HEART
+sstr=Hello There|DM:HELLO
+sstr=Scream|DM:SCREAM
+sstr=Flutter|DM:FLUTTER
+sstr=Overload Sequence|DM:OVERLOAD
+sstr=Body Panels|BD:CBIDATADOOR
+sstr=Alarm|DM:ALARM
+sstr=Cantina|DM:CANTINA
+sstr=Bloom|DM:BLOOM
+sstr=Random|DM:RANDOM
+sstr=Disco|DM:DISCO
+sstr=Rock March|DM:ROCKMARCH
+
+gadget=0,2

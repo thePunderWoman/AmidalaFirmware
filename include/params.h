@@ -89,7 +89,7 @@ struct AmidalaParameters {
   ButtonAction LB[9];
   ButtonAction AB[9];   // Alt-button layer (dispatched when altbtn is held)
   GestureAction G[MAX_GESTURES];
-  DigitalOut D[4];
+  DigitalOut D[8];
   SerialString Str[MAX_SERIAL_STRINGS];
   uint8_t serialcount;
   uint8_t gcount;

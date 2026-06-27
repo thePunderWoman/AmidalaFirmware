@@ -196,6 +196,46 @@ void test_altbtn_and_altdomestick_are_distinct_addresses() {
     TEST_ASSERT_NOT_EQUAL((void*)&p.altdomestick, (void*)&p.domestall);
 }
 
+// ---- D[] / Str[] layout: no overlap -----------------------------------------
+// Regression: D[] was declared D[4] but setDigitalPin/getDigitalPin access
+// indices 0..7 (pins 1..8).  D[4..7] overflowed into Str[0], zeroing
+// Str[0].name[0] and making the first serial string name appear empty in the UI.
+
+void test_dout_array_does_not_overlap_str() {
+    AmidalaParameters p;
+    char* d_end   = (char*)&p.D[0] + sizeof(p.D);     // first byte past D[]
+    char* str_beg = (char*)&p.Str[0];                  // first byte of Str[]
+    // D[] must end at or before Str[] begins — no overlap allowed.
+    TEST_ASSERT_TRUE_MESSAGE(d_end <= str_beg,
+        "D[] overlaps Str[0]: D[4..7] would corrupt Str[0].name");
+}
+
+void test_dout_all_eight_pins_fit() {
+    // The firmware uses pin numbers 1..8 → indices 0..7.
+    // Verify the array is large enough so no out-of-bounds write occurs.
+    AmidalaParameters p;
+    TEST_ASSERT_EQUAL_MESSAGE(8, (int)(sizeof(p.D) / sizeof(p.D[0])),
+        "D[] must hold 8 entries for pin indices 0..7");
+}
+
+void test_dout_write_does_not_corrupt_sstr_name() {
+    // Simulate what setup() does: write false to D[4..7] (pins 5..8).
+    // Before the fix this zeroed Str[0].name[0], making the first serial
+    // string appear unnamed in the web UI on every boot.
+    AmidalaParameters p;
+    memset(&p, 0, sizeof(p));
+    strncpy(p.Str[0].name, "Sad (Moderate)", sizeof(p.Str[0].name) - 1);
+    p.Str[0].name[sizeof(p.Str[0].name) - 1] = '\0';
+
+    // Write false to D[4..7] as setDigitalPin(5..8, false) does
+    p.D[4].state = false;
+    p.D[5].state = false;
+    p.D[6].state = false;
+    p.D[7].state = false;
+
+    TEST_ASSERT_EQUAL_STRING("Sad (Moderate)", p.Str[0].name);
+}
+
 // ---- EEPROM serial number load (DB01 signature) -----------------------------
 
 void test_eeprom_serial_loaded_when_db01_signature_present() {
@@ -301,6 +341,10 @@ int main(int argc, char **argv) {
     RUN_TEST(test_default_altbtn_is_zero);
     RUN_TEST(test_default_altdomestick_is_zero);
     RUN_TEST(test_altbtn_and_altdomestick_are_distinct_addresses);
+
+    RUN_TEST(test_dout_array_does_not_overlap_str);
+    RUN_TEST(test_dout_all_eight_pins_fit);
+    RUN_TEST(test_dout_write_does_not_corrupt_sstr_name);
 
     RUN_TEST(test_eeprom_serial_loaded_when_db01_signature_present);
     RUN_TEST(test_eeprom_serial_not_loaded_when_no_signature);

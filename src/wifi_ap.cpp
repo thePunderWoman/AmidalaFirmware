@@ -631,7 +631,7 @@ static void handleApiConfigPost() {
             sServer.send(400, "text/plain", "invalid servo config"); return;
         }
         bool ok = rewriteServos();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -663,7 +663,7 @@ static void handleApiConfigPost() {
         }
         bool ok = rewriteSerialStrings();
         if (gadgetsDirty) rewriteGadgetConfig();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "deleted but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — delete applied in memory only");
         return;
     }
 
@@ -696,7 +696,7 @@ static void handleApiConfigPost() {
         }
         setSerialStringFields(sCtrl->params.Str[idx], value.c_str());
         bool ok = rewriteSerialStrings();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -711,7 +711,7 @@ static void handleApiConfigPost() {
         memset(&sCtrl->params.SB[sCtrl->params.sbcount - 1], 0, sizeof(AmidalaParameters::SoundBank));
         sCtrl->params.sbcount--;
         bool ok = rewriteSoundBanks();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "deleted but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — delete applied in memory only");
         return;
     }
 
@@ -738,7 +738,7 @@ static void handleApiConfigPost() {
         if (idx == (int)sCtrl->params.sbcount)
             sCtrl->params.sbcount++;
         bool ok = rewriteSoundBanks();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -756,7 +756,7 @@ static void handleApiConfigPost() {
             memset(&sCtrl->params.B[idx], 0, sizeof(ButtonAction));
             bool ok  = updateConfigFile("altbtn", String(btnNum).c_str());
             bool ok2 = rewriteButtons();
-            sServer.send((ok && ok2) ? 200 : 207, "text/plain", (ok && ok2) ? "OK" : "applied but SD write failed");
+            sServer.send((ok && ok2) ? 200 : 500, "text/plain", (ok && ok2) ? "OK" : "SD write failed — change applied in memory only");
             return;
         }
         if (value == "mutebutton") {
@@ -764,7 +764,7 @@ static void handleApiConfigPost() {
             memset(&sCtrl->params.B[idx], 0, sizeof(ButtonAction));
             bool ok  = updateConfigFile("mutebutton", String(btnNum).c_str());
             bool ok2 = rewriteButtons();
-            sServer.send((ok && ok2) ? 200 : 207, "text/plain", (ok && ok2) ? "OK" : "applied but SD write failed");
+            sServer.send((ok && ok2) ? 200 : 500, "text/plain", (ok && ok2) ? "OK" : "SD write failed — change applied in memory only");
             return;
         }
 
@@ -778,7 +778,7 @@ static void handleApiConfigPost() {
                           :                     sCtrl->params.B;
         parseButtonAction(arr[idx], value);
         bool ok = rewriteButtons();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -793,7 +793,7 @@ static void handleApiConfigPost() {
         memset(&sCtrl->params.G[sCtrl->params.gcount - 1], 0, sizeof(GestureAction));
         sCtrl->params.gcount--;
         bool ok = rewriteGestures();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "deleted but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — delete applied in memory only");
         return;
     }
 
@@ -811,7 +811,7 @@ static void handleApiConfigPost() {
         parseButtonAction(g.action, act);
         sCtrl->params.gcount++;
         bool ok = rewriteGestures();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -827,7 +827,7 @@ static void handleApiConfigPost() {
         sCtrl->params.G[idx].gesture.setGesture(seq.c_str());
         parseButtonAction(sCtrl->params.G[idx].action, act);
         bool ok = rewriteGestures();
-        sServer.send(ok ? 200 : 207, "text/plain", ok ? "OK" : "applied but SD write failed");
+        sServer.send(ok ? 200 : 500, "text/plain", ok ? "OK" : "SD write failed — change applied in memory only");
         return;
     }
 
@@ -926,7 +926,7 @@ static void handleApiConfigPost() {
         return;
     }
     if (!updateConfigFile(key.c_str(), value.c_str())) {
-        sServer.send(207, "text/plain", "applied but SD write failed");
+        sServer.send(500, "text/plain", "SD write failed — change applied in memory only");
         return;
     }
     sServer.send(200, "text/plain", "OK");
