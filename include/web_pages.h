@@ -5029,6 +5029,9 @@ footer a:hover { opacity: 1; }
 .btn-add{background:none;border:1px solid var(--border);color:var(--text);padding:.4rem 1.2rem;font-family:inherit;font-size:.8rem;letter-spacing:.12em;cursor:pointer;border-radius:4px;transition:border-color .15s,color .15s}
 .btn-add:hover{border-color:var(--accent);color:var(--accent)}
 #empty{color:var(--muted);font-size:.8rem;padding:1rem 0;letter-spacing:.1em}
+#filter-bar{max-width:820px;margin:0 auto;padding:.65rem 0 0}
+#sstr-filter{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.4rem .6rem;font-family:inherit;font-size:.83rem;box-sizing:border-box;border-radius:4px}
+#sstr-filter:focus{outline:none;border-color:var(--accent)}
 .cat-mgr{margin-top:1.4rem;padding-top:1rem;border-top:1px solid var(--border)}
 .cat-mgr-hdr{font:600 .68rem/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
 .cat-row{display:flex;align-items:center;gap:.6rem;padding:.35rem 0;border-bottom:1px solid var(--border)}
@@ -5044,6 +5047,9 @@ footer a:hover { opacity: 1; }
 <div class="page-header">
   <a class="back" href="/">&#9664; BACK</a>
   <div class="page-title"><span class="dot"></span><span class="label">Serial Commands</span><span class="dot"></span></div>
+</div>
+<div id="filter-bar" hidden>
+  <input type="search" id="sstr-filter" placeholder="Filter commands…" oninput="render()">
 </div>
 <main id="main">
   <div id="status">LOADING&#8230;</div>
@@ -5388,6 +5394,7 @@ function editRow(i, name, s, cat, fav, hid) {
     +'</div>'
     +'</div>'
     +'<div class="ss-acts">'
+    +'<button class="be" onclick="sendCurrent()" title="Send to droid">&#9654;</button>'
     +'<button class="bs" onclick="'+onSave+'" title="Save">&#10003;</button>'
     +'<button class="bc" onclick="cancelEdit()" title="Cancel">&#10005;</button>'
     +'</div>'
@@ -5395,11 +5402,21 @@ function editRow(i, name, s, cat, fav, hid) {
 }
 
 function render() {
+  var filterBar = document.getElementById('filter-bar');
+  if (filterBar) filterBar.hidden = (_d.length === 0 && !_isNew);
+  var filterEl = document.getElementById('sstr-filter');
+  var q = filterEl ? filterEl.value.trim().toLowerCase() : '';
+
   var h = '';
   if (_d.length === 0 && !_isNew) {
     h += '<div id="empty">No serial commands yet.</div>';
   } else {
+    var anyVisible = false;
     _d.forEach(function(row, i) {
+      if (q && i !== _ed &&
+          row.n.toLowerCase().indexOf(q) < 0 &&
+          row.s.toLowerCase().indexOf(q) < 0) return;
+      anyVisible = true;
       var ob  = i+1;
       var cat = catForIdx(ob);
       var fav = _favs.indexOf(ob) >= 0;
@@ -5419,18 +5436,36 @@ function render() {
         h += '</div>'
           +'</div>'
           +'<div class="ss-acts">'
+          +'<button class="be" onclick="sendStr(_d['+i+'].s)" title="Send to droid">&#9654;</button>'
           +'<button class="be" onclick="startRowEdit('+i+')" title="Edit">&#9998;</button>'
           +'<button class="bd" onclick="delStr('+i+')" title="Delete">&#10005;</button>'
           +'</div>'
           +'</div>';
       }
     });
+    if (q && !anyVisible) h += '<div id="empty">No commands match &ldquo;'+esc(q)+'&rdquo;.</div>';
   }
   if (_isNew) h += editRow(-1,'','','',false,false);
   h += '<div class="add-row"><button class="btn-add" onclick="addStr()">+ Add Command</button></div>';
   h += renderCategories();
   document.getElementById('main').innerHTML = h;
   if (_ed >= 0 || _isNew) { var el=document.getElementById('ed-name'); if(el) el.focus(); }
+}
+
+function sendStr(s) {
+  fetch('/api/gadget-cmd', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'cmd=' + encodeURIComponent(s)
+  }).then(function(r) { showToast(r.ok ? 'Sent' : 'Failed', !r.ok); })
+    .catch(function() { showToast('Network error', true); });
+}
+
+function sendCurrent() {
+  var el = document.getElementById('ed-val');
+  var s = el ? el.value.trim() : '';
+  if (!s) { showToast('No string to send', true); return; }
+  sendStr(s);
 }
 
 function startRowEdit(i){ _ed=i; _isNew=false; render(); }
@@ -5914,19 +5949,6 @@ footer a:hover { opacity: 1; }
 .cmd-ref-table td:last-child{color:var(--muted)}
 .ref-group-hdr{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:.6rem 0 .2rem;border-top:1px solid var(--border);padding-top:.5rem}
 .ref-group-hdr:first-of-type{border-top:none;padding-top:0}
-/* Periscope sequence management */
-.pseq-row{display:flex;align-items:center;gap:.5rem;padding:.3rem 0;border-bottom:1px solid var(--border)}
-.pseq-slot{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.72rem;color:var(--accent);min-width:2rem;flex-shrink:0}
-.pseq-name{flex:1;font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pseq-seq{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:14rem}
-.pseq-acts{display:flex;gap:.2rem;flex-shrink:0}
-.pseq-del{background:none;border:none;color:var(--muted);font-size:.85rem;padding:.1rem .3rem;cursor:pointer;opacity:.7}
-.pseq-del:hover{opacity:1;color:var(--danger)}
-.pseq-new{margin-top:.5rem}
-.pseq-inputs{display:grid;grid-template-columns:3rem 1fr 1fr;gap:.4rem;margin-bottom:.4rem}
-.pseq-inputs input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.3rem .5rem;font-family:inherit;font-size:.78rem;border-radius:4px;width:100%;box-sizing:border-box}
-.pseq-inputs input:focus{outline:none;border-color:var(--accent)}
-.pseq-inputs input.mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
 </style>
 <script>!function(){var t=localStorage.getItem("amidala-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");document.documentElement.dataset.theme=t}()</script>
 </head>
@@ -6218,7 +6240,6 @@ function buildPage(SCHEMA, endpoint, callback) {
 </script>
 <script>
 var _cfg = null;
-var _periscope_seqs = {};  // slot_str -> {name, seq}
 
 // Commands automatically included for the Uppity Spinner periscope.
 // These appear in droid control and as button assignment options.
@@ -6300,11 +6321,8 @@ function gadgetCmdPost(cmd) {
 }
 
 function load() {
-  var p1 = fetch('/api/config').then(function(r) { return r.json(); });
-  var p2 = fetch('/api/periscope/seqs').then(function(r) { return r.json(); }).catch(function() { return {}; });
-  Promise.all([p1, p2]).then(function(results) {
-    _cfg = results[0];
-    _periscope_seqs = results[1] || {};
+  fetch('/api/config').then(function(r) { return r.json(); }).then(function(d) {
+    _cfg = d;
     render();
   }).catch(function() { document.getElementById('status').textContent = 'Failed to load.'; });
 }
@@ -6347,41 +6365,6 @@ function render() {
         });
         h += '</table>';
       });
-      h += '</div>';
-
-      // Custom sequences
-      h += '<div class="sstr-section">';
-      h += '<div class="sstr-label">Custom Sequences</div>';
-      h += '<div style="font-size:.7rem;color:var(--muted);margin-bottom:.5rem">Sequences stored on the periscope (slots 0–100). Trigger with <span style="font-family:ui-monospace,monospace">:PS&lt;n&gt;</span>.</div>';
-
-      var seqSlots = Object.keys(_periscope_seqs).sort(function(a,b){ return parseInt(a)-parseInt(b); });
-      if (seqSlots.length > 0) {
-        seqSlots.forEach(function(slot) {
-          var seq = _periscope_seqs[slot];
-          h += '<div class="pseq-row">';
-          h += '<span class="pseq-slot">#' + slot + '</span>';
-          h += '<span class="pseq-name">' + esc(seq.name || seq.seq) + '</span>';
-          h += '<span class="pseq-seq">' + esc(seq.seq) + '</span>';
-          h += '<div class="pseq-acts">';
-          h += '<button class="sstr-add-btn" onclick="triggerPseq(' + slot + ')" title="Run">&#9654;</button>';
-          h += '<button class="pseq-del" onclick="deletePseq(' + slot + ')" title="Delete">&#10005;</button>';
-          h += '</div>';
-          h += '</div>';
-        });
-      } else {
-        h += '<div class="sstr-empty">No custom sequences stored yet.</div>';
-      }
-
-      h += '<div class="pseq-new">';
-      h += '<div class="sstr-label" style="margin-top:.5rem">Store New Sequence</div>';
-      h += '<div class="pseq-inputs">';
-      h += '<input type="number" id="pseq-slot" min="0" max="100" placeholder="Slot" style="text-align:center">';
-      h += '<input type="text"   id="pseq-name" placeholder="Label (optional)">';
-      h += '<input type="text"   id="pseq-seq"  placeholder="Sequence, e.g. PP100:PH" class="mono">';
-      h += '</div>';
-      h += '<button class="sstr-add-btn" onclick="storePseq()">&#43; Store Sequence</button>';
-      h += '</div>';
-
       h += '</div>';
 
       // Calibration / setup buttons
@@ -6440,47 +6423,6 @@ function render() {
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function triggerPseq(slot) {
-  gadgetCmdPost(':PS' + slot);
-}
-
-function storePseq() {
-  var slotEl = document.getElementById('pseq-slot');
-  var nameEl = document.getElementById('pseq-name');
-  var seqEl  = document.getElementById('pseq-seq');
-  if (!slotEl || !seqEl) return;
-  var slot = slotEl.value.trim();
-  var name = (nameEl ? nameEl.value.trim() : '');
-  var seq  = seqEl.value.trim();
-  if (!slot || !seq) { showToast('Slot and sequence required', true); return; }
-  var n = parseInt(slot, 10);
-  if (isNaN(n) || n < 0 || n > 100) { showToast('Slot must be 0–100', true); return; }
-  fetch('/api/periscope/seq', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'slot=' + n + '&name=' + encodeURIComponent(name) + '&seq=' + encodeURIComponent(seq)
-  }).then(function(r) {
-    if (!r.ok) { showToast('Failed to store', true); return; }
-    _periscope_seqs[String(n)] = {name: name, seq: seq};
-    render();
-    showToast('Sequence stored');
-  }).catch(function() { showToast('Network error', true); });
-}
-
-function deletePseq(slot) {
-  if (!confirm('Delete sequence #' + slot + '?')) return;
-  fetch('/api/periscope/seq/delete', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-    body: 'slot=' + slot
-  }).then(function(r) {
-    if (!r.ok) { showToast('Delete failed', true); return; }
-    delete _periscope_seqs[String(slot)];
-    render();
-    showToast('Deleted');
-  }).catch(function() { showToast('Network error', true); });
 }
 
 function apiPost(key, value, cb) {
@@ -9053,7 +8995,19 @@ function renderGadgets() {
       });
     });
 
-    if (slots.length === 0 && catItems.length === 0) {
+    if (i === 0 && g.type === 2) {
+      // Periscope (Uppity Spinner): show serial commands categorized as "Periscope"
+      if (catItems.length === 0) {
+        h += '<div style="padding:.3rem 0 .6rem;color:var(--muted);font-size:.78rem">No commands yet. Create serial commands and set their category to <strong>Periscope</strong> in <a href="/config/serial-strings">Serial Commands</a>.</div>';
+      } else {
+        h += '<div class="cmd-grid">';
+        catItems.sort(function(a, b) { return a.s.n.toLowerCase() < b.s.n.toLowerCase() ? -1 : 1; });
+        catItems.forEach(function(item) {
+          h += '<button class="grid-btn" onclick="serialPost(' + item.idx + ')">' + esc(item.s.n) + '</button>';
+        });
+        h += '</div>';
+      }
+    } else if (slots.length === 0 && catItems.length === 0) {
       h += '<div style="padding:.3rem 0 .6rem;color:var(--muted);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a> or set category in <a href="/config/serial-strings">Serial Commands</a>.</div>';
     } else {
       h += '<div class="cmd-grid">';

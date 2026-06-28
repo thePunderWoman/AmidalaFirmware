@@ -217,6 +217,6 @@ struct GestureAction {
 // ---- SerialString -----------------------------------------------------------
 
 struct SerialString {
-  char name[32]; // human-readable label (e.g. "Leia Sequence")
-  char str[32];  // serial string to send (e.g. ":LD00")
+  char name[32];  // human-readable label (e.g. "Leia Sequence")
+  char str[100];  // serial string to send (e.g. ":LD00")
 };
