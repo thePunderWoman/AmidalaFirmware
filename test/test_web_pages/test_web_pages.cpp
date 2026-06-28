@@ -232,6 +232,17 @@ void test_serial_strings_page_has_add_and_delete_ui() {
     TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "confirm"));
 }
 
+void test_serial_strings_page_has_send_button() {
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "sendStr"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "sendCurrent"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "/api/gadget-cmd"));
+}
+
+void test_serial_strings_page_has_filter_bar() {
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "sstr-filter"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_SERIAL_STRINGS, "Filter commands"));
+}
+
 // ---------------------------------------------------------------------------
 // buildFullConfigJson — JSON content
 // ---------------------------------------------------------------------------
@@ -467,6 +478,18 @@ void test_gadgets_page_has_uppity_ops_and_cfg_commands() {
 
 void test_gadgets_page_has_droid_control_link() {
     TEST_ASSERT_TRUE(contains(WEB_PAGE_GADGETS, "/droid-control"));
+}
+
+void test_gadgets_page_has_no_sequence_store_endpoint() {
+    // Sequence storage was removed — Uppity holds sequences in its own EEPROM
+    TEST_ASSERT_FALSE(contains(WEB_PAGE_GADGETS, "/api/periscope/seq"));
+}
+
+void test_droid_control_periscope_uses_category_filter() {
+    // Periscope gadget tab shows serial commands categorized as "Periscope"
+    // via the existing isGadgetCat mechanism, not hardcoded button lists
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_DROID_CONTROL, "isGadgetCat"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_DROID_CONTROL, "catItems"));
 }
 
 // ---------------------------------------------------------------------------
@@ -761,6 +784,8 @@ int main(int /*argc*/, char** /*argv*/) {
     RUN_TEST(test_servos_page_has_edit_ui);
     RUN_TEST(test_serial_strings_page_uses_config_endpoint);
     RUN_TEST(test_serial_strings_page_has_add_and_delete_ui);
+    RUN_TEST(test_serial_strings_page_has_send_button);
+    RUN_TEST(test_serial_strings_page_has_filter_bar);
     RUN_TEST(test_serial_strings_page_respects_user_cnt);
 
     // Gadgets config page
@@ -769,6 +794,7 @@ int main(int /*argc*/, char** /*argv*/) {
     RUN_TEST(test_gadgets_page_has_periscope_and_uppity_spinner);
     RUN_TEST(test_gadgets_page_has_uppity_ops_and_cfg_commands);
     RUN_TEST(test_gadgets_page_has_droid_control_link);
+    RUN_TEST(test_gadgets_page_has_no_sequence_store_endpoint);
 
     // Safety page
     RUN_TEST(test_safety_page_uses_config_endpoint);
@@ -781,6 +807,7 @@ int main(int /*argc*/, char** /*argv*/) {
     // Droid control page
     RUN_TEST(test_droid_control_page_uses_config_endpoint);
     RUN_TEST(test_droid_control_page_has_three_tabs);
+    RUN_TEST(test_droid_control_periscope_uses_category_filter);
 
     // buildFullConfigJson
     RUN_TEST(test_full_config_json_wraps_in_braces);

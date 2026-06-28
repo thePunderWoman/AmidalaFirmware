@@ -420,7 +420,20 @@ void test_gesture_action_prints_gesture_then_action() {
 // ---- SerialString -----------------------------------------------------------
 
 void test_serial_string_capacity() {
-    TEST_ASSERT_EQUAL(32, sizeof(SerialString::str));
+    // str must hold long Uppity sequences (e.g. "#PS8:H:P50:W2:P85,35:A90,25:W2:A270,20,100:W2:P100,100:L5:R50:W4:H" = 67 chars)
+    TEST_ASSERT_EQUAL(100, sizeof(SerialString::str));
+    // name field unchanged
+    TEST_ASSERT_EQUAL(32, sizeof(SerialString::name));
+}
+
+void test_serial_string_holds_long_uppity_sequence() {
+    SerialString s;
+    const char* longSeq = "#PS8:H:P50:W2:P85,35:A90,25:W2:A270,20,100:W2:P100,100:L5:R50:W4:H";
+    TEST_ASSERT_TRUE_MESSAGE(strlen(longSeq) < sizeof(s.str),
+        "Long Uppity sequence must fit in SerialString::str");
+    strncpy(s.str, longSeq, sizeof(s.str) - 1);
+    s.str[sizeof(s.str) - 1] = '\0';
+    TEST_ASSERT_EQUAL_STRING(longSeq, s.str);
 }
 
 // ---- main -------------------------------------------------------------------
@@ -468,6 +481,7 @@ int main(int argc, char **argv) {
     RUN_TEST(test_gesture_action_prints_gesture_then_action);
 
     RUN_TEST(test_serial_string_capacity);
+    RUN_TEST(test_serial_string_holds_long_uppity_sequence);
 
     return UNITY_END();
 }

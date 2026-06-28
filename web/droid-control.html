@@ -420,7 +420,19 @@ function renderGadgets() {
       });
     });
 
-    if (slots.length === 0 && catItems.length === 0) {
+    if (i === 0 && g.type === 2) {
+      // Periscope (Uppity Spinner): show serial commands categorized as "Periscope"
+      if (catItems.length === 0) {
+        h += '<div style="padding:.3rem 0 .6rem;color:var(--muted);font-size:.78rem">No commands yet. Create serial commands and set their category to <strong>Periscope</strong> in <a href="/config/serial-strings">Serial Commands</a>.</div>';
+      } else {
+        h += '<div class="cmd-grid">';
+        catItems.sort(function(a, b) { return a.s.n.toLowerCase() < b.s.n.toLowerCase() ? -1 : 1; });
+        catItems.forEach(function(item) {
+          h += '<button class="grid-btn" onclick="serialPost(' + item.idx + ')">' + esc(item.s.n) + '</button>';
+        });
+        h += '</div>';
+      }
+    } else if (slots.length === 0 && catItems.length === 0) {
       h += '<div style="padding:.3rem 0 .6rem;color:var(--muted);font-size:.78rem">No commands assigned. <a href="/config/gadgets">Configure</a> or set category in <a href="/config/serial-strings">Serial Commands</a>.</div>';
     } else {
       h += '<div class="cmd-grid">';

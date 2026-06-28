@@ -1122,6 +1122,7 @@ static void handleApiGadgetCmd() {
     sServer.send(200, "text/plain", "OK");
 }
 
+
 static void handleApiSerial() {
     if (!sCtrl) { sServer.send(500, "text/plain", "no controller"); return; }
     int idx = sServer.arg("idx").toInt(); // 1-based
