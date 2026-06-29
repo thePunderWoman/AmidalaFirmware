@@ -7799,26 +7799,39 @@ function opt(v, label, sel) {
 
 function actionOptions(sel) {
   var h = opt('0', '— None —', sel);
-  var sstr   = _cfg.sstr || [];
-  var gCfg   = _cfg.gadgets_cfg || [];
-  var percSstr = (gCfg[0] && gCfg[0].type === 2) ? (gCfg[0].sstr || []) : [];
-  var nonPerc = sstr.filter(function(_, i) { return percSstr.indexOf(i + 1) < 0; });
-  if (nonPerc.length) {
-    h += '<optgroup label="Serial Commands">';
-    sstr.forEach(function(s, i) {
-      if (percSstr.indexOf(i + 1) >= 0) return;
-      h += opt('5,' + (i + 1), s.n, sel);
-    });
-    h += '</optgroup>';
+  var sstr    = _cfg.sstr || [];
+  var cats    = _cfg.sstr_cats || [];
+  var userCnt = (_cfg.sstr_user_cnt !== undefined) ? _cfg.sstr_user_cnt : sstr.length;
+
+  // Map 1-based index → category name
+  var catOf = {};
+  cats.forEach(function(c) {
+    (c.idx || []).forEach(function(idx) { catOf[idx] = c.name; });
+  });
+
+  // Group user-defined commands by category, preserving insertion order
+  var groups = {};   // catName → [{idx, name}]
+  var order  = [];
+  for (var i = 0; i < userCnt; i++) {
+    var s = sstr[i]; if (!s) continue;
+    var idx = i + 1;
+    var cat = catOf[idx] || '';
+    if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+    groups[cat].push({idx: idx, name: s.n});
   }
-  if (percSstr.length) {
-    h += '<optgroup label="Periscope">';
-    percSstr.forEach(function(idx) {
-      var s = sstr[idx - 1];
-      if (s) h += opt('5,' + idx, s.n.replace('Periscope: ', ''), sel);
-    });
+  // De-dup while preserving first-seen order
+  var seen = {};
+  order = order.filter(function(c) { return seen[c] ? false : (seen[c] = true); });
+
+  order.forEach(function(cat) {
+    var items = groups[cat];
+    if (!items || !items.length) return;
+    var label = cat || 'Serial Commands';
+    h += '<optgroup label="' + label.replace(/"/g, '&quot;') + '">';
+    items.forEach(function(item) { h += opt('5,' + item.idx, item.name, sel); });
     h += '</optgroup>';
-  }
+  });
+
   h += '<optgroup label="Dome">';
   h += opt('9,0', 'Random Mode Toggle', sel);
   h += opt('9,8', 'Abs-Stick Toggle',   sel);
