@@ -515,9 +515,13 @@ void test_controllers_page_uses_config_endpoint() {
     TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "href=\"/\""));
 }
 
-void test_controllers_page_has_periscope_optgroup() {
-    TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "Periscope"));
-    TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "gadgets_cfg"));
+void test_controllers_page_groups_serial_cmds_by_category() {
+    // Serial commands are grouped by sstr_cats; optgroup labels are generated
+    // dynamically so no hardcoded "Periscope" label exists in the static page.
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "sstr_cats"));
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "sstr_user_cnt"));
+    // Uncategorised commands fall under "Serial Commands"
+    TEST_ASSERT_TRUE(contains(WEB_PAGE_CONTROLLERS, "Serial Commands"));
 }
 
 // ---------------------------------------------------------------------------
@@ -802,7 +806,7 @@ int main(int /*argc*/, char** /*argv*/) {
 
     // Controllers page
     RUN_TEST(test_controllers_page_uses_config_endpoint);
-    RUN_TEST(test_controllers_page_has_periscope_optgroup);
+    RUN_TEST(test_controllers_page_groups_serial_cmds_by_category);
 
     // Droid control page
     RUN_TEST(test_droid_control_page_uses_config_endpoint);
